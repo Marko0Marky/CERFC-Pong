@@ -17,14 +17,14 @@ body {
     padding: 20px;
     color: #4af;
     box-sizing: border-box;
-    overflow-x: hidden; /* Prevent horizontal scrolling */
+    overflow-x: hidden;
 }
 .main-container {
     display: flex;
     flex-direction: column;
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0; /* Already has padding from body */
+    padding: 0;
     gap: 20px;
 }
 /* --- Header Styles --- */
@@ -50,31 +50,34 @@ body {
 /* --- Content Layout --- */
 .content-section {
     display: flex;
+    flex-direction: row;
     gap: 20px;
     flex-wrap: wrap;
     justify-content: center;
-    align-items: flex-start;
+    align-items: stretch; /* Ensure children stretch to full height */
+    min-height: 100vh; /* Full viewport height */
 }
-/* --- Game Container --- */
-.game-container {
-    flex: 2; /* Takes up more space */
-    min-width: 500px;
+/* --- Metrics Panel (Left, Full Height and Width) --- */
+.metrics-panel {
+    flex: 0 0 400px; /* Fixed width for maximum space in flex row */
     background: rgba(10, 10, 30, 0.9);
     border-radius: 12px;
     border: 1px solid #2a2a4a;
     padding: 15px;
     display: flex;
     flex-direction: column;
+    gap: 10px;
+    height: 100%; /* Full height of content-section */
+    min-height: 100vh; /* Ensure full viewport height */
+    overflow-y: auto; /* Scrollable content */
 }
-#gameCanvas {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 2 / 1; /* Changed from 4 / 3 to 2 / 1 for consistency with 1200x600 logical game dimensions */
-    object-fit: contain;
-    background: linear-gradient(180deg, #000011, #000033);
-    border: 1px solid #333;
-    border-radius: 6px;
-    margin-bottom: 10px;
+.metrics-panel h3 {
+    margin-top: 0;
+    color: #4af;
+    border-bottom: 2px solid #4af;
+    padding-bottom: 8px;
+    text-shadow: 0 0 10px rgba(68, 170, 255, 0.5);
+    font-size: 1.3em;
 }
 .metric {
     display: flex;
@@ -90,118 +93,8 @@ body {
     font-weight: bold;
     color: #e0e0e0;
 }
-/* --- Visualizer Column (NN + OFTCC) --- */
-.visualizer-column {
-    flex: 1;
-    min-width: 300px; /* Reduced min-width to better fit next to game */
-    max-width: 450px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-/* Common panel style */
-.panel {
-    background: rgba(10, 10, 30, 0.9);
-    border: 1px solid #2a2a4a;
-    border-radius: 10px;
-    padding: 15px;
-    box-sizing: border-box;
-    flex-grow: 1; /* Allows panels to grow to fill space */
-}
-.panel h3 {
-    margin-top: 0;
-    color: #4af;
-    border-bottom: 2px solid #4af;
-    padding-bottom: 8px;
-    text-shadow: 0 0 10px rgba(68, 170, 255, 0.5);
-    font-size: 1.3em;
-}
-.panel p {
-    font-size: 0.85em;
-    color: #aaa;
-    margin-top: -5px;
-    margin-bottom: 10px;
-    text-align: center;
-}
-/* --- NN Visualizer Specific Styles --- */
-.nn-visualizer-panel {
-    position: relative;
-    min-height: 200px; /* Ensure enough space for NN viz */
-    display: flex;
-    flex-direction: column;
-}
-#nn-visualization-container, #nn-visualization-container-opponent {
-    position: relative;
-    flex-grow: 1; /* Allow visualizer container to take available height */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 10px;
-}
-.nn-layer {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    height: 100%;
-    align-items: center;
-    z-index: 10;
-    position: relative; /* FIX: Added position: relative for correct neuron positioning */
-}
-.nn-neuron {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 1px solid #888;
-    background-color: #333;
-    transition: background-color 0.1s ease-out, border-color 0.1s ease-out;
-    flex-shrink: 0; /* Prevent neurons from shrinking */
-}
-.nn-connections-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 5;
-}
-/* --- OFTCC Panel Specific Styles (from original) --- */
-.controls-panel { /* Re-using this class for the OFTCC panel */
-    background: rgba(10, 10, 30, 0.9);
-    border: 1px solid #2a2a4a;
-    border-radius: 10px;
-    padding: 15px;
-    width: 100%; /* Take full width of parent column */
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    flex-grow: 1;
-    max-width: none; /* Override previous max-width */
-}
-.framework-badge {
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 15px;
-}
-.status {
-    color: #4af;
-    text-align: center;
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 15px;
-}
 .qualia-viz {
-    margin: 15px 0;
-    border: 1px solid #4af;
-    border-radius: 5px;
-    padding: 10px;
-    background: rgba(0, 0, 0, 0.3);
+    margin: 10px 0;
 }
 .qualia-bar-container {
     height: 20px;
@@ -270,6 +163,23 @@ body {
     color: white;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
+.framework-badge {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 15px;
+}
+.status {
+    color: #4af;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
 .stability-gauge {
     width: 100%;
     height: 15px;
@@ -283,12 +193,6 @@ body {
     background: linear-gradient(90deg, #ff6b6b, #26de81);
     width: 0%;
     transition: width 0.5s ease;
-}
-.theoretical-info {
-    margin-top: 15px;
-    font-size: 12px;
-    color: #666;
-    line-height: 1.4;
 }
 .slider-container {
     margin: 10px 0;
@@ -304,7 +208,12 @@ input[type="range"] {
     width: 100%;
     cursor: pointer;
 }
-/* --- Sheaf Graph --- */
+.theoretical-info {
+    margin-top: 15px;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
 .sheaf-graph {
     position: relative;
     height: 120px;
@@ -319,7 +228,7 @@ input[type="range"] {
     top: 0;
     left: 0;
 }
-.vertex { /* Removed inline positioning, handled by JS */
+.vertex {
     width: 30px;
     height: 30px;
     border-radius: 50%;
@@ -342,12 +251,136 @@ input[type="range"] {
     50% { transform: scale(1.1); }
     100% { transform: scale(1); }
 }
+/* --- Right Column (Game + Visualizers) --- */
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+    min-width: 500px;
+}
+.game-container {
+    width: 100%;
+    background: rgba(10, 10, 30, 0.9);
+    border-radius: 12px;
+    border: 1px solid #2a2a4a;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#gameCanvas {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 1;
+    object-fit: contain;
+    background: linear-gradient(180deg, #000011, #000033);
+    border: 1px solid #333;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+.score-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+}
+.score-metric {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    font-size: 1.2em;
+}
+.score-metric .metric-label {
+    color: #ff9900;
+}
+.score-metric .metric-value {
+    font-weight: bold;
+    color: #e0e0e0;
+}
+.ai-score .metric-label {
+    color: #44aaff;
+}
+/* --- Visualizer Column (Stacked) --- */
+.visualizer-row {
+    display: flex;
+    flex-direction: column; /* Stack vertically */
+    gap: 20px;
+    justify-content: flex-start;
+}
+.panel {
+    background: rgba(10, 10, 30, 0.9);
+    border: 1px solid #2a2a4a;
+    border-radius: 10px;
+    padding: 15px;
+    box-sizing: border-box;
+    width: 100%; /* Full width of parent */
+}
+.panel h3 {
+    margin-top: 0;
+    color: #4af;
+    border-bottom: 2px solid #4af;
+    padding-bottom: 8px;
+    text-shadow: 0 0 10px rgba(68, 170, 255, 0.5);
+    font-size: 1.3em;
+}
+.panel p {
+    font-size: 0.85em;
+    color: #aaa;
+    margin-top: -5px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+.nn-visualizer-panel {
+    position: relative;
+    min-height: 50px; /* 1/4th of original 200px */
+    display: flex;
+    flex-direction: column;
+}
+#nn-visualization-container, #nn-visualization-container-opponent {
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    min-height: 45px; /* 1/4th of original 180px */
+}
+.nn-layer {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    height: 100%;
+    align-items: center;
+    gap: 5px; /* Reduced from 10px */
+    z-index: 10;
+    position: relative;
+    min-height: 45px;
+}
+.nn-neuron {
+    width: 3px; /* Reduced from 5px */
+    height: 3px; /* Reduced from 5px */
+    border-radius: 50%;
+    border: 1px solid #888;
+    background-color: #333;
+    transition: background-color 0.1s ease-out, border-color 0.1s ease-out;
+    flex-shrink: 0;
+}
+.nn-connections-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
 .neuron-flash {
     animation: neuron-flash-anim 0.8s ease-out forwards;
 }
 @keyframes neuron-flash-anim {
     0% { transform: scale(1.0); box-shadow: 0 0 10px rgba(255, 255, 255, 0.8); }
-    50% { transform: scale(1.2); box-shadow: 0 0 20px rgba(0, 255, 153, 0.9), 0 0 30px rgba(0, 255, 153, 0.5); }
+    50% { transform: scale(1.2); box-shadow: 0 0 15px rgba(0, 255, 153, 0.9), 0 0 20px rgba(0, 255, 153, 0.5); }
     100% { transform: scale(1.0); box-shadow: 0 0 5px rgba(0, 255, 153, 0.3); }
 }
 /* --- Controls & Log --- */
@@ -392,15 +425,9 @@ button:hover {
     font-size: 12px;
     color: #ccc;
 }
-.log-entry.error {
-    color: #ff6b6b;
-}
-.log-entry.warn {
-    color: #ffa726;
-}
-.log-entry.info {
-    color: #4CAF50;
-}
+.log-entry.error { color: #ff6b6b; }
+.log-entry.warn { color: #ffa726; }
+.log-entry.info { color: #4CAF50; }
 </style>
 </head>
 <body>
@@ -410,142 +437,143 @@ button:hover {
         <p>A dual-AI Pong game demonstrating Qualia Sheaf Diffusion, Ontological World Models, and Integrated Information Theory (Φ).</p>
     </div>
     <div class="content-section">
-        <div class="game-container panel">
-            <h3>🏓 PONG Environment</h3>
-            <canvas id="gameCanvas"></canvas>
-            <div class="metric">
-                <span class="metric-label" style="color:#ff9900;">Player (Left) Score:</span>
-                <span id="player-score" class="metric-value" aria-live="polite" aria-atomic="true">0</span>
+        <div class="metrics-panel">
+            <h3>OFTCC Metrics</h3>
+            <div class="framework-badge">
+                OFTCC ⊕ HTOF ⊕ CERFC+ ⊕ PUCF ⊕ UACF 2.5
             </div>
-            <div class="metric">
-                <span class="metric-label" style="color:#44aaff;">AI (Right) Score:</span>
-                <span id="ai-score" class="metric-value" aria-live="polite" aria-atomic="true">0</span>
+            <div class="status" id="status" aria-live="polite" aria-atomic="true">
+                Initializing...
+            </div>
+            <div class="phi-display" id="phi-display" aria-live="polite" aria-atomic="true">
+                Φ: 0.000
+            </div>
+            <div class="btn-group">
+                <button class="btn" id="toggleButton">Toggle</button>
+                <button class="btn" id="resetButton">Reset</button>
+                <button class="btn" id="tuneButton">Tune</button>
+            </div>
+            <div class="qualia-viz">
+                <h3 class="status">Qualia Diffusion Dynamics</h3>
+                <div class="qualia-bar-container">
+                    <div class="qualia-bar qualia-being" id="qualia-being-fill"></div>
+                    <span class="qualia-label">Being</span>
+                    <span class="qualia-value" id="being-value">0.00</span>
+                </div>
+                <div class="qualia-bar-container">
+                    <div class="qualia-bar qualia-intent" id="qualia-intent-fill"></div>
+                    <span class="qualia-label">Intent</span>
+                    <span class="qualia-value" id="intent-value">0.00</span>
+                </div>
+                <div class="qualia-bar-container">
+                    <div class="qualia-bar qualia-existence" id="qualia-existence-fill"></div>
+                    <span class="qualia-label">Existence</span>
+                    <span class="qualia-value" id="existence-value">0.00</span>
+                </div>
+                <div class="qualia-bar-container">
+                    <div class="qualia-bar qualia-emergence" id="qualia-emergence-fill"></div>
+                    <span class="qualia-label">Emergence</span>
+                    <span class="qualia-value" id="emergence-value">0.00</span>
+                </div>
+                <div class="qualia-bar-container">
+                    <div class="qualia-bar qualia-gestalt" id="qualia-gestalt-fill"></div>
+                    <span class="qualia-label">Gestalt</span>
+                    <span class="qualia-value" id="gestalt-value">0.00</span>
+                </div>
+                <div class="qualia-bar-container">
+                    <div class="qualia-bar qualia-context" id="qualia-context-fill"></div>
+                    <span class="qualia-label">Context</span>
+                    <span class="qualia-value" id="context-value">0.00</span>
+                </div>
+                <div class="qualia-bar-container">
+                    <div class="qualia-bar qualia-rel-emergence" id="qualia-rel-emergence-fill"></div>
+                    <span class="qualia-label">Rel. Emergence</span>
+                    <span class="qualia-value" id="rel-emergence-value">0.00</span>
+                </div>
+            </div>
+            <div class="metric-group">
+                <div class="metric">
+                    <span class="metric-label">Free Energy F:</span>
+                    <span class="metric-value" id="free-energy" aria-live="polite" aria-atomic="true">0.000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Prediction Error:</span>
+                    <span class="metric-value" id="prediction-error" aria-live="polite" aria-atomic="true">0.000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Gestalt Unity:</span>
+                    <span class="metric-value" id="gestalt-unity" aria-live="polite" aria-atomic="true">0.000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">dim H¹:</span>
+                    <span class="metric-value" id="h1-dimension" aria-live="polite" aria-atomic="true">0.00</span>
+                </div>
+            </div>
+            <div class="sheaf-graph">
+                <canvas id="sheafGraphCanvas" class="sheaf-vertex-canvas"></canvas>
+                <div class="vertex" id="vertex-0">P-Y</div>
+                <div class="vertex" id="vertex-1">B-X</div>
+                <div class="vertex" id="vertex-2">B-Y</div>
+                <div class="vertex" id="vertex-3">B-DX</div>
+                <div class="vertex" id="vertex-4">B-DY</div>
+                <div class="vertex" id="vertex-5">P-SC</div>
+                <div class="vertex" id="vertex-6">AI-SC</div>
+                <div class="vertex" id="vertex-7">P-DY</div>
+            </div>
+            <div class="metric-group">
+                <h3 class="status">System Stability</h3>
+                <div class="stability-gauge">
+                    <div class="stability-fill" id="stability-fill"></div>
+                </div>
+                <div class="slider-container">
+                    <label class="slider-label" for="alphaSlider">α Parameter:</label>
+                    <input type="range" id="alphaSlider" min="0.01" max="1" step="0.01" value="0.5">
+                    <span class="metric-value" id="alpha-param" aria-live="polite" aria-atomic="true">0.500</span>
+                </div>
+                <div class="slider-container">
+                    <label class="slider-label" for="betaSlider">β Parameter:</label>
+                    <input type="range" id="betaSlider" min="0.01" max="1" step="0.01" value="0.5">
+                    <span class="metric-value" id="beta-param" aria-live="polite" aria-atomic="true">0.500</span>
+                </div>
+                <div class="slider-container">
+                    <label class="slider-label" for="gammaSlider">γ Parameter:</label>
+                    <input type="range" id="gammaSlider" min="0.01" max="0.5" step="0.01" value="0.1">
+                    <span class="metric-value" id="gamma-param" aria-live="polite" aria-atomic="true">0.100</span>
+                </div>
+            </div>
+            <div class="theoretical-info">
+                Theoretical Foundation:<br>
+                • Sheaf Laplacian: $ℒ_{\text{OFTCC}} = \bigoplus_{X \in \{B,I,E,M,G,C,R\}} ℒ_X$<br>
+                • Cohomology: $H¹(G,ℱ) = ker d¹/im d⁰$<br>
+                • Stability: $exp(-dim H¹)$<br>
+                • Φ: $log(1 + MI) \cdot S \cdot GU$
             </div>
         </div>
-        <div class="visualizer-column">
-            <!-- AI Brain Visualizer for Left AI (Opponent) -->
-            <div class="nn-visualizer-panel panel">
-                <h3>🤖 Player (Left) AI Brain</h3>
-                <p>This AI learns independently using its own ontological world model.</p>
-                <div id="nn-visualization-container-opponent"></div>
+        <div class="right-column">
+            <div class="game-container panel">
+                <h3>🏓 PONG Environment</h3>
+                <canvas id="gameCanvas"></canvas>
+                <div class="score-container">
+                    <div class="score-metric">
+                        <span class="metric-label" style="color:#ff9900;">Player (Left) Score:</span>
+                        <span id="player-score" class="metric-value" aria-live="polite" aria-atomic="true">0</span>
+                    </div>
+                    <div class="score-metric ai-score">
+                        <span class="metric-label" style="color:#44aaff;">AI (Right) Score:</span>
+                        <span id="ai-score" class="metric-value" aria-live="polite" aria-atomic="true">0</span>
+                    </div>
+                </div>
             </div>
-            <!-- AI Brain Visualizer for Right AI (Main) -->
-            <div class="nn-visualizer-panel panel">
-                <h3>🧠 AI (Right) Main Brain</h3>
-                <p>This AI's 'consciousness' metrics are displayed in the OFTCC panel.</p>
-                <div id="nn-visualization-container"></div>
-            </div>
-            <!-- OFTCC/Consciousness Panel -->
-            <div class="controls-panel panel">
-                <div class="framework-badge">
-                    OFTCC ⊕ HTOF ⊕ CERFC+ ⊕ PUCF ⊕ UACF 2.5
+            <div class="visualizer-row">
+                <div class="nn-visualizer-panel panel">
+                    <h3>🤖 Player (Left) AI Brain</h3>
+                    <p>This AI learns independently using its own ontological world model.</p>
+                    <div id="nn-visualization-container-opponent"></div>
                 </div>
-                <div class="status" id="status" aria-live="polite" aria-atomic="true">
-                    Initializing...
-                </div>
-                <div class="phi-display" id="phi-display" aria-live="polite" aria-atomic="true">
-                    Φ: 0.000
-                </div>
-                <div class="btn-group">
-                    <button class="btn" id="toggleButton">Toggle</button>
-                    <button class="btn" id="resetButton">Reset</button>
-                    <button class="btn" id="tuneButton">Tune</button>
-                </div>
-                <div class="qualia-viz">
-                    <h3 class="status">Qualia Diffusion Dynamics</h3>
-                    <div class="qualia-bar-container">
-                        <div class="qualia-bar qualia-being" id="qualia-being-fill"></div>
-                        <span class="qualia-label">Being</span>
-                        <span class="qualia-value" id="being-value">0.00</span>
-                    </div>
-                    <div class="qualia-bar-container">
-                        <div class="qualia-bar qualia-intent" id="qualia-intent-fill"></div>
-                        <span class="qualia-label">Intent</span>
-                        <span class="qualia-value" id="intent-value">0.00</span>
-                    </div>
-                    <div class="qualia-bar-container">
-                        <div class="qualia-bar qualia-existence" id="qualia-existence-fill"></div>
-                        <span class="qualia-label">Existence</span>
-                        <span class="qualia-value" id="existence-value">0.00</span>
-                    </div>
-                    <div class="qualia-bar-container">
-                        <div class="qualia-bar qualia-emergence" id="qualia-emergence-fill"></div>
-                        <span class="qualia-label">Emergence</span>
-                        <span class="qualia-value" id="emergence-value">0.00</span>
-                    </div>
-                    <div class="qualia-bar-container">
-                        <div class="qualia-bar qualia-gestalt" id="qualia-gestalt-fill"></div>
-                        <span class="qualia-label">Gestalt</span>
-                        <span class="qualia-value" id="gestalt-value">0.00</span>
-                    </div>
-                    <div class="qualia-bar-container">
-                        <div class="qualia-bar qualia-context" id="qualia-context-fill"></div>
-                        <span class="qualia-label">Context</span>
-                        <span class="qualia-value" id="context-value">0.00</span>
-                    </div>
-                    <div class="qualia-bar-container">
-                        <div class="qualia-bar qualia-rel-emergence" id="qualia-rel-emergence-fill"></div>
-                        <span class="qualia-label">Rel. Emergence</span>
-                        <span class="qualia-value" id="rel-emergence-value">0.00</span>
-                    </div>
-                </div>
-                <div class="metric-group">
-                    <div class="metric">
-                        <span class="metric-label">Free Energy F:</span>
-                        <span class="metric-value" id="free-energy" aria-live="polite" aria-atomic="true">0.000</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Prediction Error:</span>
-                        <span class="metric-value" id="prediction-error" aria-live="polite" aria-atomic="true">0.000</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Gestalt Unity:</span>
-                        <span class="metric-value" id="gestalt-unity" aria-live="polite" aria-atomic="true">0.000</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">dim H¹:</span>
-                        <span class="metric-value" id="h1-dimension" aria-live="polite" aria-atomic="true">0.00</span>
-                    </div>
-                </div>
-                <div class="sheaf-graph">
-                    <canvas id="sheafGraphCanvas" class="sheaf-vertex-canvas"></canvas>
-                    <!-- HTML vertices for Sheaf graph. 8 vertices for 8 concepts. Positions set by JS. -->
-                    <div class="vertex" id="vertex-0">P-Y</div>
-                    <div class="vertex" id="vertex-1">B-X</div>
-                    <div class="vertex" id="vertex-2">B-Y</div>
-                    <div class="vertex" id="vertex-3">B-DX</div>
-                    <div class="vertex" id="vertex-4">B-DY</div>
-                    <div class="vertex" id="vertex-5">P-SC</div>
-                    <div class="vertex" id="vertex-6">AI-SC</div>
-                    <div class="vertex" id="vertex-7">P-DY</div>
-                </div>
-                <div class="metric-group">
-                    <h3 class="status">System Stability</h3>
-                    <div class="stability-gauge">
-                        <div class="stability-fill" id="stability-fill"></div>
-                    </div>
-                    <div class="slider-container">
-                        <label class="slider-label" for="alphaSlider">α Parameter:</label>
-                        <input type="range" id="alphaSlider" min="0.01" max="1" step="0.01" value="0.5">
-                        <span class="metric-value" id="alpha-param" aria-live="polite" aria-atomic="true">0.500</span>
-                    </div>
-                    <div class="slider-container">
-                        <label class="slider-label" for="betaSlider">β Parameter:</label>
-                        <input type="range" id="betaSlider" min="0.01" max="1" step="0.01" value="0.5">
-                        <span class="metric-value" id="beta-param" aria-live="polite" aria-atomic="true">0.500</span>
-                    </div>
-                    <div class="slider-container">
-                        <label class="slider-label" for="gammaSlider">γ Parameter:</label>
-                        <input type="range" id="gammaSlider" min="0.01" max="0.5" step="0.01" value="0.1">
-                        <span class="metric-value" id="gamma-param" aria-live="polite" aria-atomic="true">0.100</span>
-                    </div>
-                </div>
-                <div class="theoretical-info">
-                    Theoretical Foundation:<br>
-                    • Sheaf Laplacian: $ℒ_{\text{OFTCC}} = \bigoplus_{X \in \{B,I,E,M,G,C,R\}} ℒ_X$<br>
-                    • Cohomology: $H¹(G,ℱ) = ker d¹/im d⁰$<br>
-                    • Stability: $exp(-dim H¹)$<br>
-                    • Φ: $log(1 + MI) \cdot S \cdot GU$
+                <div class="nn-visualizer-panel panel">
+                    <h3>🧠 AI (Right) Main Brain</h3>
+                    <p>This AI's 'consciousness' metrics are displayed in the OFTCC panel.</p>
+                    <div id="nn-visualization-container"></div>
                 </div>
             </div>
         </div>
@@ -562,6 +590,7 @@ button:hover {
 <script src="https://unpkg.com/@popperjs/core@2"></script>
 <script src="https://unpkg.com/tippy.js@6"></script>
 <script>
+
 (function () {
     // --- On-page Logger ---
     const logElement = document.getElementById('log');
@@ -658,10 +687,6 @@ function randomMatrix(r, c, scale) {
 }
 function vecZeros(n) { return Array(n).fill(0); }
 function zeroMatrix(r, c) { return Array(r).fill().map(() => Array(c).fill(0)); }
-function isFiniteVector(v) {
-    if (!Array.isArray(v)) return false;
-    return v.every(x => typeof x === 'number' && isFinite(x));
-}
 function identity(n) {
     const M = zeroMatrix(n, n);
     for (let i = 0; i < n; i++) M[i][i] = 1;
@@ -1177,6 +1202,7 @@ class OntologicalWorldModel {
         }
         const attended = this.applyAttention(input);
         const { output: nextState, activations } = this.forward(attended);
+        activations.push(nextState);         
         this.predictionError = norm2(vecSub(nextState, state));
         const sGlobal = qualiaArray.slice();
         const lapQuad = 0.5 * dot(sGlobal, matVecMul(this.buildGlobalLaplacian(), sGlobal));
@@ -1541,34 +1567,12 @@ class OntologicalWorldModel {
             const ro = new ResizeObserver(() => {
                 this.canvas.width = this.container.clientWidth;
                 this.canvas.height = this.container.clientHeight;
-                this._positionNeurons();
                 this._drawConnections();
             });
             ro.observe(this.container);
-            this._positionNeurons(); // Initial positioning
         }
-
-        _positionNeurons() {
-            this.visualLayers.forEach((layer, lIndex) => {
-                const neuronDivs = this.neuronElements[lIndex];
-                if (neuronDivs.length === 0) return;
-                const lDiv = neuronDivs[0].parentElement;
-                if (!lDiv) return;
-                const layerHeight = lDiv.clientHeight;
-                const neuronHeight = neuronDivs[0].offsetHeight;
-                const totalNeuronsInLayer = neuronDivs.length; // Use displayed count
-
-                neuronDivs.forEach((neuronDiv, nIndex) => {
-                    const spacing = (layerHeight - totalNeuronsInLayer * neuronHeight) / (totalNeuronsInLayer + 1);
-                    const topOffset = (spacing + neuronHeight) * nIndex + spacing;
-                    neuronDiv.style.position = 'absolute';
-                    neuronDiv.style.top = `${topOffset}px`;
-                    // FIX: Add horizontal positioning for neurons
-                    neuronDiv.style.left = '50%';
-                    neuronDiv.style.transform = 'translateX(-50%)';
-                });
-            });
-        }
+        
+        // Removed _positionNeurons() as it's no longer needed
 
         _getNeuronPosition(lIndex, nIndex) {
             const el = this.neuronElements[lIndex][nIndex];
@@ -1800,6 +1804,7 @@ class OntologicalWorldModel {
             tippy('#alphaSlider', { content: 'α controls input gain for qualia diffusion.' });
             tippy('#betaSlider', { content: 'β adjusts diffusion strength across the sheaf.' });
             tippy('#gammaSlider', { content: 'γ sets the inertia for qualia updates and learning rate.' });
+            tippy('#tuneButton', { content: 'Adjusts AI parameters based on system stability.' });
         }
 
         playSound() {
