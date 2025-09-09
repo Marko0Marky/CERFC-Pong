@@ -722,13 +722,6 @@ function matrixDeterminant(M) {
     }
     return det;
 }
-function subMatrix(M, rowStart, colStart, numRows, numCols) {
-    const sub = [];
-    for (let i = 0; i < numRows; i++) {
-        sub.push(M[rowStart + i].slice(colStart, colStart + numCols));
-    }
-    return sub;
-}
 
 // EnhancedQualiaSheaf Class
 class EnhancedQualiaSheaf {
@@ -1259,6 +1252,7 @@ class OntologicalWorldModel {
         this.alpha_ont = 0.01 + 0.09 * Math.min(this.stepCount / 500, 1.0);
     }
 }
+
  // -------------------- LEARNING AI CLASS (Agent) --------------------
     class LearningAI {
         constructor(worldModel, gameBounds, isPlayerTwo = false) {
