@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Conscious Pong AI</title>
+<title>Conscious Pong AI — Enhanced & Optimized</title>
 <style>
 /* --- General Page Styles --- */
 body {
     margin: 0;
-    background: linear-gradient(135deg, #0a0a15 0%, #1a1a2e 100%);
+    background: linear-gradient(135deg, #0a0a15 0%, #1a0a2e 100%);
     font-family: 'Courier New', monospace;
     display: flex;
     justify-content: center;
@@ -40,12 +40,12 @@ body {
     margin: 0;
     color: #4af;
     text-shadow: 0 0 20px rgba(68, 170, 255, 0.8);
-    font-size: 2.5em;
+    font-size: 2.2em;
 }
 .header p {
-    margin: 10px 0 0 0;
+    margin: 10px 0 0;
     color: #aaa;
-    font-size: 1.1em;
+    font-size: 1.0em;
 }
 /* --- Content Layout --- */
 .content-section {
@@ -55,11 +55,11 @@ body {
     flex-wrap: wrap;
     justify-content: center;
     align-items: stretch; /* Ensure children stretch to full height */
-    min-height: 100vh; /* Full viewport height */
+    min-height: 80vh;
 }
 /* --- Metrics Panel (Left, Full Height and Width) --- */
 .metrics-panel {
-    flex: 0 0 400px; /* Fixed width for maximum space in flex row */
+    flex: 0 0 400px; /* Fixed width */
     background: rgba(10, 10, 30, 0.9);
     border-radius: 12px;
     border: 1px solid #2a2a4a;
@@ -67,8 +67,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    height: 100%; /* Full height of content-section */
-    min-height: 100vh; /* Ensure full viewport height */
+    height: 100%;
+    min-height: 80vh;
     overflow-y: auto; /* Scrollable content */
 }
 .metrics-panel h3 {
@@ -76,15 +76,14 @@ body {
     color: #4af;
     border-bottom: 2px solid #4af;
     padding-bottom: 8px;
-    text-shadow: 0 0 10px rgba(68, 170, 255, 0.5);
-    font-size: 1.3em;
+    font-size: 1.15em;
 }
 .metric {
     display: flex;
     justify-content: space-between;
-    margin: 5px 0;
+    margin:6px 0;
     padding: 3px 0;
-    font-size: 1.1em;
+    font-size: 1.02em;
 }
 .metric-label {
     color: #aaa;
@@ -92,9 +91,6 @@ body {
 .metric-value {
     font-weight: bold;
     color: #e0e0e0;
-}
-.qualia-viz {
-    margin: 10px 0;
 }
 .qualia-bar-container {
     height: 20px;
@@ -108,8 +104,9 @@ body {
 .qualia-bar {
     height: 100%;
     border-radius: 3px;
-    transition: width 0.3s ease;
+    transition: width 0.25s linear;
     position: relative;
+    width: 0%;
 }
 .qualia-being { background: linear-gradient(90deg, #ff6b6b, #ff4757); }
 .qualia-intent { background: linear-gradient(90deg, #4ecdc4, #26de81); }
@@ -132,36 +129,27 @@ body {
     from { transform: translateX(-100%); }
     to { transform: translateX(100%); }
 }
-.qualia-label {
+.qualia-label, .qualia-value {
     position: absolute;
-    left: 5px;
     top: 50%;
     transform: translateY(-50%);
-    color: white;
+    color: #fff;
     font-size: 12px;
     font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
 }
-.qualia-value {
-    position: absolute;
-    right: 5px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: white;
-    font-size: 12px;
-    font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-}
+.qualia-label { left: 6px; }
+.qualia-value { right: 6px; }
+
 .phi-display {
     text-align: center;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
-    margin: 15px 0;
-    padding: 10px;
+    margin: 12px 0;
+    padding: 8px;
     border-radius: 10px;
     background: linear-gradient(45deg, #667eea, #764ba2);
-    color: white;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    color: #fff;
 }
 .framework-badge {
     background: linear-gradient(45deg, #667eea, #764ba2);
@@ -171,14 +159,14 @@ body {
     font-size: 12px;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 15px;
+    margin-bottom: 8px;
 }
 .status {
     color: #4af;
     text-align: center;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
-    margin-bottom: 15px;
+    margin-bottom: 8px;
 }
 .stability-gauge {
     width: 100%;
@@ -186,7 +174,7 @@ body {
     background: rgba(0, 0, 0, 0.3);
     border-radius: 5px;
     overflow: hidden;
-    margin: 10px 0;
+    margin: 8px 0;
 }
 .stability-fill {
     height: 100%;
@@ -195,30 +183,24 @@ body {
     transition: width 0.5s ease;
 }
 .slider-container {
-    margin: 10px 0;
+    margin: 8px 0;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
 }
 .slider-label {
-    font-size: 14px;
+    font-size: 13px;
     color: #4af;
 }
 input[type="range"] {
     width: 100%;
     cursor: pointer;
 }
-.theoretical-info {
-    margin-top: 15px;
-    font-size: 12px;
-    color: #666;
-    line-height: 1.4;
-}
 .sheaf-graph {
     position: relative;
-    height: 120px;
+    height: 140px;
     width: 100%;
-    margin: 15px 0;
+    margin: 10px 0;
     padding: 10px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 5px;
@@ -227,17 +209,19 @@ input[type="range"] {
     position: absolute;
     top: 0;
     left: 0;
+    width: 100%;
+    height: 100%;
 }
 .vertex {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: bold;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     position: absolute;
     color: white;
     z-index: 10;
@@ -248,7 +232,7 @@ input[type="range"] {
 }
 @keyframes pulse {
     0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    50% { transform: scale(1.08); }
     100% { transform: scale(1); }
 }
 /* --- Right Column (Game + Visualizers) --- */
@@ -273,7 +257,6 @@ input[type="range"] {
     width: 100%;
     height: auto;
     aspect-ratio: 2 / 1;
-    object-fit: contain;
     background: linear-gradient(180deg, #000011, #000033);
     border: 1px solid #333;
     border-radius: 6px;
@@ -289,14 +272,10 @@ input[type="range"] {
     display: flex;
     justify-content: center;
     gap: 10px;
-    font-size: 1.2em;
+    font-size: 1.1em;
 }
 .score-metric .metric-label {
     color: #ff9900;
-}
-.score-metric .metric-value {
-    font-weight: bold;
-    color: #e0e0e0;
 }
 .ai-score .metric-label {
     color: #44aaff;
@@ -321,11 +300,10 @@ input[type="range"] {
     color: #4af;
     border-bottom: 2px solid #4af;
     padding-bottom: 8px;
-    text-shadow: 0 0 10px rgba(68, 170, 255, 0.5);
-    font-size: 1.3em;
+    font-size: 1.12em;
 }
 .panel p {
-    font-size: 0.85em;
+    font-size: 12px;
     color: #aaa;
     margin-top: -5px;
     margin-bottom: 10px;
@@ -333,7 +311,7 @@ input[type="range"] {
 }
 .nn-visualizer-panel {
     position: relative;
-    min-height: 50px; /* 1/4th of original 200px */
+    min-height: 50px;
     display: flex;
     flex-direction: column;
 }
@@ -344,7 +322,7 @@ input[type="range"] {
     justify-content: space-between;
     align-items: center;
     padding: 0 10px;
-    min-height: 45px; /* 1/4th of original 180px */
+    min-height: 45px;
 }
 .nn-layer {
     display: flex;
@@ -352,17 +330,17 @@ input[type="range"] {
     justify-content: space-around;
     height: 100%;
     align-items: center;
-    gap: 5px; /* Reduced from 10px */
+    gap: 5px;
     z-index: 10;
     position: relative;
     min-height: 45px;
 }
 .nn-neuron {
-    width: 3px; /* Reduced from 5px */
-    height: 3px; /* Reduced from 5px */
+    width: 3px;
+    height: 3px;
     border-radius: 50%;
     border: 1px solid #888;
-    background-color: #333;
+    background: #333;
     transition: background-color 0.1s ease-out, border-color 0.1s ease-out;
     flex-shrink: 0;
 }
@@ -395,17 +373,17 @@ button {
     background: linear-gradient(135deg, #2a2a4a, #3a3a5a);
     color: #e0e0e0;
     border: 1px solid #555;
-    padding: 12px 18px;
+    padding: 10px 14px;
     cursor: pointer;
     border-radius: 6px;
     font-family: inherit;
-    transition: all 0.3s;
+    transition: all 0.2s;
     font-weight: bold;
-    min-width: 150px;
+    min-width: 120px;
 }
 button:hover {
     background: linear-gradient(135deg, #3a3a5a, #4a4a6a);
-    box-shadow: 0 2px 10px rgba(68, 170, 255, 0.3);
+    box-shadow: 0 2px 10px rgba(68, 170, 255, 0.2);
 }
 .log-container {
     flex-basis: 100%;
@@ -418,8 +396,8 @@ button:hover {
     background: #1e1e1e;
     border: 1px solid #444;
     border-radius: 4px;
-    padding: 15px;
-    height: 100px;
+    padding: 12px;
+    height: 120px;
     overflow-y: auto;
     font-family: 'Courier New', monospace;
     font-size: 12px;
@@ -433,25 +411,25 @@ button:hover {
 <body>
 <div class="main-container">
     <div class="header">
-        <h1>🧠 Conscious Pong AI Simulation</h1>
-        <p>A dual-AI Pong game demonstrating Qualia Sheaf Diffusion, Ontological World Models, and Integrated Information Theory (Φ).</p>
+        <h1>🧠 Conscious Pong AI — Enhanced & Optimized</h1>
+        <p>A dual-AI Pong game using Ontological World Models with optimized heavy computation.</p>
     </div>
     <div class="content-section">
         <div class="metrics-panel">
             <h3>OFTCC Metrics</h3>
             <div class="framework-badge">
-                OFTCC ⊕ HTOF ⊕ CERFC+ ⊕ PUCF ⊕ UACF 2.5
+                 OFTCC ⊕ HTOF ⊕ CERFC+ ⊕ PUCF ⊕ UACF 2.5
             </div>
             <div class="status" id="status" aria-live="polite" aria-atomic="true">
                 Initializing...
             </div>
             <div class="phi-display" id="phi-display" aria-live="polite" aria-atomic="true">
                 Φ: 0.000
-            </div>
+             </div>
             <div class="btn-group">
-                <button class="btn" id="toggleButton">Toggle</button>
-                <button class="btn" id="resetButton">Reset</button>
-                <button class="btn" id="tuneButton">Tune</button>
+                <button id="toggleSimButton">🚀 Toggle Simulation</button>
+                <button id="resetSimButton">🔄 Reset All</button>
+                <button id="tuneButton">⚙️ Tune</button>
             </div>
             <div class="qualia-viz">
                 <h3 class="status">Qualia Diffusion Dynamics</h3>
@@ -492,24 +470,13 @@ button:hover {
                 </div>
             </div>
             <div class="metric-group">
-                <div class="metric">
-                    <span class="metric-label">Free Energy F:</span>
-                    <span class="metric-value" id="free-energy" aria-live="polite" aria-atomic="true">0.000</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Prediction Error:</span>
-                    <span class="metric-value" id="prediction-error" aria-live="polite" aria-atomic="true">0.000</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Gestalt Unity:</span>
-                    <span class="metric-value" id="gestalt-unity" aria-live="polite" aria-atomic="true">0.000</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">dim H¹:</span>
-                    <span class="metric-value" id="h1-dimension" aria-live="polite" aria-atomic="true">0.00</span>
-                </div>
+                <div class="metric"><span class="metric-label">Free Energy F:</span><span class="metric-value" id="free-energy">0.000</span></div>
+                <div class="metric"><span class="metric-label">Prediction Error:</span><span class="metric-value" id="prediction-error">0.000</span></div>
+                <div class="metric"><span class="metric-label">Gestalt Unity:</span><span class="metric-value" id="gestalt-unity">0.000</span></div>
+                <div class="metric"><span class="metric-label">dim H¹:</span><span class="metric-value" id="h1-dimension">0.00</span></div>
+                <div class="metric"><span class="metric-label">Gluing Inconsistency:</span><span class="metric-value" id="inconsistency">0.000</span></div>
             </div>
-            <div class="sheaf-graph">
+            <div class="sheaf-graph" id="sheafGraph">
                 <canvas id="sheafGraphCanvas" class="sheaf-vertex-canvas"></canvas>
                 <div class="vertex" id="vertex-0">P-Y</div>
                 <div class="vertex" id="vertex-1">B-X</div>
@@ -519,6 +486,8 @@ button:hover {
                 <div class="vertex" id="vertex-5">P-SC</div>
                 <div class="vertex" id="vertex-6">AI-SC</div>
                 <div class="vertex" id="vertex-7">P-DY</div>
+                <div class="vertex" id="vertex-8">P-Col</div>
+                <div class="vertex" id="vertex-9">AI-Col</div>
             </div>
             <div class="metric-group">
                 <h3 class="status">System Stability</h3>
@@ -528,20 +497,20 @@ button:hover {
                 <div class="slider-container">
                     <label class="slider-label" for="alphaSlider">α Parameter:</label>
                     <input type="range" id="alphaSlider" min="0.01" max="1" step="0.01" value="0.5">
-                    <span class="metric-value" id="alpha-param" aria-live="polite" aria-atomic="true">0.500</span>
+                    <span class="metric-value" id="alpha-param">0.500</span>
                 </div>
                 <div class="slider-container">
                     <label class="slider-label" for="betaSlider">β Parameter:</label>
                     <input type="range" id="betaSlider" min="0.01" max="1" step="0.01" value="0.5">
-                    <span class="metric-value" id="beta-param" aria-live="polite" aria-atomic="true">0.500</span>
+                    <span class="metric-value" id="beta-param">0.500</span>
                 </div>
                 <div class="slider-container">
                     <label class="slider-label" for="gammaSlider">γ Parameter:</label>
                     <input type="range" id="gammaSlider" min="0.01" max="0.5" step="0.01" value="0.1">
-                    <span class="metric-value" id="gamma-param" aria-live="polite" aria-atomic="true">0.100</span>
+                    <span class="metric-value" id="gamma-param">0.100</span>
                 </div>
             </div>
-            <div class="theoretical-info">
+            <div class="theoretical-info" style="margin-top:8px; font-size:12px; color:#888;">
                 Theoretical Foundation:<br>
                 • Sheaf Laplacian: $ℒ_{\text{OFTCC}} = \bigoplus_{X \in \{B,I,E,M,G,C,R\}} ℒ_X$<br>
                 • Cohomology: $H¹(G,ℱ) = ker d¹/im d⁰$<br>
@@ -555,12 +524,12 @@ button:hover {
                 <canvas id="gameCanvas"></canvas>
                 <div class="score-container">
                     <div class="score-metric">
-                        <span class="metric-label" style="color:#ff9900;">Player (Left) Score:</span>
-                        <span id="player-score" class="metric-value" aria-live="polite" aria-atomic="true">0</span>
+                        <span class="metric-label">Player (Left) Score:</span>
+                        <span id="player-score" class="metric-value">0</span>
                     </div>
                     <div class="score-metric ai-score">
-                        <span class="metric-label" style="color:#44aaff;">AI (Right) Score:</span>
-                        <span id="ai-score" class="metric-value" aria-live="polite" aria-atomic="true">0</span>
+                        <span class="metric-label">AI (Right) Score:</span>
+                        <span id="ai-score" class="metric-value">0</span>
                     </div>
                 </div>
             </div>
@@ -579,8 +548,8 @@ button:hover {
         </div>
     </div>
     <div class="controls-section">
-        <button id="toggleButton">🚀 Toggle Simulation</button>
-        <button id="resetButton">🔄 Reset All</button>
+         <button id="stepButton">⏭️ Step</button>
+         <button id="pauseButton">⏸️ Pause</button>
     </div>
     <div class="log-container">
         <h3>🔧 System Console</h3>
@@ -590,1506 +559,1114 @@ button:hover {
 <script src="https://unpkg.com/@popperjs/core@2"></script>
 <script src="https://unpkg.com/tippy.js@6"></script>
 <script>
+// --- On-page Logger (from Document3) ---
+const logElement = document.getElementById('log');
+function appendLog(message, type = 'info') {
+    if (!logElement) {
+        console.warn('Log element not found, logging to console:', message);
+        return;
+    }
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    logElement.appendChild(entry);
+    if (logElement.children.length > 200) logElement.removeChild(logElement.children[0]);
+    logElement.scrollTop = logElement.scrollHeight;
+}
+const logger = {
+    info: (msg, data) => appendLog(`INFO: ${msg}` + (data ? ' ' + JSON.stringify(data) : '')),
+    warn: (msg, data) => appendLog(`WARN: ${msg}` + (data ? ' ' + JSON.stringify(data) : ''), 'warn'),
+    error: (msg, data) => { appendLog(`ERROR: ${msg}` + (data ? ' ' + JSON.stringify(data) : ''), 'error'); console.error(msg, data); }
+};
 
-(function () {
-    // --- On-page Logger ---
-    const logElement = document.getElementById('log');
-    const appendLog = (message, type = 'info') => {
-        const entry = document.createElement('div');
-        entry.className = `log-entry ${type}`;
-        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-        logElement.appendChild(entry);
-        if (logElement.children.length > 50) logElement.removeChild(logElement.children[0]);
-        logElement.scrollTop = logElement.scrollHeight;
-    };
-    const logger = {
-        info: (msg, data) => appendLog(`INFO: ${msg}` + (data ? JSON.stringify(data) : '')),
-        warn: (msg, data) => appendLog(`WARN: ${msg}` + (data ? JSON.stringify(data) : ''), 'warn'),
-        error: (msg, data) => { appendLog(`ERROR: ${msg}` + (data ? JSON.stringify(data) : ''), 'error'); console.error(msg, data); }
-    };
-
-    // -------------------- UTILITY FUNCTIONS --------------------
-    function safeClamp(v, min, max) {
-        if (!isFinite(v)) return 0;
-        return Math.max(min, Math.min(max, v));
+// --- OPTIMIZED UTILITY FUNCTIONS (from Document3) ---
+function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+}
+function dot(a, b) {
+    if (!a || !b || a.length !== b.length) return 0;
+    let s = 0.0;
+    for (let i = 0, n = a.length; i < n; ++i) {
+        const ai = a[i], bi = b[i];
+        if (!isFinite(ai) || !isFinite(bi)) return 0;
+        s += ai * bi;
     }
-    function clamp(v, min, max) {
-        return Math.max(min, Math.min(max, v));
-    }
-    function dot(a, b) {
-        if (!isFiniteVector(a) || !isFiniteVector(b) || a.length !== b.length) return 0;
-        return a.reduce((sum, x, i) => sum + x * b[i], 0);
-    }
-    function norm2(v) {
-        if (!isFiniteVector(v)) return 0;
-        const sumSquares = dot(v, v);
-        if (isNaN(sumSquares) || !isFinite(sumSquares)) return 0;
-        return Math.sqrt(sumSquares + 1e-10);
-    }
-    function vecAdd(a, b) {
-        if (!isFiniteVector(a) || !isFiniteVector(b) || a.length !== b.length) return vecZeros(a.length);
-        return a.map((x, i) => x + b[i]);
-    }
-    function vecSub(a, b) {
-        if (!isFiniteVector(a) || !isFiniteVector(b) || a.length !== b.length) return vecZeros(a.length);
-        return a.map((x, i) => x - b[i]);
-    }
-    function vecScale(v, s) {
-        if (!isFiniteVector(v) || !isFinite(s)) return vecZeros(v.length);
-        return v.map(x => x * s);
-    }
-    function tanhVec(v) {
-        if (!isFiniteVector(v)) return vecZeros(v.length);
-        return v.map(x => Math.tanh(x));
-    }
-    function matVecMul(m, v) {
-        if (!isFiniteMatrix(m) || !isFiniteVector(v) || !m.length || !m[0] || m[0].length !== v.length) {
-            return Array(m.length).fill(0);
+    return s;
+}
+function norm2(v) {
+    if (!isFiniteVector(v)) return 0;
+    let s = 0;
+    for (let i = 0; i < v.length; ++i) s += v[i]*v[i];
+    return Math.sqrt(s + 1e-12);
+}
+function vecAdd(a, b) {
+    const n = Math.max(a?.length||0, b?.length||0);
+    const out = new Array(n);
+    for (let i = 0; i < n; ++i) out[i] = (a[i] || 0) + (b[i] || 0);
+    return out;
+}
+function vecSub(a, b) {
+    const n = Math.max(a?.length||0, b?.length||0);
+    const out = new Array(n);
+    for (let i = 0; i < n; ++i) out[i] = (a[i] || 0) - (b[i] || 0);
+    return out;
+}
+function vecScale(v, s) {
+    const n = v?.length || 0;
+    const out = new Array(n);
+    for (let i = 0; i < n; ++i) out[i] = (v[i] || 0) * s;
+    return out;
+}
+function tanhVec(v) {
+    if (!isFiniteVector(v)) return vecZeros(v?.length || 0);
+    return v.map(x => Math.tanh(x));
+}
+function matVecMul(m, v) {
+    const r = m?.length || 0;
+    const c = (m && m[0]) ? m[0].length : 0;
+    if (!r || !c || !v || v.length !== c) return new Array(r).fill(0);
+    const out = new Array(r);
+    for (let i = 0; i < r; ++i) {
+        let s = 0.0;
+        const row = m[i];
+        for (let j = 0; j < c; ++j) {
+            s += row[j] * v[j];
         }
-        const result = m.map(row => dot(row, v));
-        return result.map(val => safeClamp(val, -100, 100));
+        out[i] = s;
     }
-    function transpose(matrix) {
-        if (!isFiniteMatrix(matrix) || matrix.length === 0 || !Array.isArray(matrix[0])) return [];
-        return matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex]));
+    return out;
+}
+function transpose(matrix) {
+    if (!isFiniteMatrix(matrix) || matrix.length === 0 || !Array.isArray(matrix[0])) return [];
+    return matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex]));
+}
+function randomMatrix(r, c, scale) {
+    return Array(r).fill().map(() => Array(c).fill().map(() => (Math.random() - 0.5) * scale));
+}
+function vecZeros(n) {
+    return Array(n).fill(0);
+}
+function zeroMatrix(r, c) {
+    return Array(r).fill().map(() => Array(c).fill(0));
+}
+function identity(n) {
+    const M = zeroMatrix(n, n);
+    for (let i = 0; i < n; i++) M[i][i] = 1;
+    return M;
+}
+function isFiniteVector(v) {
+    if (!Array.isArray(v)) return false;
+    return v.every(x => typeof x === 'number' && isFinite(x));
+}
+function isFiniteMatrix(m) {
+    return Array.isArray(m) && m.length > 0 && m.every(row => Array.isArray(row) && row.length === m[0].length && row.every(x => typeof x === 'number' && isFinite(x)));
+}
+function matrixSpectralNormApprox(M, maxIter = 10) {
+    if (!isFiniteMatrix(M) || M.length === 0 || M[0].length === 0) return 0;
+    let n = M[0].length;
+    let v = Array(n).fill(1 / Math.sqrt(n));
+    for (let i = 0; i < maxIter; i++) {
+        const Av = matVecMul(M, v);
+        if (!isFiniteVector(Av)) return 0;
+        const norm = norm2(Av);
+        if (norm < 1e-10) return 0;
+        v = vecScale(Av, 1 / norm);
     }
-    function randomMatrix(r, c, scale) {
-        return Array(r).fill().map(() => Array(c).fill().map(() => (Math.random() - 0.5) * scale));
+    return norm2(matVecMul(M, v));
+}
+function solveLinearSystemCG(A, b, opts={tol:1e-6, maxIter:200}) {
+    const n = b.length;
+    if (!Array.isArray(A) || A.length !== n || !Array.isArray(b)) {
+        logger.warn('solveLinearSystemCG: invalid input; returning clamped b');
+        return b.map(x=>Math.max(-1,Math.min(1,x)));
     }
-    function vecZeros(n) {
-        return Array(n).fill(0);
-    }
-    function zeroMatrix(r, c) {
-        return Array(r).fill().map(() => Array(c).fill(0));
-    }
-    function identity(n) {
-        const M = zeroMatrix(n, n);
-        for (let i = 0; i < n; i++) M[i][i] = 1;
-        return M;
-    }
-    function isFiniteVector(v) {
-        if (!Array.isArray(v)) return false;
-        return v.every(x => typeof x === 'number' && isFinite(x));
-    }
-    function isFiniteMatrix(m) {
-        return Array.isArray(m) && m.length > 0 && m.every(row => Array.isArray(row) && row.length === m[0].length && row.every(x => typeof x === 'number' && isFinite(x)));
-    }
-    function matrixSpectralNormApprox(M, maxIter = 10) {
-        if (!isFiniteMatrix(M) || M.length === 0 || M[0].length === 0) return 0;
-        let n = M[0].length;
-        let v = Array(n).fill(1 / Math.sqrt(n));
-        for (let i = 0; i < maxIter; i++) {
-            const Av = matVecMul(M, v);
-            if (!isFiniteVector(Av)) return 0;
-            const norm = norm2(Av);
-            if (norm < 1e-10) return 0;
-            v = vecScale(Av, 1 / norm);
+    const x = new Array(n).fill(0);
+    const r = b.slice();
+    const p = r.slice();
+    let rsold = dot(r, r);
+    if (!isFinite(rsold) || rsold < 1e-20) return x;
+    const Ap = new Array(n);
+    const maxIter = Math.min(opts.maxIter || 200, n*5);
+    for (let it=0; it<maxIter; ++it) {
+        for (let i=0;i<n;i++) {
+            let s = 0;
+            const row = A[i];
+            for (let j=0;j<n;j++) s += row[j]*p[j];
+            Ap[i] = s;
         }
-        return norm2(matVecMul(M, v));
+        const denom = dot(p, Ap) + 1e-12;
+        if (!isFinite(denom) || denom <= 0) break;
+        const alpha = rsold / denom;
+        for (let i=0;i<n;i++) x[i] += alpha * p[i];
+        for (let i=0;i<n;i++) r[i] -= alpha * Ap[i];
+        const rsnew = dot(r, r);
+        if (Math.sqrt(rsnew) < (opts.tol || 1e-6)) break;
+        const beta = rsnew / (rsold + 1e-20);
+        for (let i=0;i<n;i++) p[i] = r[i] + beta * p[i];
+        rsold = rsnew;
     }
-    function solveLinearSystem(A, b, options = { tol: 1e-8, maxIter: 15 }) {
-        if (!isFiniteMatrix(A) || !isFiniteVector(b) || A.length !== b.length || A[0].length !== b.length) {
-            logger.warn('Invalid input to solveLinearSystem; returning clamped input vector');
-            return b.map(v => safeClamp(v, -1, 1));
-        }
-        const n = b.length;
-        let x = vecZeros(n).map(v => safeClamp(v, -10, 10));
-        let r = vecSub(b, matVecMul(A, x)).map(v => safeClamp(v, -10, 10));
-        if (!isFiniteVector(r)) {
-            logger.warn('Initial residual in solveLinearSystem is invalid; returning clamped input');
-            return b.map(v => safeClamp(v, -1, 1));
-        }
-        let p = r.slice().map(v => safeClamp(v, -10, 10));
-        let rsold = dot(r, r);
-        if (rsold < 1e-10 || isNaN(rsold)) {
-            logger.warn('Initial rsold in solveLinearSystem is invalid; returning clamped input');
-            return b.map(v => safeClamp(v, -1, 1));
-        }
-        for (let i = 0; i < options.maxIter; i++) {
-            let Ap = matVecMul(A, p).map(v => safeClamp(v, -100, 100));
-            if (!isFiniteVector(Ap)) {
-                logger.warn('Ap vector in solveLinearSystem is invalid; returning clamped input');
-                return b.map(v => safeClamp(v, -1, 1));
+    for (let i=0;i<n;i++) if (!isFinite(x[i])) x[i] = 0;
+    return x.map(v => Math.max(-1, Math.min(1, v)));
+}
+function covarianceMatrix(states, eps = 1e-3) {
+    if (!Array.isArray(states) || states.length === 0) {
+        logger.warn('covarianceMatrix: empty states; returning 1x1 eps');
+        return [[eps]];
+    }
+    const n = states.length;
+    const d = states[0].length || 0;
+    if (d === 0) return identity(1).map(r => r.map(x => x*eps));
+    const mean = new Array(d).fill(0);
+    for (let i=0;i<n;i++){
+        const s = states[i];
+        if (!isFiniteVector(s)) continue;
+        for (let j=0;j<d;j++) mean[j] += s[j];
+    }
+    for (let j=0;j<d;j++) mean[j] /= n;
+    const cov = Array(d);
+    for (let i=0;i<d;i++){
+        cov[i] = new Array(d).fill(0);
+    }
+    for (let k=0;k<n;k++){
+        const s = states[k];
+        if (!isFiniteVector(s)) continue;
+        for (let i=0;i<d;i++){
+            const di = s[i] - mean[i];
+            for (let j=i;j<d;j++){
+                cov[i][j] += (di * (s[j] - mean[j])) / Math.max(1, n-1);
             }
-            const denom = dot(p, Ap) + 1e-8;
-            if (denom <= 0 || isNaN(denom)) {
-                logger.warn('Invalid denominator in solveLinearSystem; returning clamped input');
-                return b.map(v => safeClamp(v, -1, 1));
-            }
-            let alpha = rsold / denom;
-            alpha = safeClamp(alpha, -1e3, 1e3);
-            x = vecAdd(x, vecScale(p, alpha)).map(v => safeClamp(v, -10, 10));
-            r = vecSub(r, vecScale(Ap, alpha)).map(v => safeClamp(v, -10, 10));
-            if (!isFiniteVector(r) || !isFiniteVector(p)) {
-                logger.warn('Residual or direction vector became invalid; returning clamped solution');
-                return x.map(v => safeClamp(v, -1, 1));
-            }
-            const rsnew = dot(r, r);
-            if (Math.sqrt(rsnew) < options.tol || isNaN(rsnew)) break;
-            p = vecAdd(r, vecScale(p, rsnew / (rsold + 1e-10))).map(v => safeClamp(v, -10, 10));
-            rsold = rsnew;
         }
-        const result = x.map(v => safeClamp(v, -1, 1));
-        if (!isFiniteVector(result)) {
-            logger.warn('Final solution in solveLinearSystem is invalid; returning clamped input');
-            return b.map(v => safeClamp(v, -1, 1));
-        }
-        return result;
     }
-     function covarianceMatrix(states, eps = 1e-2) {
-        if (!states || states.length < 2 || !states.every(isFiniteVector)) {
-            logger.warn('Invalid or insufficient states for covariance matrix');
-            return zeroMatrix(0, 0);
+    for (let i=0;i<d;i++){
+        for (let j=0;j<d;j++){
+            if (j < i) cov[i][j] = cov[j][i];
         }
-        const n = states.length, d = states[0].length;
-        const mean = vecScale(states.reduce(vecAdd, vecZeros(d)), 1 / n);
-        if (!isFiniteVector(mean)) {
-            logger.warn('Invalid mean vector in covarianceMatrix');
-            return identity(d);
-        }
-        let cov = zeroMatrix(d, d);
-        let validStates = 0;
-        for (let s of states) {
-            if (!isFiniteVector(s)) continue;
-            const diff = vecSub(s, mean).map(v => safeClamp(v, -10, 10));
-            for (let i = 0; i < d; i++) {
-                for (let j = 0; j < d; j++) {
-                    cov[i][j] += safeClamp(diff[i] * diff[j] / (n - 1), -100, 100);
-                }
-            }
-            validStates++;
-        }
-        if (validStates < d + 1) {
-            logger.warn(`Too few valid states for covariance; valid: ${validStates}, required: ${d + 1}`);
-            return identity(d);
-        }
-        for (let i = 0; i < d; i++) cov[i][i] += eps;
-        if (!isFiniteMatrix(cov)) {
-            logger.warn('Computed covariance matrix contains invalid values');
-            return identity(d);
-        }
-        logger.info(`Covariance matrix computed with ${validStates} valid states`);
-        return cov;
+        cov[i][i] += eps;
     }
-    function matrixDeterminant(M) {
-        if (!isFiniteMatrix(M) || M.length === 0) return 1e-12;
-        const n = M.length;
-        if (n === 1) return M[0][0];
-        if (n === 2) return M[0][0] * M[1][1] - M[0][1] * M[1][0];
+    return cov;
+}
+function matrixDeterminant(M) {
+    const n = M?.length || 0;
+    if (n === 0) return 1e-12;
+    if (n === 1) return M[0][0];
+    if (n === 2) return M[0][0]*M[1][1] - M[0][1]*M[1][0];
+    if (n <= 4) {
         let det = 0;
-        for (let j = 0; j < n; j++) {
-            const subM = M.slice(1).map(row => row.slice(0, j).concat(row.slice(j + 1)));
-            det += M[0][j] * (j % 2 === 0 ? 1 : -1) * matrixDeterminant(subM);
-        }
-        if (!isFinite(det)) return 1e-12;
-        return det;
-    }
-    function validateWindowedStates(states, minRows = 3, minCols = 1) {
-        if (!Array.isArray(states) || states.length < minRows) return false;
-        return states.every(row => Array.isArray(row) && row.length >= minCols && row.every(Number.isFinite));
-    }
-    const warnRateLimit = (function() {
-        const last = new Map();
-        return function(key, msg, ms = 5000) {
-            const now = Date.now();
-            if (!last.has(key) || now - last.get(key) > ms) {
-                last.set(key, now);
-                console.warn(msg);
+        for (let j=0;j<n;j++){
+            const sub = [];
+            for (let r=1;r<n;r++){
+                const row = [];
+                for (let c=0;c<n;c++) if (c !== j) row.push(M[r][c]);
+                sub.push(row);
             }
+            det += ((j%2===0)?1:-1) * M[0][j] * matrixDeterminant(sub);
+        }
+        return det || 1e-12;
+    }
+    let prod = 1;
+    for (let i=0;i<n;i++) prod *= (M[i][i] || 1e-12);
+    return prod || 1e-12;
+}
+function logDeterminantFromDiagonal(M) {
+    if (!Array.isArray(M) || M.length === 0) return Math.log(1e-12);
+    let s = 0;
+    for (let i=0;i<M.length;i++) s += Math.log(Math.max(Math.abs(M[i][i]), 1e-12));
+    return s;
+}
+const sheafVertexPositions = {
+    0: {x:0.08, y:0.16}, 1: {x:0.26, y:0.48}, 2: {x:0.08, y:0.80},
+    3: {x:0.92, y:0.16}, 4: {x:0.70, y:0.50}, 5: {x:0.92, y:0.80},
+    6: {x:0.52, y:0.16}, 7: {x:0.50, y:0.80}, 8: {x:0.30, y:0.18},
+    9: {x:0.75, y:0.82}
+};
+
+// --- APPLICATION CLASSES (from New Text Document) ---
+class EnhancedQualiaSheaf {
+    constructor(graph, stateDim = 10, qDim = 7, alpha = 0.1, beta = 0.1, gamma = 0.05) {
+        this.stateDim = stateDim;
+        this.qDim = Math.min(qDim || 7, 7);
+        this.entityNames = ['being', 'intent', 'existence', 'emergence', 'gestalt', 'context', 'rel_emergence'];
+        if (this.qDim !== this.entityNames.length) {
+            logger.warn(`qDim (${this.qDim}) does not match entityNames length (${this.entityNames.length}). Adjusting qDim.`);
+            this.qDim = this.entityNames.length;
+        }
+        const defaultVertices = ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed', 'player_collision', 'ai_collision'];
+        this.graph = {
+            vertices: graph?.vertices && Array.isArray(graph.vertices) && graph.vertices.length >= 8 ? graph.vertices : defaultVertices,
+            edges: graph?.edges && Array.isArray(graph.edges) ? graph.edges.slice(0, 15) : []
         };
-    })();
-    function logDeterminantFromDiagonal(M) {
-        if (!isFiniteMatrix(M)) return Math.log(1e-12);
-        let logDet = 0;
-        for (let i = 0; i < M.length; i++) {
-            logDet += Math.log(Math.max(M[i][i], 1e-10));
+        if (!this.graph.edges.length && this.graph.vertices.length >= 2) {
+             this.graph.edges.push(
+                ['paddle_y', 'ball_y'], ['ball_x', 'ball_dx'], ['ball_y', 'ball_dy'],
+                ['ball_dx', 'ball_dy'], ['player_score', 'ai_score'], ['paddle_y', 'ball_dy'],
+                ['paddle_y', 'paddle_speed'], ['player_collision', 'paddle_y'], ['ai_collision', 'ball_x']
+            );
         }
-        return logDet;
+        this.alpha = clamp(alpha, 0.01, 0.2);
+        this.beta = clamp(beta, 0.01, 0.2);
+        this.gamma = clamp(gamma, 0.01, 0.1);
+        this.eps = 1e-4;
+        this.stalks = new Map(this.graph.vertices.map(v =>
+            [v, Array(this.qDim).fill().map(() => clamp((Math.random() - 0.5) * 0.5, -1, 1))]
+        ));
+        this._updateGraphStructureAndMetrics();
+        this.phi = 0.2;
+        this.h1Dimension = 0;
+        this.gestaltUnity = 0.6;
+        this.stability = 0.6;
+        this.diffusionEnergy = 0;
+        this.inconsistency = 0;
+        this.windowedStates = [];
+        this.windowSize = 50;
+        const N_total_stalk_dim = this.graph.vertices.length * this.qDim;
+        for (let i = 0; i < this.windowSize; i++) {
+            this.windowedStates.push(Array(N_total_stalk_dim).fill().map(() => clamp((Math.random() - 0.5) * 0.1, -1, 1)));
+        }
+        logger.info('EnhancedQualiaSheaf initialized.');
     }
-    const sheafVertexPositions = {
-        0: { x: 0.1, y: 0.2 },
-        1: { x: 0.3, y: 0.5 },
-        2: { x: 0.1, y: 0.8 },
-        3: { x: 0.9, y: 0.2 },
-        4: { x: 0.7, y: 0.5 },
-        5: { x: 0.9, y: 0.8 },
-        6: { x: 0.5, y: 0.2 },
-        7: { x: 0.5, y: 0.8 }
-    };
-
-    // -------------------- ENHANCED QUALIA SHEAF CLASS --------------------
-    class EnhancedQualiaSheaf {
-        constructor(graph, stateDim = 10, qDim = 7, alpha = 0.1, beta = 0.1, gamma = 0.05) {
-            this.graph = graph || {
-                vertices: ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed'],
-                edges: [
-                    ['paddle_y', 'ball_y'], ['ball_x', 'ball_dx'], ['ball_y', 'ball_dy'],
-                    ['ball_dx', 'ball_dy'], ['player_score', 'ai_score'], ['paddle_y', 'ball_dy'],
-                    ['paddle_y', 'paddle_speed']
-                ]
-            };
-            if (!Array.isArray(this.graph.vertices) || !Array.isArray(this.graph.edges)) {
-                throw new Error('Invalid graph structure: vertices and edges must be arrays');
-            }
-            for (let [u, v] of this.graph.edges) {
-                if (!this.graph.vertices.includes(u) || !this.graph.vertices.includes(v)) {
-                    throw new Error('Graph contains invalid vertices or edges');
-                }
-            }
-            this.stateDim = stateDim;
-            this.qDim = qDim;
-            this.entityNames = ['being', 'intent', 'existence', 'emergence', 'gestalt', 'context', 'rel_emergence'];
-            if (this.qDim !== this.entityNames.length) {
-                throw new Error(`qDim (${this.qDim}) must match entityNames length (${this.entityNames.length})`);
-            }
-            this.alpha = clamp(alpha, 0.01, 0.2);
-            this.beta = clamp(beta, 0.01, 0.2);
-            this.gamma = clamp(gamma, 0.01, 0.1);
-            if (alpha > 0.2 || beta > 0.2 || gamma > 0.1) {
-                logger.warn('High parameter values detected; clamped to safer range');
-            }
-            this.eps = 1e-4;
-            this.lambda_reg = 0.01;
-this.stalks = new Map(this.graph.vertices.map(v => [v, Array(this.qDim).fill().map(() => safeClamp(Math.random() * 0.5, -1, 1))]));            this.adjacencyMatrix = this.buildAdjacencyMatrix();
-            this.laplacian = this.buildLaplacian();
-            this.maxEigApprox = matrixSpectralNormApprox(this.laplacian) || 1;
-            this.projectionMatrices = this.computeProjectionMatrices();
-            this.phi = 0.2;
-            this.h1Dimension = 0;
-            this.gestaltUnity = 0.6;
-            this.stability = 0.6;
-            this.diffusionEnergy = 0;
-            this.windowedStates = [];
-            this.windowSize = 512;
-            this.fimTrace = 0;
-            this.lastDiffusionResult = { energy: 0, phi: 0.2 };
-            const N = this.graph.vertices.length * this.qDim;
-            for (let i = 0; i < this.windowSize; i++) {
-                this.windowedStates.push(Array(N).fill().map(() => safeClamp(Math.random() * 0.5, -1, 1)));
+    buildAdjacencyMatrix() {
+        const n = this.graph.vertices.length;
+        const mapIdx = new Map(this.graph.vertices.map((v, i) => [v, i]));
+        const adj = zeroMatrix(n, n);
+        const clustering = this.computeClustering();
+        const curvature = clustering.map(c => 1 - c);
+        for (const [u, v] of this.graph.edges) {
+            const i = mapIdx.get(u), j = mapIdx.get(v);
+            if (i === undefined || j === undefined) continue;
+            const w = Math.max(1e-3, 1.0 - 0.5 * (curvature[i] + curvature[j]));
+            adj[i][j] = w; adj[j][i] = w;
+        }
+        return adj;
+    }
+    computeClustering() {
+        const n = this.graph.vertices.length;
+        const adjBinary = zeroMatrix(n, n);
+        const mapIdx = new Map(this.graph.vertices.map((v, i) => [v, i]));
+        for (const [u, v] of this.graph.edges) {
+            const i = mapIdx.get(u), j = mapIdx.get(v);
+            if (i !== undefined && j !== undefined) {
+                adjBinary[i][j] = 1;
+                adjBinary[j][i] = 1;
             }
         }
-
-        buildAdjacencyMatrix() {
-            const n = this.graph.vertices.length;
-            const mapIdx = new Map(this.graph.vertices.map((v, i) => [v, i]));
-            const adj = zeroMatrix(n, n);
-            const clustering = this.computeClustering();
-            const curvature = clustering.map(c => 1 - c);
-            for (const [u, v] of this.graph.edges) {
-                const i = mapIdx.get(u), j = mapIdx.get(v);
-                if (i === undefined || j === undefined) {
-                    logger.warn(`Invalid edge [${u}, ${v}] ignored`);
-                    continue;
-                }
-                const w = Math.max(1e-3, 1.0 - 0.5 * (curvature[i] + curvature[j]));
-                adj[i][j] = w; adj[j][i] = w;
+        const clustering = Array(n).fill(0);
+        for (let i = 0; i < n; i++) {
+            const neighbors = [];
+            for (let j = 0; j < n; j++) if (adjBinary[i][j]) neighbors.push(j);
+            const k = neighbors.length;
+            if (k < 2) continue;
+            let tri = 0;
+            for (let a = 0; a < neighbors.length; a++) for (let b = a + 1; b < neighbors.length; b++) {
+                if (adjBinary[neighbors[a]][neighbors[b]]) tri++;
             }
-            return adj;
+            const possible = k * (k - 1) / 2;
+            clustering[i] = possible > 0 ? tri / possible : 0;
         }
-
-        computeClustering() {
-            const n = this.graph.vertices.length;
-            const adjBinary = zeroMatrix(n, n);
-            const mapIdx = new Map(this.graph.vertices.map((v, i) => [v, i]));
-            for (const [u, v] of this.graph.edges) {
-                const i = mapIdx.get(u), j = mapIdx.get(v);
-                if (i !== undefined && j !== undefined) {
-                    adjBinary[i][j] = 1; adjBinary[j][i] = 1;
+        return clustering;
+    }
+    buildLaplacian() {
+        const n = this.graph.vertices.length;
+        const adj = this.adjacencyMatrix || this.buildAdjacencyMatrix();
+        const L = zeroMatrix(n, n);
+        for (let i = 0; i < n; i++) {
+            let deg = 0;
+            for (let j = 0; j < n; j++) {
+                if (adj[i][j]) {
+                    L[i][j] = -adj[i][j];
+                    deg += adj[i][j];
                 }
             }
-            const clustering = Array(n).fill(0);
-            for (let i = 0; i < n; i++) {
-                const neighbors = [];
-                for (let j = 0; j < n; j++) if (adjBinary[i][j]) neighbors.push(j);
-                const k = neighbors.length;
-                if (k < 2) continue;
-                let tri = 0;
-                for (let a = 0; a < neighbors.length; a++) for (let b = a + 1; b < neighbors.length; b++) {
-                    if (adjBinary[neighbors[a]][neighbors[b]]) tri++;
-                }
-                const possible = k * (k - 1) / 2;
-                clustering[i] = possible > 0 ? tri / possible : 0;
-            }
-            return clustering;
+            L[i][i] = deg + this.eps;
         }
-
-        buildLaplacian() {
-            const n = this.graph.vertices.length;
-            const adj = this.adjacencyMatrix || this.buildAdjacencyMatrix();
-            const L = zeroMatrix(n, n);
-            for (let i = 0; i < n; i++) {
-                let deg = 0;
-                for (let j = 0; j < n; j++) {
-                    if (adj[i][j]) {
-                        L[i][j] = -adj[i][j];
-                        deg += adj[i][j];
-                    }
-                }
-                L[i][i] = deg + this.eps;
-            }
-            return L;
-        }
-
-        computeProjectionMatrices() {
-            const projections = new Map();
-            this.graph.edges.forEach(([u, v]) => {
-                const weight = this.computeContextualWeight(u, v);
-                const omega = 1 / (1 + Math.exp(-weight));
-                const barRho = randomMatrix(this.qDim, this.qDim, 0.5);
-                const P_context = identity(this.qDim);
-                let P = barRho.map((row, ri) => vecAdd(vecScale(row, 1 - omega), vecScale(P_context[ri], omega)));
-                for (let k = 0; k < this.qDim; k++) {
-                    const norm = norm2(P[k]);
-                    if (norm > 1e-10) P[k] = vecScale(P[k], clamp(norm, 0.1, 1) / norm);
-                }
-                projections.set(`${u}-${v}`, P);
-                projections.set(`${v}-${u}`, transpose(P));
-            });
-            return projections;
-        }
-
-        computeContextualWeight(u, v) {
-            const stalk_u = this.stalks.get(u) || vecZeros(this.qDim);
-            const stalk_v = this.stalks.get(v) || vecZeros(this.qDim);
-            let klDiv = 0;
+        return L;
+    }
+    computeProjectionMatrices() {
+        const projections = new Map();
+        this.graph.edges.forEach(([u, v]) => {
+            const weight = this.computeContextualWeight(u, v);
+            const omega = 1 / (1 + Math.exp(-weight));
+            const barRho = randomMatrix(this.qDim, this.qDim, 0.5);
+            const P_context = identity(this.qDim);
+            let P = barRho.map((row, ri) => vecAdd(vecScale(row, 1 - omega), vecScale(P_context[ri], omega)));
             for (let k = 0; k < this.qDim; k++) {
-                const p_u = Math.max(stalk_u[k], this.eps);
-                const p_v = Math.max(stalk_v[k], this.eps);
-                klDiv += p_u * Math.log(p_u / p_v);
+                const norm = norm2(P[k]);
+                if (norm > 1e-10) P[k] = vecScale(P[k], clamp(norm, 0.1, 1) / norm);
             }
-            return Math.exp(-klDiv * 0.5 - this.eps);
-        }
-
-        resetStalks() {
-this.stalks = new Map(this.graph.vertices.map(v => [v, Array(this.qDim).fill().map(() => safeClamp(Math.random() * 0.5, -1, 1))]));            this.h1Dimension = 0;
-            this.gestaltUnity = 0.6;
-            this.stability = 0.6;
-            this.phi = 0.2;
-            this.diffusionEnergy = 0;
-            this.windowedStates = [];
-            const N = this.graph.vertices.length * this.qDim;
-            for (let i = 0; i < this.windowSize; i++) {
-                this.windowedStates.push(Array(N).fill().map(() => safeClamp(Math.random() * 0.5, -1, 1)));
-            }
-            logger.info('Stalks reset due to numerical instability');
-        }
-
-        diffuseQualia(state) {
-            if (!isFiniteVector(state) || state.length !== this.stateDim) {
-                logger.warn('Invalid state input to diffuseQualia', state);
-                this.resetStalks();
-                return this.lastDiffusionResult;
-            }
-            // Optimized qInput to minimize clipping
-            const qInput = [
-                clamp(state[0], 0, 1), // paddle_y
-                clamp(state[1], 0, 1), // ball_x
-                clamp(state[2], 0, 1), // ball_y
-                clamp(state[3], -1, 1), // ball_dx
-                clamp(state[4], -1, 1), // ball_dy
-                clamp(state[5] * 2, 0, 1), // player_score (reduced amplification)
-                clamp(state[6] * 2, 0, 1), // ai_score (reduced amplification)
-                clamp(state[7], -1, 1), // paddle_speed
-                clamp(state[8] * 2, 0, 1), // player_collision
-                clamp(state[9] * 2, 0, 1) // ai_collision
-            ].map(v => safeClamp(v, 0, 1));
-            logger.info('diffuseQualia input state', state.map(v => v.toFixed(3)));
-            logger.info('diffuseQualia qInput', qInput.map(v => v.toFixed(3)));
-            if (!isFiniteVector(qInput)) {
-                logger.warn('Invalid qInput in diffuseQualia; using default');
-                return this.lastDiffusionResult;
-            }
-            const n = this.graph.vertices.length, N = n * this.qDim;
-            const s = [];
-            for (const v of this.graph.vertices) {
-                s.push(...(this.stalks.get(v) || vecZeros(this.qDim)));
-            }
-            if (!isFiniteVector(s)) {
-                logger.warn('Invalid stalk state vector in diffuseQualia; resetting');
-                this.resetStalks();
-                return this.lastDiffusionResult;
-            }
-            const Lnode = this.laplacian || this.buildLaplacian();
-            const Lfull = zeroMatrix(N, N);
-            const idx = new Map(this.graph.vertices.map((v, i) => [v, i]));
-            this.projectionMatrices = this.computeProjectionMatrices();
-            for (const [u, v] of this.graph.edges) {
-                const i = idx.get(u), j = idx.get(v);
-                const P_uv = this.projectionMatrices.get(`${u}-${v}`);
-                for (let qi = 0; qi < this.qDim; qi++) {
-                    for (let qj = 0; qj < this.qDim; qj++) {
-                        const val = -Lnode[i][j] * P_uv[qi][qj];
-                        if (!isFinite(val)) continue;
-                        Lfull[i * this.qDim + qi][j * this.qDim + qj] = val;
-                        Lfull[j * this.qDim + qj][i * this.qDim + qi] = -Lnode[j][i] * P_uv[qj][qi];
-                    }
-                }
-            }
-            for (let i = 0; i < n; i++) {
-                let deg = 0;
-                for (let j = 0; j < n; j++) {
-                    for (let qi = 0; qi < this.qDim; qi++) {
-                        deg += -Lfull[i * this.qDim + qi][j * this.qDim + qi];
-                    }
-                }
-                for (let qi = 0; qi < this.qDim; qi++) {
-                    Lfull[i * this.qDim + qi][i * this.qDim + qi] = deg + this.eps;
-                }
-            }
-            const f_s = Array(N).fill(0);
-            for (let i = 0; i < n; i++) {
-                const val = qInput[i % qInput.length];
-                for (let qi = 0; qi < this.qDim; qi++) {
-                    f_s[i * this.qDim + qi] = this.alpha * val * 0.7; // Increased for stronger updates
-                }
-            }
-            const eta = 0.01 / Math.max(1, this.maxEigApprox);
-            const A = zeroMatrix(N, N);
-            for (let i = 0; i < N; i++) {
-                for (let j = 0; j < N; j++) {
-                    A[i][j] = (i === j ? 1 : 0) + eta * Lfull[i][j];
-                }
-            }
-            const rhs = vecAdd(s, vecScale(f_s, eta)).map(v => safeClamp(v, -10, 10));
-            if (!isFiniteMatrix(A) || !isFiniteVector(rhs)) {
-                logger.warn('Invalid A or rhs in diffuseQualia; using fallback update');
-                const sNext = s.map((v, i) => safeClamp(v + f_s[i] * 0.005, -1, 1));
-                if (isFiniteVector(sNext)) {
-                    for (let i = 0; i < n; i++) {
-                        this.stalks.set(this.graph.vertices[i], sNext.slice(i * this.qDim, (i + 1) * this.qDim));
-                    }
-                    this.windowedStates.push(sNext.slice());
-                    if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
-                }
-                this.computeH1Dimension();
-                this.computeGestaltUnity();
-                this.computeIntegratedInformation();
-                this.diffusionEnergy = 0.1;
-                this.lastDiffusionResult = { energy: this.diffusionEnergy, phi: this.phi };
-                return this.lastDiffusionResult;
-            }
-            let sSolved;
-            try {
-                sSolved = solveLinearSystem(A, rhs, { tol: 1e-6, maxIter: 15 });
-            } catch (e) {
-                logger.warn('Solver failed in diffuseQualia: ' + e.message + '; using fallback update');
-                sSolved = null;
-            }
-            if (!sSolved || !isFiniteVector(sSolved)) {
-                logger.warn('Solver produced invalid vector in diffuseQualia; using fallback update');
-                const sNext = s.map((v, i) => safeClamp(v + f_s[i] * 0.005, -1, 1));
-                if (isFiniteVector(sNext)) {
-                    for (let i = 0; i < n; i++) {
-                        this.stalks.set(this.graph.vertices[i], sNext.slice(i * this.qDim, (i + 1) * this.qDim));
-                    }
-                    this.windowedStates.push(sNext.slice());
-                    if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
-                }
-                this.computeH1Dimension();
-                this.computeGestaltUnity();
-                this.computeIntegratedInformation();
-                this.diffusionEnergy = 0.1;
-                this.lastDiffusionResult = { energy: this.diffusionEnergy, phi: this.phi };
-                return this.lastDiffusionResult;
-            }
-            const sNext = sSolved.map(v => safeClamp(v, -1, 1));
-            if (!isFiniteVector(sNext)) {
-                logger.warn('sNext is invalid after clamping; using fallback update');
-                const sNextFallback = s.map((v, i) => safeClamp(v + f_s[i] * 0.005, -1, 1));
-                if (isFiniteVector(sNextFallback)) {
-                    for (let i = 0; i < n; i++) {
-                        this.stalks.set(this.graph.vertices[i], sNextFallback.slice(i * this.qDim, (i + 1) * this.qDim));
-                    }
-                    this.windowedStates.push(sNextFallback.slice());
-                    if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
-                }
-                this.computeH1Dimension();
-                this.computeGestaltUnity();
-                this.computeIntegratedInformation();
-                this.diffusionEnergy = 0.1;
-                this.lastDiffusionResult = { energy: this.diffusionEnergy, phi: this.phi };
-                return this.lastDiffusionResult;
-            }
-            // Increased noise for diversity
-            const sNextWithNoise = sNext.map(v => safeClamp(v + (Math.random() - 0.5) * 0.5, -1, 1));
-            logger.info(`Pushing sNext to windowedStates; valid: ${isFiniteVector(sNextWithNoise)}`);
-            for (let i = 0; i < n; i++) {
-                this.stalks.set(this.graph.vertices[i], sNextWithNoise.slice(i * this.qDim, (i + 1) * this.qDim));
-            }
-            this.windowedStates.push(sNextWithNoise.slice());
-            if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
-            logger.info('Sample windowedStates', this.windowedStates.slice(-5).map(s => s.slice(0, 5).map(v => v.toFixed(3))));
-            this.computeH1Dimension();
-            this.computeGestaltUnity();
-            this.computeIntegratedInformation();
-            this.diffusionEnergy = clamp(sNextWithNoise.reduce((sum, v) => sum + v * v, 0) / N, 0.1, 1);
-            this.lastDiffusionResult = { energy: this.diffusionEnergy, phi: this.phi };
-            return this.lastDiffusionResult;
-        }
-
-        computeH1Dimension() {
-            const eps = 0.01;
-            let sum = 0, count = 0;
-            const idx = new Map(this.graph.vertices.map((v, i) => [v, i]));
-            const adj = this.adjacencyMatrix || this.buildAdjacencyMatrix();
-            for (const [u, v] of this.graph.edges) {
-                const su = this.stalks.get(u) || vecZeros(this.qDim);
-                const sv = this.stalks.get(v) || vecZeros(this.qDim);
-                if (!isFiniteVector(su) || !isFiniteVector(sv)) continue;
-                const d = vecSub(su, sv);
-                const r = dot(d, d);
-                sum += Math.log(1 + r / eps) * 0.5;
-                count++;
-            }
-            const base = count > 0 ? sum / count : 0;
-            const n = this.graph.vertices.length;
-            const visited = new Set();
-            let components = 0;
-            for (let i = 0; i < n; i++) {
-                if (visited.has(i)) continue;
-                components++;
-                const stack = [i]; visited.add(i);
-                while (stack.length) {
-                    const u = stack.pop();
-                    for (let j = 0; j < n; j++) if (adj[u][j] && !visited.has(j)) { visited.add(j); stack.push(j); }
-                }
-            }
-            const m = this.graph.edges.length;
-            const cycles = Math.max(0, m - n + components);
-            const cycleFactor = 1 + Math.log(1 + cycles);
-            this.h1Dimension = clamp(base * cycleFactor, 0, 3); // Reduced max to lower h1Dimension
-            this.stability = clamp(Math.exp(-this.h1Dimension * 0.1), 0.6, 1); // Adjusted for higher stability
-            if (!isFinite(this.stability)) this.stability = 0.6;
-            logger.info(`Computed h1Dimension: ${this.h1Dimension.toFixed(3)}, stability: ${this.stability.toFixed(3)}`);
-        }
-
-        computeGestaltUnity() {
-            const vals = Array.from(this.stalks.values()).filter(isFiniteVector);
-            const m = vals.length;
-            if (m < 2) { this.gestaltUnity = 0.6; return; }
-            let sum = 0, pairs = 0;
-            for (let i = 0; i < m; i++) {
-                for (let j = i + 1; j < m; j++) {
-                    const a = vals[i], b = vals[j];
-                    const denom = norm2(a) * norm2(b) + this.eps;
-                    if (denom <= this.eps) continue;
-                    sum += Math.abs(dot(a, b) / denom) * 1.5; // Amplified to increase similarity
-                    pairs++;
-                }
-            }
-            this.gestaltUnity = pairs > 0 ? clamp(sum / pairs, 0.6, 0.9) : 0.6; // Raised minimum and maximum
-            if (!isFinite(this.gestaltUnity)) this.gestaltUnity = 0.6;
-            logger.info(`Computed gestaltUnity: ${this.gestaltUnity.toFixed(3)}`);
-        }
-
-        computeIntegratedInformation() {
-            const fallbackPhi = () => clamp(0.5 + this.gestaltUnity * this.stability, 0.2, 5);
-            const minRequiredStates = Math.max(4, Math.floor(this.graph.vertices.length * this.qDim / 7)); // 8
-            const validStates = this.windowedStates.filter(isFiniteVector);
-            logger.info(`computeIntegratedInformation: total states=${this.windowedStates.length}, valid states=${validStates.length}, required=${minRequiredStates}`);
-            if (!validateWindowedStates(this.windowedStates, minRequiredStates, this.graph.vertices.length * this.qDim)) {
-                this.phi = fallbackPhi();
-                logger.warn(`Insufficient states for covariance: need ${minRequiredStates}, have ${validStates.length}`);
-                return;
-            }
-            try {
-                const sampledStates = validStates.slice(-Math.max(minRequiredStates, 64));
-                logger.info(`Using ${sampledStates.length} states for covariance computation`);
-                if (sampledStates.length < minRequiredStates) {
-                    this.phi = fallbackPhi();
-                    logger.warn(`Insufficient states after filtering: need ${minRequiredStates}, have ${sampledStates.length}`);
-                    return;
-                }
-                const norms = sampledStates.map(s => norm2(s));
-                const avgNorm = norms.reduce((sum, v) => sum + v, 0) / norms.length;
-                const MI = clamp(Math.abs(avgNorm - norm2(sampledStates[sampledStates.length - 1])) * 5.0 + 1e-4, 1e-4, 5);
-                logger.info(`Computed MI: ${MI.toFixed(3)} (norm-based), avgNorm=${avgNorm.toFixed(3)}, lastNorm=${norm2(sampledStates[sampledStates.length - 1]).toFixed(3)}`);
-                logger.info('Sample state norms', norms.slice(-5).map(v => v.toFixed(3)));
-                const vCount = this.graph.vertices.length || 1;
-                const connectivity = 2 * (this.graph.edges.length || 0) / (vCount * (vCount - 1) / 2 + 1e-8);
-                const phi_v = (1 + MI * 10) * Math.max(this.stability, 0.6) * Math.max(this.gestaltUnity, 0.6) * Math.max(1e-6, connectivity);
-                this.phi = isFinite(phi_v) ? clamp(phi_v, 0.2, 5) : fallbackPhi();
-                logger.info(`Computed Φ: ${this.phi.toFixed(3)}, MI: ${MI.toFixed(3)}, stability: ${this.stability.toFixed(3)}, gestaltUnity: ${this.gestaltUnity.toFixed(3)}, connectivity: ${connectivity.toFixed(3)}`);
-            } catch (e) {
-                this.phi = fallbackPhi();
-                logger.warn(`computeIntegratedInformation error: ${e.message}; using fallback phi`);
-            }
-        }
-
-        visualizeActivity() {
-            const sheafGraphEl = document.querySelector('.sheaf-graph');
-            if (!sheafGraphEl) return;
-            const graphWidth = sheafGraphEl.clientWidth;
-            const graphHeight = sheafGraphEl.clientHeight;
-            const vertices = this.graph.vertices;
-            vertices.forEach((vertex, idx) => {
-                const el = document.getElementById(`vertex-${idx}`);
-                if (!el) return;
-                const pos = sheafVertexPositions[idx] || { x: 0.5, y: 0.5 };
-                el.style.left = `${pos.x * graphWidth - 15}px`;
-                el.style.top = `${pos.y * graphHeight - 15}px`;
-                const stalk = this.stalks.get(vertex) || Array(this.qDim).fill(0);
-                const intensity = clamp(stalk.reduce((sum, v) => sum + Math.abs(v), 0) / this.qDim, 0, 1);
-                el.classList.toggle('active', intensity > 0.5);
-                el.style.background = `radial-gradient(circle, hsl(0, 100%, ${50 + intensity * 50}%), hsl(0, 80%, 30%))`;
-            });
-        }
-
-        tuneParameters() {
-            this.alpha = clamp(this.alpha * (1 + 0.05 * (1 - this.stability)), 0.01, 0.2);
-            this.beta = clamp(this.beta * (1 + 0.05 * this.gestaltUnity), 0.01, 0.2);
-            this.gamma = clamp(this.gamma * (1 - 0.1 * this.h1Dimension), 0.01, 0.1);
-            logger.info(`Parameters tuned: α=${this.alpha.toFixed(3)}, β=${this.beta.toFixed(3)}, γ=${this.gamma.toFixed(3)}`);
-        }
+            projections.set(`${u}-${v}`, P);
+            projections.set(`${v}-${u}`, transpose(P));
+        });
+        return projections;
     }
-    // -------------------- REMAINING CLASSES AND INITIALIZATION --------------------
-    // (OntologicalWorldModel, LearningAI, PongGame, NeuralNetworkVisualizer, MainApp, and initialization code remain unchanged)
-    class OntologicalWorldModel {
-        constructor(stateDim = 10, actionDim = 3, qDim = 7, hiddenSizes = [16, 32, 16]) {
-            this.stateDim = stateDim;
-            this.actionDim = actionDim;
-            this.qDim = qDim;
-            this.hiddenSizes = hiddenSizes;
-            this.graph = {
-                vertices: ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed'],
-                edges: [
-                    ['paddle_y', 'ball_y'], ['ball_x', 'ball_dx'], ['ball_y', 'ball_dy'],
-                    ['ball_dx', 'ball_dy'], ['player_score', 'ai_score'], ['paddle_y', 'ball_dy'],
-                    ['paddle_y', 'paddle_speed']
-                ]
-            };
-            this.qualiaSheaf = new EnhancedQualiaSheaf(this.graph, this.stateDim, this.qDim, 0.1, 0.1, 0.05);
-            this.inputDim = this.stateDim + this.actionDim + 1 + (this.graph.vertices.length * this.qDim);
-            this.layers = [];
-            for (let i = 0; i < this.hiddenSizes.length; i++) {
-                const inputLayerSize = i === 0 ? this.inputDim : this.hiddenSizes[i - 1];
-                const scale = Math.sqrt(2.0 / (inputLayerSize + this.hiddenSizes[i]));
-                this.layers.push({ W: randomMatrix(this.hiddenSizes[i], inputLayerSize, scale), b: vecZeros(this.hiddenSizes[i]), activation: 'tanh' });
-            }
-            const outputScale = Math.sqrt(2.0 / (this.hiddenSizes[this.hiddenSizes.length - 1] + this.stateDim));
-            this.outputLayer = { W: randomMatrix(this.stateDim, this.hiddenSizes[this.hiddenSizes.length - 1], outputScale), b: vecZeros(this.stateDim) };
-            this.attentionWeights = Array(this.qDim).fill().map(() => Array(this.inputDim).fill().map(() => (Math.random() - 0.5) * 0.1));
-            this.freeEnergy = 0;
-            this.predictionError = 0;
-            this.memory = [];
-            this.windowedStates = [];
-            this.stepCount = 0;
-            this.alpha_ont = 0.01;
-            this.gamma_h1 = 0.5;
-            this.kl_weight = 0.05;
-            this.fim_weight = 1e-4;
+    computeContextualWeight(u, v) {
+        const stalk_u = this.stalks.get(u) || vecZeros(this.qDim);
+        const stalk_v = this.stalks.get(v) || vecZeros(this.qDim);
+        let klDiv = 0;
+        for (let k = 0; k < this.qDim; k++) {
+            const p_u = Math.max(stalk_u[k], this.eps);
+            const p_v = Math.max(stalk_v[k], this.eps);
+            klDiv += p_u * Math.log(p_u / Math.max(p_v, this.eps));
         }
-        forward(input) {
-            let x = input.slice();
-            const activations = [x.slice()];
-            for (const layer of this.layers) {
-                x = matVecMul(layer.W, x);
-                x = vecAdd(x, layer.b);
-                if (layer.activation === 'tanh') x = tanhVec(x);
-                activations.push(x.slice());
-            }
-            const out = vecAdd(matVecMul(this.outputLayer.W, x), this.outputLayer.b);
-            return { output: out, activations };
-        }
-        applyAttention(input) {
-            let maxScore = -Infinity;
-            const scores = [];
-            for (let i = 0; i < this.qDim; i++) {
-                const w = this.attentionWeights[i];
-                const score = dot(w, input);
-                scores.push(score);
-                maxScore = Math.max(maxScore, score);
-            }
-            const expScores = scores.map(s => Math.exp(s - maxScore));
-            const sumExpScores = expScores.reduce((s, x) => s + x, 1e-10);
-            const softmaxScores = expScores.map(s => s / sumExpScores);
-            const att = vecZeros(input.length);
-            for (let i = 0; i < this.qDim; i++) {
-                const score = softmaxScores[i];
-                for (let j = 0; j < input.length; j++) {
-                    att[j] += score * input[j];
-                }
-            }
-            return vecAdd(input, vecScale(att, 0.1));
-        }
-        predict(state, action, audioAmplitude = 0) {
-            const qualiaRes = this.qualiaSheaf.diffuseQualia(state);
-            const qualiaArray = Array.from(this.qualiaSheaf.stalks.values()).flat();
-            const input = state.concat(action).concat([audioAmplitude]).concat(qualiaArray);
-            if (!isFiniteVector(input)) {
-                logger.warn('Invalid input to predict; returning default');
-                return { nextState: vecZeros(this.stateDim), phi: 0, activations: [] };
-            }
-            const attended = this.applyAttention(input);
-            const { output: nextState, activations } = this.forward(attended);
-            activations.push(nextState);
-            this.predictionError = norm2(vecSub(nextState, state));
-            const sGlobal = qualiaArray.slice();
-            const lapQuad = 0.5 * dot(sGlobal, matVecMul(this.buildGlobalLaplacian(), sGlobal));
-            const klTerm = this.computeKLPerEntity();
-            const h1proxy = this.qualiaSheaf.h1Dimension;
-            const fimPenalty = (this.qualiaSheaf.fimTrace || 0) * this.fim_weight;
-            let fe = lapQuad + this.kl_weight * klTerm + this.gamma_h1 * h1proxy + fimPenalty;
-            this.freeEnergy = 0.85 * (this.freeEnergy || 0) + 0.15 * fe;
-            return { nextState: nextState.map(v => clamp(v, -5, 5)), phi: this.qualiaSheaf.phi, activations };
-        }
-        buildGlobalLaplacian() {
-            const Lnode = this.qualiaSheaf.laplacian || this.qualiaSheaf.buildLaplacian();
-            const n = Lnode.length, q = this.qDim;
-            const N = n * q;
-            const Lfull = zeroMatrix(N, N);
-            for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
-                const v = Lnode[i][j];
-                for (let qi = 0; qi < q; qi++) {
-                    Lfull[i * q + qi][j * q + qi] = v;
-                }
-            }
-            return Lfull;
-        }
-        computeKLPerEntity() {
-            const n = this.qualiaSheaf.graph.vertices.length, q = this.qDim;
-            let klSum = 0;
-            for (let e = 0; e < q; e++) {
-                const vals = [];
-                for (const v of this.qualiaSheaf.graph.vertices) {
-                    const st = this.qualiaSheaf.stalks.get(v);
-                    if (isFiniteVector(st) && isFinite(st[e])) vals.push(st[e]);
-                }
-                if (vals.length < 2) continue;
-                const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-                let variance = vals.reduce((s, x) => s + (x - mean) * (x - mean), 0) / (vals.length - 1);
-                variance = Math.max(variance, 1e-6);
-                const kl = 0.5 * (mean * mean + variance - 1 - Math.log(variance));
-                if (isFinite(kl)) klSum += kl;
-            }
-            return klSum;
-        }
-        update(currentState, action, newState, audioAmplitude = 0) {
-            if (!isFiniteVector(currentState) || !isFiniteVector(action) || !isFiniteVector(newState)) {
-                logger.warn('Invalid state/action in update; skipping');
-                return;
-            }
-            const pred = this.predict(currentState, action, audioAmplitude);
-            const predictedState = pred.nextState;
-            this.predictionError = norm2(vecSub(newState, predictedState));
-            this.freeEnergy = 0.98 * this.freeEnergy + 0.02 * (this.freeEnergy + 0.01 * this.predictionError);
-            const acts = pred.activations || [];
-            const safeActs = acts.length > 0 && acts.every(arr => Array.isArray(arr) && arr.every(isFinite));
-            if (!safeActs) {
-                this.stepCount++;
-                this.alpha_ont = 0.01 + 0.09 * Math.min(this.stepCount / 500, 1.0);
-                return;
-            }
-            const error = vecSub(newState, predictedState);
-            const gradInput = error.map(e => e * 0.001);
-            for (let i = 0; i < this.qDim; i++) {
-                const input = currentState.concat(action).concat([audioAmplitude]).concat(Array.from(this.qualiaSheaf.stalks.values()).flat());
-                const score = dot(this.attentionWeights[i], input);
-                for (let j = 0; j < this.inputDim; j++) {
-                    this.attentionWeights[i][j] -= 0.01 * score * gradInput[j];
-                }
-            }
-            this.memory.push({ s: currentState.slice(), a: action.slice(), nextS: newState.slice(), qualiaPhi: this.qualiaSheaf.phi });
-            if (this.memory.length > 2000) this.memory.shift();
-            this.stepCount++;
-            this.alpha_ont = 0.01 + 0.09 * Math.min(this.stepCount / 500, 1.0);
-        }
+        return Math.exp(-klDiv * 0.5 - this.eps);
     }
-    class LearningAI {
-        constructor(worldModel, gameBounds, isPlayerTwo = false) {
-            this.worldModel = worldModel;
-            this.gameWidth = gameBounds.width;
-            this.gameHeight = gameBounds.height;
-            this.scoreToWin = gameBounds.scoreToWin || 10;
-            this.isPlayerTwo = isPlayerTwo;
-            this.lastStateVec = Array(10).fill(0.5);
-            this.lastActionVec = [0, 0, 1];
-            this.lastPrediction = null;
-        }
-        createStateVector(gameState) {
-            const paddle = this.isPlayerTwo ? gameState.ai : gameState.player;
-            const opponentPaddle = this.isPlayerTwo ? gameState.player : gameState.ai;
-            const stateVec = [
-                gameState.ball.x / this.gameWidth,
-                gameState.ball.y / this.gameHeight,
-                gameState.ball.dx / 8,
-                gameState.ball.dy / 8,
-                paddle.y / this.gameHeight,
-                opponentPaddle.y / this.gameHeight,
-                paddle.dy / 8,
-                opponentPaddle.dy / 8,
-                gameState.score.player / this.scoreToWin,
-                gameState.score.ai / this.scoreToWin
-            ];
-            if (!isFiniteVector(stateVec) || stateVec.length !== 10) {
-                logger.warn('Invalid state vector; returning default');
-                return Array(10).fill(0.5);
-            }
-            return stateVec;
-        }
-        makeDecision(gameState, audioAmplitude = 0) {
-            const actions = [
-                { name: 'UP', vec: [1, 0, 0] },
-                { name: 'DOWN', vec: [0, 1, 0] },
-                { name: 'IDLE', vec: [0, 0, 1] }
-            ];
-            let bestAction = 'IDLE';
-            let bestScore = -Infinity;
-            let bestActivations = [];
-            const stateVec = this.createStateVector(gameState);
-            let validPredictions = [];
-            const ballY = gameState.ball.y;
-            const ballDy = gameState.ball.dy;
-            const ballDx = gameState.ball.dx;
-            const paddle = this.isPlayerTwo ? gameState.ai : gameState.player;
-            const paddleCenter = paddle.y + paddle.height / 2;
-            const timeToPaddle = this.isPlayerTwo
-                ? (this.gameWidth - gameState.ball.x) / Math.max(Math.abs(ballDx), 1e-3)
-                : gameState.ball.x / Math.max(Math.abs(ballDx), 1e-3);
-            const predictedBallY = clamp(ballY + ballDy * timeToPaddle, 0, this.gameHeight);
-            actions.forEach(action => {
-                const { nextState, phi, activations } = this.worldModel.predict(stateVec, action.vec, audioAmplitude);
-                if (!nextState || !isFiniteVector(nextState)) {
-                    return;
+    _updateGraphStructureAndMetrics() {
+        this.adjacencyMatrix = this.buildAdjacencyMatrix();
+        this.laplacian = this.buildLaplacian();
+        this.maxEigApprox = matrixSpectralNormApprox(this.laplacian) || 1;
+        this.projectionMatrices = this.computeProjectionMatrices();
+    }
+    diffuseQualia(state) {
+        if (!isFiniteVector(state) || state.length !== this.stateDim) { return; }
+        this._updateGraphStructureAndMetrics();
+        const qInput = state.slice(0, this.graph.vertices.length).map(v => clamp(v, 0, 1));
+        if (!isFiniteVector(qInput) || qInput.length !== this.graph.vertices.length) { return; }
+        const n = this.graph.vertices.length, N = n * this.qDim;
+        const s = Array.from(this.stalks.values()).flat();
+        if (!isFiniteVector(s) || s.length !== N) { return; }
+        const Lnode = this.laplacian;
+        const Lfull = zeroMatrix(N, N);
+        const idx = new Map(this.graph.vertices.map((v, i) => [v, i]));
+        for (const [u, v] of this.graph.edges) {
+            const i = idx.get(u), j = idx.get(v);
+            if (i === undefined || j === undefined) continue;
+            const P_uv = this.projectionMatrices.get(`${u}-${v}`) || identity(this.qDim);
+            const P_vu = this.projectionMatrices.get(`${v}-${u}`) || identity(this.qDim);
+            for (let qi = 0; qi < this.qDim; qi++) {
+                for (let qj = 0; qj < this.qDim; qj++) {
+                    const val = -Lnode[i][j] * P_uv[qi][qj];
+                    if (!isFinite(val)) continue;
+                    Lfull[i * this.qDim + qi][j * this.qDim + qj] = val;
+                    Lfull[j * this.qDim + qj][i * this.qDim + qi] = -Lnode[j][i] * P_vu[qj][qi];
                 }
+            }
+        }
+        for (let i = 0; i < n; i++) {
+            let deg_block = this.adjacencyMatrix[i].reduce((sum, w) => sum + w, 0);
+            for (let qi = 0; qi < this.qDim; qi++) {
+                Lfull[i * this.qDim + qi][i * this.qDim + qi] = deg_block + this.eps;
+            }
+        }
+        const f_s = Array(N).fill(0);
+        for (let i = 0; i < n; i++) {
+            const inputVal = qInput[i % qInput.length];
+            for (let qi = 0; qi < this.qDim; qi++) {
+                f_s[i * this.qDim + qi] = this.alpha * inputVal * 0.7;
+            }
+        }
+        const eta = 0.01 / Math.max(1, this.maxEigApprox);
+        const A = identity(N).map((row, i) => row.map((v, j) => v + eta * Lfull[i][j]));
+        const rhs = vecAdd(s, vecScale(f_s, eta)).map(v => clamp(v, -10, 10));
+        if (!isFiniteMatrix(A) || !isFiniteVector(rhs)) { return; }
+        let sSolved = solveLinearSystemCG(A, rhs, { tol: 1e-6, maxIter: 15 });
+        const sNext = sSolved.map(v => clamp(v, -1, 1));
+        this._updateStalksAndWindow(sNext, n);
+        this._updateDerivedMetrics();
+    }
+    _updateStalksAndWindow(sNextVector, n) {
+        for (let i = 0; i < n; i++) {
+            this.stalks.set(this.graph.vertices[i], sNextVector.slice(i * this.qDim, (i + 1) * this.qDim));
+        }
+        this.windowedStates.push(sNextVector.slice());
+        if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
+    }
+    _updateDerivedMetrics() {
+        this.computeH1Dimension();
+        this.computeGestaltUnity();
+        this.computeIntegratedInformation();
+    }
+    computeH1Dimension() {
+        let inconsistency = 0;
+        this.graph.edges.forEach(([u, v]) => {
+            const stalk_u = this.stalks.get(u);
+            const stalk_v = this.stalks.get(v);
+            const P_uv = this.projectionMatrices.get(`${u}-${v}`) || identity(this.qDim);
+            inconsistency += norm2(vecSub(matVecMul(P_uv, stalk_u), stalk_v));
+        });
+        this.h1Dimension = clamp(inconsistency / (this.graph.edges.length || 1), 0, 3);
+        this.inconsistency = this.h1Dimension;
+        this.stability = clamp(Math.exp(-this.h1Dimension * 0.1), 0.1, 1);
+    }
+    computeGestaltUnity() {
+        let sum = 0;
+        this.graph.edges.forEach(([u, v]) => {
+            const stalk_u = this.stalks.get(u);
+            const stalk_v = this.stalks.get(v);
+            sum += Math.exp(-norm2(vecSub(stalk_u, stalk_v)));
+        });
+        this.gestaltUnity = this.graph.edges.length > 0 ? clamp(sum / this.graph.edges.length, 0.1, 0.95) : 0.1;
+    }
+    computeIntegratedInformation() {
+        const validStates = this.windowedStates.filter(isFiniteVector);
+        if (validStates.length < 4) { this.phi = clamp(0.5 + this.gestaltUnity * this.stability, 0.2, 5); return; }
+        const cov = covarianceMatrix(validStates);
+        const MI = Math.abs(logDeterminantFromDiagonal(cov)) * 0.1 + 1e-4;
+        this.phi = clamp(Math.log(1 + MI) * this.stability * this.gestaltUnity * Math.exp(-this.inconsistency), 0.2, 5);
+    }
+    visualizeActivity() {
+        this.graph.vertices.forEach((vertexName, idx) => {
+            const el = document.getElementById(`vertex-${idx}`);
+            if (!el) return;
+            const stalk = this.stalks.get(vertexName) || vecZeros(this.qDim);
+            const intensity = clamp(norm2(stalk) / Math.sqrt(this.qDim), 0, 1);
+            el.classList.toggle('active', intensity > 0.6);
+            el.style.background = `radial-gradient(circle, hsl(0, 100%, ${50 + intensity * 50}%), hsl(0, 80%, 30%))`;
+        });
+    }
+    tuneParameters() {
+        this.alpha = clamp(this.alpha * (1 + 0.05 * (1 - this.stability)), 0.01, 0.2);
+        this.beta = clamp(this.beta * (1 + 0.05 * this.gestaltUnity), 0.01, 0.2);
+        this.gamma = clamp(this.gamma * (1 - 0.1 * this.h1Dimension), 0.01, 0.1);
+        logger.info(`Parameters tuned: α=${this.alpha.toFixed(3)}, β=${this.beta.toFixed(3)}, γ=${this.gamma.toFixed(3)}`);
+    }
+}
+class OntologicalWorldModel {
+    constructor(stateDim = 10, actionDim = 3, qDim = 7, hiddenSizes = [16, 32, 16]) {
+        this.stateDim = stateDim;
+        this.actionDim = actionDim;
+        this.qDim = Math.min(qDim, 7);
+        this.graph = {
+            vertices: ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed', 'player_collision', 'ai_collision'],
+            edges: [['paddle_y', 'ball_y'], ['ball_x', 'ball_dx'], ['ball_y', 'ball_dy'], ['player_collision', 'paddle_y']]
+        };
+        this.qualiaSheaf = new EnhancedQualiaSheaf(this.graph, this.stateDim, this.qDim, 0.1, 0.1, 0.05);
+        this.inputDim = this.stateDim + this.actionDim + 1 + (this.graph.vertices.length * this.qualiaSheaf.qDim);
+        this.hiddenSizes = hiddenSizes;
+        this.layers = [];
+        for (let i = 0; i < this.hiddenSizes.length; i++) {
+            const currentInputDim = i === 0 ? this.inputDim : this.hiddenSizes[i - 1];
+            const scale = Math.sqrt(2.0 / (currentInputDim + this.hiddenSizes[i]));
+            this.layers.push({ W: randomMatrix(this.hiddenSizes[i], currentInputDim, scale), b: vecZeros(this.hiddenSizes[i]), activation: 'tanh' });
+        }
+        const outputScale = Math.sqrt(2.0 / (this.hiddenSizes[this.hiddenSizes.length - 1] + this.stateDim));
+        this.outputLayer = { W: randomMatrix(this.stateDim, this.hiddenSizes[this.hiddenSizes.length - 1], outputScale), b: vecZeros(this.stateDim) };
+        this.attentionWeights = Array(this.qualiaSheaf.qDim).fill().map(() => Array(this.inputDim).fill().map(() => (Math.random() - 0.5) * 0.1));
+        this.freeEnergy = 0;
+        this.predictionError = 0;
+        this.memory = [];
+    }
+    forward(input) {
+        if (!isFiniteVector(input) || input.length !== this.inputDim) { return { output: vecZeros(this.stateDim), activations: [] }; }
+        let x = input.slice();
+        const activations = [x.slice()];
+        for (const layer of this.layers) {
+            x = matVecMul(layer.W, x);
+            x = vecAdd(x, layer.b);
+            if (layer.activation === 'tanh') x = tanhVec(x);
+            activations.push(x.slice());
+        }
+        const out = vecAdd(matVecMul(this.outputLayer.W, x), this.outputLayer.b);
+        return { output: out, activations };
+    }
+    applyAttention(input) {
+        if (!isFiniteVector(input) || input.length !== this.inputDim) { return vecZeros(this.inputDim); }
+        const scores = this.attentionWeights.map(w => dot(w, input));
+        const maxScore = Math.max(...scores);
+        const expScores = scores.map(s => Math.exp(s - maxScore));
+        const sumExpScores = expScores.reduce((s, x) => s + x, 1e-10);
+        const softmaxScores = expScores.map(s => s / sumExpScores);
+        const att = vecZeros(input.length);
+        for (let i = 0; i < softmaxScores.length; i++) {
+            for (let j = 0; j < input.length; j++) {
+                att[j] += softmaxScores[i] * input[j];
+            }
+        }
+        return vecAdd(input, vecScale(att, 0.1));
+    }
+    predict(state, action, audioAmplitude = 0) {
+        if (!isFiniteVector(state) || !isFiniteVector(action)) { return { nextState: vecZeros(this.stateDim), phi: 0, activations: [] }; }
+        this.qualiaSheaf.diffuseQualia(state);
+        const qualiaArray = Array.from(this.qualiaSheaf.stalks.values()).flat();
+        const expectedQualiaLength = this.graph.vertices.length * this.qualiaSheaf.qDim;
+        const finalQualiaArray = qualiaArray.length === expectedQualiaLength ? qualiaArray : qualiaArray.concat(vecZeros(expectedQualiaLength - qualiaArray.length)).slice(0, expectedQualiaLength);
+        if (!isFiniteVector(finalQualiaArray)) { return { nextState: vecZeros(this.stateDim), phi: this.qualiaSheaf.phi, activations: [] }; }
+        const input = state.concat(action).concat([audioAmplitude]).concat(finalQualiaArray);
+        if (!isFiniteVector(input) || input.length !== this.inputDim) { return { nextState: vecZeros(this.stateDim), phi: this.qualiaSheaf.phi, activations: [] }; }
+        const attended = this.applyAttention(input);
+        const { output: nextState, activations } = this.forward(attended);
+        this.predictionError = norm2(vecSub(nextState, state.slice(0, nextState.length)));
+        const sGlobal = finalQualiaArray;
+        const L = zeroMatrix(sGlobal.length, sGlobal.length); // Placeholder
+        const lapQuad = 0.5 * dot(sGlobal, matVecMul(L, sGlobal));
+        this.freeEnergy = 0.85 * (this.freeEnergy || 0) + 0.15 * (lapQuad + this.qualiaSheaf.h1Dimension);
+        return { nextState: nextState.map(v => clamp(v, -5, 5)), phi: this.qualiaSheaf.phi, activations };
+    }
+}
+class LearningAI {
+    constructor(worldModel, gameBounds, isPlayerTwo = false) {
+        this.worldModel = worldModel;
+        this.gameWidth = gameBounds.width;
+        this.gameHeight = gameBounds.height;
+        this.scoreToWin = gameBounds.scoreToWin || 10;
+        this.isPlayerTwo = isPlayerTwo;
+        this.lastStateVec = Array(10).fill(0.5);
+        this.lastActionVec = [0, 0, 1];
+        this.lastPrediction = { nextState: Array(10).fill(0.5), phi: 0, activations: [] };
+    }
+    createStateVector(gameState) {
+        const paddle = this.isPlayerTwo ? gameState.ai : gameState.player;
+        const opponentPaddle = this.isPlayerTwo ? gameState.player : gameState.ai;
+        const stateVec = [
+            gameState.ball.x / this.gameWidth, gameState.ball.y / this.gameHeight,
+            gameState.ball.dx / 8, gameState.ball.dy / 10,
+            paddle.y / this.gameHeight, opponentPaddle.y / this.gameHeight,
+            paddle.dy / 5, opponentPaddle.dy / 5,
+            gameState.score.player / this.scoreToWin, gameState.score.ai / this.scoreToWin
+        ].map(v => clamp(v, -1, 1));
+        if (!isFiniteVector(stateVec) || stateVec.length !== 10) { return vecZeros(10); }
+        return stateVec;
+    }
+    makeDecision(gameState, audioAmplitude = 0) {
+        const actions = [{ name: 'UP', vec: [1, 0, 0] }, { name: 'DOWN', vec: [0, 1, 0] }, { name: 'IDLE', vec: [0, 0, 1] }];
+        let bestActionName = 'IDLE', bestActionVec = actions[2].vec, bestScore = -Infinity, bestActivations = [];
+        const stateVec = this.createStateVector(gameState);
+        const ballY = gameState.ball.y, ballDy = gameState.ball.dy, ballDx = gameState.ball.dx;
+        const paddle = this.isPlayerTwo ? gameState.ai : gameState.player;
+        const paddleCenter = paddle.y + paddle.height / 2;
+        const timeToPaddle = this.isPlayerTwo ? (this.gameWidth - gameState.ball.x) / Math.max(Math.abs(ballDx), 1e-3) : gameState.ball.x / Math.max(Math.abs(ballDx), 1e-3);
+        const predictedBallY_physics = clamp(ballY + ballDy * timeToPaddle, 0, this.gameHeight);
+        let validPredictions = [];
+        for (const action of actions) {
+            const { nextState, phi, activations } = this.worldModel.predict(stateVec, action.vec, audioAmplitude);
+            if (isFiniteVector(nextState) && nextState.length === this.worldModel.stateDim && isFinite(phi)) {
                 validPredictions.push({ action, nextState, phi, activations });
-            });
-            if (validPredictions.length === 0) {
-                if (predictedBallY < paddleCenter - 15) {
-                    bestAction = 'UP';
-                } else if (predictedBallY > paddleCenter + 15) {
-                    bestAction = 'DOWN';
-                } else {
-                    bestAction = 'IDLE';
+            }
+        }
+        if (validPredictions.length === 0) {
+            if (predictedBallY_physics < paddleCenter - 15) { bestActionName = 'UP'; } else if (predictedBallY_physics > paddleCenter + 15) { bestActionName = 'DOWN'; }
+            bestActionVec = actions.find(a => a.name === bestActionName).vec;
+            this.lastPrediction = { nextState: stateVec, phi: 0, activations: [] };
+        } else {
+            validPredictions.forEach(({ action, nextState, phi, activations }) => {
+                const predictedBallY_model = nextState[1] * this.gameHeight;
+                const distancePenalty = Math.abs(predictedBallY_model - predictedBallY_physics) / this.gameHeight;
+                const velocityAlignment = this.isPlayerTwo ? (ballDx > 0 ? 0.3 : -0.3) : (ballDx < 0 ? 0.3 : -0.3);
+                const score = -3.0 * distancePenalty + 0.4 * phi + velocityAlignment + 0.2 * Math.abs(ballDy) / 10;
+                if (!isFinite(score)) { return; }
+                if (score > bestScore) {
+                    bestScore = score; bestActionName = action.name; bestActionVec = action.vec; bestActivations = activations;
+                    this.lastPrediction = { nextState, phi, activations };
                 }
-                this.lastPrediction = { nextState: stateVec, phi: 0, activations: [] };
-            } else {
-                validPredictions.forEach(({ action, nextState, phi, activations }) => {
-                    const predictedBallYNext = nextState[1] * this.gameHeight;
-                    const distancePenalty = Math.abs(predictedBallYNext - predictedBallY) / this.gameHeight;
-                    const velocityAlignment = this.isPlayerTwo
-                        ? (ballDx > 0 ? 0.3 : -0.3)
-                        : (ballDx < 0 ? 0.3 : -0.3);
-                    const score = -3.0 * distancePenalty + 0.4 * phi + velocityAlignment + 0.2 * Math.abs(ballDy) / 8;
-                    if (!isFinite(score)) {
-                        return;
-                    }
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestAction = action.name;
-                        this.lastPrediction = { nextState, phi, activations };
-                        bestActivations = activations;
-                    }
-                });
-            }
-            this.lastStateVec = stateVec;
-            this.lastActionVec = actions.find(a => a.name === bestAction).vec;
-            return { action: bestAction, activations: bestActivations };
+            });
         }
-        learn(reward, newGameState, audioAmplitude = 0) {
-            if (!this.lastStateVec || !this.lastActionVec || !this.lastPrediction || !this.lastPrediction.nextState ||
-                !isFiniteVector(this.lastStateVec) || !isFiniteVector(this.lastActionVec) || !isFiniteVector(this.lastPrediction.nextState)) {
-                this.lastStateVec = Array(10).fill(0.5);
-                this.lastActionVec = [0, 0, 1];
-                return;
-            }
-            const nextStateVec = this.createStateVector(newGameState);
-            if (!isFiniteVector(nextStateVec) || nextStateVec.length !== 10) {
-                return;
-            }
-            this.worldModel.update(this.lastStateVec, this.lastActionVec, nextStateVec, audioAmplitude);
-            this.worldModel.memory.push({ state: [...this.lastStateVec], action: [...this.lastActionVec], nextState: [...nextStateVec], reward, phi: this.worldModel.qualiaSheaf.phi });
-            if (this.worldModel.memory.length > 1000) {
-                this.worldModel.memory.shift();
-            }
-        }
+        this.lastStateVec = stateVec; this.lastActionVec = bestActionVec;
+        return { action: bestActionVec, activations: bestActivations };
     }
-    class PongGame {
-        constructor(canvas) {
-            this.canvas = canvas;
-            this.ctx = canvas.getContext('2d');
-            this.width = canvas.clientWidth;
-            this.height = canvas.clientHeight;
-            this.scoreToWin = 10;
-            this.reset();
-            this.playerCollision = false;
-            this.aiCollision = false;
-            this.gameOver = false;
-            this.winner = null;
+    learn(reward, newGameState, audioAmplitude = 0) {
+        const nextStateVec = this.createStateVector(newGameState);
+        this.worldModel.memory.push({ state: [...this.lastStateVec], action: [...this.lastActionVec], nextState: [...nextStateVec], reward, phi: this.worldModel.qualiaSheaf.phi });
+        if (this.worldModel.memory.length > 1000) { this.worldModel.memory.shift(); }
+    }
+}
+class PongGame {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.width = canvas.clientWidth;
+        this.height = canvas.clientHeight;
+        this.scoreToWin = 10;
+        this.reset();
+    }
+    reset() {
+        this.ball = { x: this.width / 2, y: this.height / 2, dx: (Math.random() > 0.5 ? 1 : -1) * 4, dy: (Math.random() - 0.5) * 6, radius: 8 };
+        this.ai = { x: this.width - 25, y: this.height / 2 - 40, width: 15, height: 80, dy: 0 };
+        this.player = { x: 10, y: this.height / 2 - 40, width: 15, height: 80, dy: 0 };
+        this.score = { ai: 0, player: 0 };
+        this.playerCollision = false; this.aiCollision = false; this.gameOver = false; this.winner = null;
+    }
+    resetBall() {
+        this.ball.x = this.width / 2; this.ball.y = this.height / 2;
+        this.ball.dx = (Math.random() > 0.5 ? 1 : -1) * 4;
+        this.ball.dy = (Math.random() - 0.5) * 6;
+    }
+    update() {
+        if (this.gameOver) { return { aReward: 0, pReward: 0, playerCollision: false, aiCollision: false }; }
+        const MAX_BALL_DX = 8, MAX_BALL_DY = 10;
+        this.ball.x += this.ball.dx; this.ball.y += this.ball.dy;
+        if (this.ball.y <= this.ball.radius || this.ball.y >= this.height - this.ball.radius) { this.ball.dy *= -1; }
+        let aReward = 0, pReward = 0; this.playerCollision = false; this.aiCollision = false;
+        if (this.ball.x <= 0) { this.score.ai++; aReward = 1; pReward = -1; this.resetBall(); }
+        else if (this.ball.x >= this.width) { this.score.player++; aReward = -1; pReward = 1; this.resetBall(); }
+        this.ai.y = clamp(this.ai.y + this.ai.dy, 0, this.height - this.ai.height);
+        this.player.y = clamp(this.player.y + this.player.dy, 0, this.height - this.player.height);
+        if (this.ball.x - this.ball.radius <= this.player.x + this.player.width && this.ball.x + this.ball.radius >= this.player.x && this.ball.y >= this.player.y && this.ball.y <= this.player.y + this.player.height) {
+            this.ball.dx = clamp(Math.abs(this.ball.dx) * 1.1, -MAX_BALL_DX, MAX_BALL_DX);
+            this.ball.dy = clamp(this.ball.dy + (Math.random() - 0.5) * 2, -MAX_BALL_DY, MAX_BALL_DY);
+            this.playerCollision = true;
         }
-        reset() {
-            this.ball = { x: this.width / 2, y: this.height / 2, dx: (Math.random() > 0.5 ? 1 : -1) * 4, dy: (Math.random() - 0.5) * 6, radius: 8 };
-            this.ai = { x: this.width - 25, y: this.height / 2 - 40, width: 15, height: 80, dy: 0 };
-            this.player = { x: 10, y: this.height / 2 - 40, width: 15, height: 80, dy: 0 };
-            this.score = { ai: 0, player: 0 };
-            this.gameOver = false;
-            this.winner = null;
-            logger.info('PongGame reset', this.getState());
+        if (this.ball.x + this.ball.radius >= this.ai.x && this.ball.x - this.ball.radius <= this.ai.x + this.ai.width && this.ball.y >= this.ai.y && this.ball.y <= this.ai.y + this.ai.height) {
+            this.ball.dx = clamp(-Math.abs(this.ball.dx) * 1.1, -MAX_BALL_DX, MAX_BALL_DX);
+            this.ball.dy = clamp(this.ball.dy + (Math.random() - 0.5) * 2, -MAX_BALL_DY, MAX_BALL_DY);
+            this.aiCollision = true;
         }
-        resetBall() {
-            this.ball.x = this.width / 2;
-            this.ball.y = this.height / 2;
-            this.ball.dx = (Math.random() > 0.5 ? 1 : -1) * 4;
-            this.ball.dy = (Math.random() - 0.5) * 6;
-            logger.info('Ball reset', { x: this.ball.x.toFixed(3), y: this.ball.y.toFixed(3), dx: this.ball.dx.toFixed(3), dy: this.ball.dy.toFixed(3) });
-        }
-        update() {
-            if (this.gameOver) {
-                return { aReward: 0, pReward: 0, playerCollision: false, aiCollision: false };
-            }
-            const MAX_BALL_DX = 8;
-            const MAX_BALL_DY = 10;
-            this.ball.x += this.ball.dx;
-            this.ball.y += this.ball.dy;
-            if (this.ball.y <= this.ball.radius || this.ball.y >= this.height - this.ball.radius) {
-                this.ball.dy *= -1;
-            }
-            let aReward = 0, pReward = 0;
-            let playerCollision = false, aiCollision = false;
-            if (this.ball.x <= 0) {
-                this.score.ai++;
-                aReward = 1;
-                pReward = -1;
-                this.resetBall();
-            } else if (this.ball.x >= this.width) {
-                this.score.player++;
-                aReward = -1;
-                pReward = 1;
-                this.resetBall();
-            }
-            this.ai.y = clamp(this.ai.y + this.ai.dy, 0, this.height - this.ai.height);
-            this.player.y = clamp(this.player.y + this.player.dy, 0, this.height - this.player.height);
-            if (this.ball.x <= this.player.x + this.player.width && this.ball.x >= this.player.x && this.ball.y >= this.player.y && this.ball.y <= this.player.y + this.player.height) {
-                this.ball.dx = clamp(Math.abs(this.ball.dx) * 1.1, -MAX_BALL_DX, MAX_BALL_DX);
-                this.ball.dy += (Math.random() - 0.5) * 2;
-                this.ball.dy = clamp(this.ball.dy, -MAX_BALL_DY, MAX_BALL_DY);
-                playerCollision = true;
-            }
-            if (this.ball.x >= this.ai.x && this.ball.x <= this.ai.x + this.ai.width && this.ball.y >= this.ai.y && this.ball.y <= this.ai.y + this.ai.height) {
-                this.ball.dx = clamp(-Math.abs(this.ball.dx) * 1.1, -MAX_BALL_DX, MAX_BALL_DX);
-                this.ball.dy += (Math.random() - 0.5) * 2;
-                this.ball.dy = clamp(this.ball.dy, -MAX_BALL_DY, MAX_BALL_DY);
-                aiCollision = true;
-            }
-            if (this.score.ai >= this.scoreToWin) {
-                this.gameOver = true;
-                this.winner = 'AI';
-            } else if (this.score.player >= this.scoreToWin) {
-                this.gameOver = true;
-                this.winner = 'Player';
-            }
-            const state = this.getState();
-            logger.info('PongGame state', state.map(v => v.toFixed(3)));
-            return { aReward, pReward, playerCollision, aiCollision };
-        }
-        setAIAction(action) {
-            const speed = 5;
-            this.ai.dy = action === 'UP' ? -speed : action === 'DOWN' ? speed : 0;
-        }
-        setPlayerAction(action) {
-            const speed = 5;
-            this.player.dy = action === 'UP' ? -speed : action === 'DOWN' ? speed : 0;
-        }
-        getState() {
-            return [
-                this.player.y / this.height, // paddle_y (0 to 1)
-                this.ball.x / this.width, // ball_x (0 to 1)
-                this.ball.y / this.height, // ball_y (0 to 1)
-                this.ball.dx / 8, // ball_dx (normalized to -1 to 1)
-                this.ball.dy / 10, // ball_dy (normalized to -1 to 1)
-                this.score.player / this.scoreToWin, // player_score (0 to 1)
-                this.score.ai / this.scoreToWin, // ai_score (0 to 1)
-                this.ai.dy / 5, // paddle_speed (normalized to -1 to 1)
-                this.playerCollision ? 1 : 0, // collision indicator
-                this.aiCollision ? 1 : 0 // collision indicator
-            ].map(v => safeClamp(v, -1, 1));
-        }
-        render(ctx) {
-            if (!ctx) {
-                return;
-            }
-            ctx.clearRect(0, 0, this.width, this.height);
-            ctx.fillStyle = this.playerCollision ? '#ff6b6b' : '#fff';
-            ctx.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
-            ctx.fillStyle = this.aiCollision ? '#ff6b6b' : '#fff';
-            ctx.fillRect(this.ai.x, this.ai.y, this.ai.width, this.ai.height);
-            ctx.beginPath();
-            ctx.arc(this.ball.x, this.ball.y, this.ball.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#fff';
-            ctx.fill();
+        if (this.score.ai >= this.scoreToWin) { this.gameOver = true; this.winner = 'AI'; }
+        else if (this.score.player >= this.scoreToWin) { this.gameOver = true; this.winner = 'Player'; }
+        return { aReward, pReward, playerCollision: this.playerCollision, aiCollision: this.aiCollision };
+    }
+    setAIAction(action) {
+        const speed = 5;
+        if (action[0] === 1) this.ai.dy = -speed; else if (action[1] === 1) this.ai.dy = speed; else this.ai.dy = 0;
+    }
+    setPlayerAction(action) {
+        const speed = 5;
+        if (action[0] === 1) this.player.dy = -speed; else if (action[1] === 1) this.player.dy = speed; else this.player.dy = 0;
+    }
+    getState() {
+        return [
+            this.player.y / this.height, this.ball.x / this.width, this.ball.y / this.height,
+            this.ball.dx / 8, this.ball.dy / 10, this.score.player / this.scoreToWin,
+            this.score.ai / this.scoreToWin, this.player.dy / 5, this.playerCollision ? 1 : 0, this.aiCollision ? 1 : 0
+        ].map(v => clamp(v, -1, 1));
+    }
+    render(ctx) {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, this.width, this.height);
+        ctx.fillStyle = this.playerCollision ? '#ff6b6b' : '#fff';
+        ctx.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
+        ctx.fillStyle = this.aiCollision ? '#ff6b6b' : '#fff';
+        ctx.fillRect(this.ai.x, this.ai.y, this.ai.width, this.ai.height);
+        ctx.beginPath(); ctx.arc(this.ball.x, this.ball.y, this.ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.font = '24px "Courier New"'; ctx.textAlign = 'center'; ctx.fillStyle = '#4af';
+        ctx.fillText(this.score.player, this.width / 4, 30);
+        ctx.fillText(this.score.ai, this.width * 3 / 4, 30);
+        if (this.gameOver) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; ctx.fillRect(0, 0, this.width, this.height);
+            ctx.fillStyle = '#4af'; ctx.font = '48px "Courier New"';
+            ctx.fillText(`${this.winner} Wins!`, this.width / 2, this.height / 2);
             ctx.font = '24px "Courier New"';
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#4af';
-            ctx.fillText(this.score.player, this.width / 4, 30);
-            ctx.fillText(this.score.ai, this.width * 3 / 4, 30);
-            if (this.gameOver) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(0, 0, this.width, this.height);
-                ctx.fillStyle = '#4af';
-                ctx.font = '48px "Courier New"';
-                ctx.fillText(`${this.winner} Wins!`, this.width / 2, this.height / 2);
-                ctx.font = '24px "Courier New"';
-                ctx.fillText('Press R to Reset', this.width / 2, this.height / 2 + 40);
-            }
-            this.playerCollision = false;
-            this.aiCollision = false;
+            ctx.fillText('Press R to Reset', this.width / 2, this.height / 2 + 40);
         }
     }
-    class NeuralNetworkVisualizer {
-        constructor(containerId, worldModel, theme = 'main') {
-            this.container = document.getElementById(containerId);
-            this.worldModel = worldModel;
-            this.theme = theme;
-            if (!this.container || !this.worldModel) return;
-            this.neuronElements = [];
-            this.visualLayers = [];
-            this.MAX_NEURONS_TO_DISPLAY = 32;
-            this._setupVisualLayers();
-            this._setupDOM();
-        }
-        _setupVisualLayers() {
-            const model = this.worldModel;
-            this.visualLayers.push({ name: 'input', actualCount: model.inputDim });
-            model.hiddenSizes.forEach((size, index) => {
-                this.visualLayers.push({ name: `hidden${index+1}`, actualCount: size });
-            });
-            this.visualLayers.push({ name: 'output', actualCount: model.stateDim });
-        }
-        _setupDOM() {
-            this.container.innerHTML = '';
-            this.canvas = document.createElement('canvas');
-            this.canvas.className = 'nn-connections-canvas';
-            this.canvas.id = `nn-connections-canvas-${this.theme}`;
-            this.ctx = this.canvas.getContext('2d');
-            this.container.appendChild(this.canvas);
-            this.visualLayers.forEach((layer, lIndex) => {
-                const lDiv = document.createElement('div');
-                lDiv.className = 'nn-layer';
-                this.neuronElements[lIndex] = [];
-                const neuronsToDisplay = Math.min(layer.actualCount, this.MAX_NEURONS_TO_DISPLAY);
-                for (let i = 0; i < neuronsToDisplay; i++) {
-                    const nDiv = document.createElement('div');
-                    nDiv.className = 'nn-neuron';
-                    lDiv.appendChild(nDiv);
-                    this.neuronElements[lIndex].push(nDiv);
-                }
-                this.container.appendChild(lDiv);
-            });
-            const ro = new ResizeObserver(() => {
-                this.canvas.width = this.container.clientWidth;
-                this.canvas.height = this.container.clientHeight;
-                this._drawConnections();
-            });
-            ro.observe(this.container);
-        }
-        _getNeuronPosition(lIndex, nIndex) {
-            const el = this.neuronElements[lIndex][nIndex];
-            if (!el) return { x: 0, y: 0 };
-            const r = el.getBoundingClientRect();
-            const cr = this.container.getBoundingClientRect();
-            return { x: r.left - cr.left + r.width / 2, y: r.top - cr.top + r.height / 2 };
-        }
-        _drawConnections() {
-            if (!this.neuronElements || this.visualLayers.length <= 1) return;
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            const model = this.worldModel;
-            const matrices = model.layers.map(layer => layer.W).concat([model.outputLayer.W]);
-            const colors = this.theme === 'opponent' ? { pos: 'rgba(255,165,0,', neg: 'rgba(138,43,226,' } : { pos: 'rgba(68,170,255,', neg: 'rgba(255,85,85,' };
-            for (let l = 0; l < this.visualLayers.length - 1; l++) {
-                const srcLayerViz = this.visualLayers[l];
-                const tgtLayerViz = this.visualLayers[l + 1];
-                const matrix = matrices[l];
-                if (!matrix || matrix.length === 0 || matrix[0].length === 0) continue;
-                for (let i = 0; i < this.neuronElements[l].length; i++) {
-                    for (let j = 0; j < this.neuronElements[l + 1].length; j++) {
-                        const start = this._getNeuronPosition(l, i);
-                        const end = this._getNeuronPosition(l + 1, j);
-                        if (start.x === 0 || end.x === 0) continue;
-                        const srcMatrixIdx = Math.floor(i * (srcLayerViz.actualCount / this.neuronElements[l].length));
-                        const tgtMatrixIdx = Math.floor(j * (tgtLayerViz.actualCount / this.neuronElements[l+1].length));
-                        if (tgtMatrixIdx >= matrix.length || srcMatrixIdx >= matrix[0].length) continue;
-                        const w = matrix[tgtMatrixIdx][srcMatrixIdx] || 0;
-                        const alpha = Math.min(0.5, Math.abs(w) * 5);
-                        if (alpha < 0.05) continue;
-                        this.ctx.strokeStyle = w > 0 ? colors.pos + `${alpha})` : colors.neg + `${alpha})`;
-                        this.ctx.lineWidth = Math.min(1.5, alpha * 2);
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(start.x, start.y);
-                        this.ctx.lineTo(end.x, end.y);
-                        this.ctx.stroke();
-                    }
-                }
+}
+class NeuralNetworkVisualizer {
+    constructor(containerId, worldModel, theme = 'main') {
+        this.container = document.getElementById(containerId);
+        this.worldModel = worldModel;
+        this.theme = theme;
+        if (!this.container || !this.worldModel) { return; }
+        this.neuronElements = []; this.visualLayers = [];
+        this.MAX_NEURONS_TO_DISPLAY = 16;
+        this._setupVisualLayers(); this._setupDOM();
+    }
+    _setupVisualLayers() {
+        const model = this.worldModel;
+        this.visualLayers.push({ name: 'input', actualCount: model.inputDim });
+        model.hiddenSizes.forEach((size, index) => this.visualLayers.push({ name: `hidden${index+1}`, actualCount: size }));
+        this.visualLayers.push({ name: 'output', actualCount: model.stateDim });
+    }
+    _setupDOM() {
+        this.container.innerHTML = '';
+        this.canvas = document.createElement('canvas');
+        this.canvas.className = 'nn-connections-canvas';
+        this.ctx = this.canvas.getContext('2d');
+        this.container.appendChild(this.canvas);
+        this.visualLayers.forEach((layer, lIndex) => {
+            const lDiv = document.createElement('div');
+            lDiv.className = 'nn-layer';
+            this.neuronElements[lIndex] = [];
+            const neuronsToDisplay = Math.min(layer.actualCount, this.MAX_NEURONS_TO_DISPLAY);
+            for (let i = 0; i < neuronsToDisplay; i++) {
+                const nDiv = document.createElement('div');
+                nDiv.className = 'nn-neuron';
+                lDiv.appendChild(nDiv);
+                this.neuronElements[lIndex].push(nDiv);
             }
-        }
-        update(activations) {
-            if (!activations || activations.length === 0) return;
-            const hues = this.theme === 'opponent' ? { pos: 39, neg: 271 } : { pos: 195, neg: 0 };
-            this.visualLayers.forEach((layerViz, l_idx) => {
-                const layerActivations = activations[l_idx];
-                if (!layerActivations || layerActivations.length === 0 || !isFiniteVector(layerActivations)) return;
-                let maxAbs = 0;
-                for (const v of layerActivations) if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
-                const norm = maxAbs + 1e-9;
-                for (let n_idx = 0; n_idx < this.neuronElements[l_idx].length; n_idx++) {
-                    const data_idx = Math.floor(n_idx * (layerActivations.length / this.neuronElements[l_idx].length));
-                    const val = layerActivations[data_idx] || 0;
-                    const intensity = clamp(Math.abs(val / norm), 0, 1);
-                    const finalIntensity = 0.05 + (1 - 0.05) * intensity;
-                    const hue = val >= 0 ? hues.pos : hues.neg;
-                    const el = this.neuronElements[l_idx][n_idx];
-                    if (el) {
-                        el.style.backgroundColor = `hsl(${hue},100%,${finalIntensity*45}%)`;
-                        el.style.borderColor = `hsl(${hue},100%,70%)`;
-                    }
-                }
-            });
+            this.container.appendChild(lDiv);
+        });
+        const ro = new ResizeObserver(() => {
+            this.canvas.width = this.container.clientWidth;
+            this.canvas.height = this.container.clientHeight;
             this._drawConnections();
+        });
+        ro.observe(this.container);
+    }
+    _getNeuronPosition(lIndex, nIndex) {
+        const el = this.neuronElements[lIndex]?.[nIndex];
+        if (!el) return { x: 0, y: 0 };
+        const r = el.getBoundingClientRect();
+        const cr = this.container.getBoundingClientRect();
+        return { x: r.left - cr.left + r.width / 2, y: r.top - cr.top + r.height / 2 };
+    }
+    _drawConnections() {
+        if (!this.ctx || !this.neuronElements || this.visualLayers.length <= 1) return;
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        const matrices = this.worldModel.layers.map(layer => layer.W).concat([this.worldModel.outputLayer.W]);
+        const colors = this.theme === 'opponent' ? { pos: 'rgba(255,165,0,', neg: 'rgba(138,43,226,' } : { pos: 'rgba(68,170,255,', neg: 'rgba(255,85,85,' };
+        for (let l = 0; l < this.visualLayers.length - 1; l++) {
+            const matrix = matrices[l];
+            if (!matrix || matrix.length === 0) continue;
+            for (let i = 0; i < this.neuronElements[l].length; i++) {
+                for (let j = 0; j < this.neuronElements[l + 1].length; j++) {
+                    const start = this._getNeuronPosition(l, i);
+                    const end = this._getNeuronPosition(l + 1, j);
+                    const srcMatrixIdx = Math.floor(i * (this.visualLayers[l].actualCount / this.neuronElements[l].length));
+                    const tgtMatrixIdx = Math.floor(j * (this.visualLayers[l + 1].actualCount / this.neuronElements[l+1].length));
+                    const w = matrix[tgtMatrixIdx]?.[srcMatrixIdx] || 0;
+                    const alpha = Math.min(0.5, Math.abs(w) * 5);
+                    if (alpha < 0.05) continue;
+                    this.ctx.strokeStyle = w > 0 ? colors.pos + `${alpha})` : colors.neg + `${alpha})`;
+                    this.ctx.lineWidth = Math.min(1.5, alpha * 2);
+                    this.ctx.beginPath(); this.ctx.moveTo(start.x, start.y); this.ctx.lineTo(end.x, end.y); this.ctx.stroke();
+                }
+            }
         }
     }
-    class MainApp {
-        constructor() {
-            this.gameCanvas = document.getElementById('gameCanvas');
-            this.sheafGraphCanvas = document.getElementById('sheafGraphCanvas');
-            if (!this.gameCanvas || !this.sheafGraphCanvas) {
-                document.getElementById('status').textContent = 'Error: Canvas not found. Check HTML IDs.';
-                throw new Error('Canvas elements not found');
+    update(activations) {
+        if (!activations || activations.length === 0) return;
+        const hues = this.theme === 'opponent' ? { pos: 39, neg: 271 } : { pos: 195, neg: 0 };
+        this.visualLayers.forEach((layerViz, l_idx) => {
+            const layerActivations = activations[l_idx];
+            if (!layerActivations || !isFiniteVector(layerActivations)) return;
+            let maxAbs = 0;
+            for (const v of layerActivations) if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
+            const norm = maxAbs + 1e-9;
+            for (let n_idx = 0; n_idx < this.neuronElements[l_idx].length; n_idx++) {
+                const data_idx = Math.floor(n_idx * (layerActivations.length / this.neuronElements[l_idx].length));
+                const val = layerActivations[data_idx] || 0;
+                const intensity = clamp(Math.abs(val / norm), 0, 1);
+                const hue = val >= 0 ? hues.pos : hues.neg;
+                const el = this.neuronElements[l_idx][n_idx];
+                if (el) {
+                    el.style.backgroundColor = `hsl(${hue},100%,${(0.05 + 0.95*intensity)*45}%)`;
+                    el.style.borderColor = `hsl(${hue},100%,70%)`;
+                }
             }
-            const dpr = window.devicePixelRatio || 1;
-            this.ctx = this.gameCanvas.getContext('2d');
-            this.sheafGraphCtx = this.sheafGraphCanvas.getContext('2d');
-            if (!this.ctx || !this.sheafGraphCtx) {
-                document.getElementById('status').textContent = 'Error: Failed to get 2D rendering context for canvas.';
-                throw new Error('Failed to get 2D context');
-            }
-            this.sheafGraphCanvas.width = 400 * dpr;
-            this.sheafGraphCanvas.height = 120 * dpr;
-            this.sheafGraphCanvas.style.width = '400px';
-            this.sheafGraphCanvas.style.height = '120px';
-            this.sheafGraphCtx.scale(dpr, dpr);
-            const gameCanvasResizeObserver = new ResizeObserver(entries => {
-                for (let entry of entries) {
-                    if (entry.target === this.gameCanvas) {
-                        const { width, height } = entry.contentRect;
-                        this.gameCanvas.width = width * dpr;
-                        this.gameCanvas.height = height * dpr;
-                        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                        if (this.pongGame) {
-                            this.pongGame.width = width;
-                            this.pongGame.height = height;
-                            this.pongGame.reset();
-                            this.pongGame.render(this.ctx);
-                            const newGameBounds = {
-                                width: this.pongGame.width,
-                                height: this.pongGame.height,
-                                scoreToWin: this.pongGame.scoreToWin
-                            };
-                            if (this.mainAI) {
-                                this.mainAI.gameWidth = newGameBounds.width;
-                                this.mainAI.gameHeight = newGameBounds.height;
-                            }
-                            if (this.opponentAI) {
-                                this.opponentAI.gameWidth = newGameBounds.width;
-                                this.opponentAI.gameHeight = newGameBounds.height;
-                            }
-                        }
+        });
+        this._drawConnections();
+    }
+}
+class MainApp {
+    constructor() {
+        this.gameCanvas = document.getElementById('gameCanvas');
+        this.sheafGraphCanvas = document.getElementById('sheafGraphCanvas');
+        if (!this.gameCanvas || !this.sheafGraphCanvas) {
+            document.getElementById('status').textContent = 'Error: Canvas not found. Check HTML IDs.';
+            throw new Error('Canvas not found');
+        }
+        const dpr = window.devicePixelRatio || 1;
+        this.ctx = this.gameCanvas.getContext('2d');
+        this.sheafGraphCtx = this.sheafGraphCanvas.getContext('2d');
+        if (!this.ctx || !this.sheafGraphCtx) {
+            document.getElementById('status').textContent = 'Error: Failed to get 2D rendering context for canvas.';
+            throw new Error('Failed to get 2D context');
+        }
+        this.sheafGraphCanvas.width = this.sheafGraphCanvas.clientWidth * dpr;
+        this.sheafGraphCanvas.height = this.sheafGraphCanvas.clientHeight * dpr;
+        this.sheafGraphCanvas.style.width = `${this.sheafGraphCanvas.clientWidth}px`;
+        this.sheafGraphCanvas.style.height = `${this.sheafGraphCanvas.clientHeight}px`;
+        this.sheafGraphCtx.scale(dpr, dpr);
+        const ro = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                const { width, height } = entry.contentRect;
+                this.gameCanvas.width = width * dpr;
+                this.gameCanvas.height = height * dpr;
+                this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                if (this.pongGame) {
+                    this.pongGame.width = width;
+                    this.pongGame.height = height;
+                    this.pongGame.render(this.ctx);
+                    const newGameBounds = { width, height, scoreToWin: this.pongGame.scoreToWin };
+                    if (this.mainAI) {
+                        this.mainAI.gameWidth = newGameBounds.width;
+                        this.mainAI.gameHeight = newGameBounds.height;
+                    }
+                    if (this.opponentAI) {
+                        this.opponentAI.gameWidth = newGameBounds.width;
+                        this.opponentAI.gameHeight = newGameBounds.height;
                     }
                 }
-            });
-            gameCanvasResizeObserver.observe(this.gameCanvas);
-            this.pongGame = null;
-            this.mainAI = null;
-            this.opponentAI = null;
-            this.mainViz = null;
-            this.opponentViz = null;
-            this.setupGameAndAIs();
-            this.isRunning = false;
-            this.frameCount = 0;
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            this.bindEvents();
-            this.setupTooltips();
-            document.getElementById('status').textContent = 'Ready';
-        }
-        setupGameAndAIs() {
-            const dpr = window.devicePixelRatio || 1;
-            const currentCanvasWidth = this.gameCanvas.clientWidth;
-            const currentCanvasHeight = this.gameCanvas.clientHeight;
-            this.gameCanvas.width = currentCanvasWidth * dpr;
-            this.gameCanvas.height = currentCanvasHeight * dpr;
-            this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            this.pongGame = new PongGame(this.gameCanvas);
-            this.pongGame.width = currentCanvasWidth;
-            this.pongGame.height = currentCanvasHeight;
-            const gameBounds = {
-                width: this.pongGame.width,
-                height: this.pongGame.height,
-                scoreToWin: 10
-            };
-            this.mainAI_worldModel = new OntologicalWorldModel(10, 3, 7, [16, 32, 16]);
-            this.opponent_worldModel = new OntologicalWorldModel(10, 3, 7, [16, 32, 16]);
-            this.mainAI = new LearningAI(this.mainAI_worldModel, gameBounds, true);
-            this.opponentAI = new LearningAI(this.opponent_worldModel, gameBounds, false);
-            this.mainViz = new NeuralNetworkVisualizer('nn-visualization-container', this.mainAI_worldModel, 'main');
-            this.opponentViz = new NeuralNetworkVisualizer('nn-visualization-container-opponent', this.opponent_worldModel, 'opponent');
-            this.pongGame.render(this.ctx);
-        }
-        bindEvents() {
-            document.getElementById('toggleButton').onclick = () => this.toggleGame();
-            document.getElementById('resetButton').onclick = () => this.resetAI();
-            document.getElementById('tuneButton').onclick = () => this.tuneParameters();
-            window.addEventListener('keydown', (e) => this.handleKeyDown(e));
-            ['alphaSlider', 'betaSlider', 'gammaSlider'].forEach(id => {
-                const slider = document.getElementById(id);
-                slider.addEventListener('input', () => {
-                    const paramName = id.replace('Slider', '');
-                    this.mainAI_worldModel.qualiaSheaf[paramName] = parseFloat(slider.value);
-                    this.opponent_worldModel.qualiaSheaf[paramName] = parseFloat(slider.value);
-                    document.getElementById(`${paramName}-param`).textContent = parseFloat(slider.value).toFixed(3);
-                    slider.setAttribute('aria-valuetext', parseFloat(slider.value).toFixed(3));
-                });
-            });
-        }
-        setupTooltips() {
-            tippy('#phi-display', { content: 'Φ measures integrated information across ontological entities.' });
-            tippy('#qualia-being-fill', { content: 'Being reflects the system’s fundamental existence.' });
-            tippy('#qualia-intent-fill', { content: 'Intent captures directed action potential.' });
-            tippy('#qualia-existence-fill', { content: 'Existence models state persistence.' });
-            tippy('#qualia-emergence-fill', { content: 'Emergence represents non-linear state synthesis.' });
-            tippy('#qualia-gestalt-fill', { content: 'Gestalt quantifies holistic coherence.' });
-            tippy('#qualia-context-fill', { content: 'Context incorporates environmental modulation.' });
-            tippy('#qualia-rel-emergence-fill', { content: 'Relational Emergence captures dynamic entity coupling.' });
-            tippy('#alphaSlider', { content: 'α controls input gain for qualia diffusion.' });
-            tippy('#betaSlider', { content: 'β adjusts diffusion strength across the sheaf.' });
-            tippy('#gammaSlider', { content: 'γ sets the inertia for qualia updates and learning rate.' });
-            tippy('#tuneButton', { content: 'Adjusts AI parameters based on system stability.' });
-        }
-        playSound() {
-            try {
-                if (this.audioContext.state !== 'running') return 0;
-                const oscillator = this.audioContext.createOscillator();
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(440, this.audioContext.currentTime);
-                oscillator.connect(this.audioContext.destination);
-                oscillator.start();
-                oscillator.stop(this.audioContext.currentTime + 0.1);
-                return 0.1;
-            } catch (e) {
-                return 0;
             }
-        }
-        drawSheafGraph() {
-            if (!this.sheafGraphCtx) return;
-            const sheafGraphEl = document.querySelector('.sheaf-graph');
-            const graphWidth = sheafGraphEl.clientWidth;
-            const graphHeight = sheafGraphEl.clientHeight;
-            this.sheafGraphCtx.clearRect(0, 0, graphWidth, graphHeight);
-            this.sheafGraphCtx.strokeStyle = 'rgba(68, 170, 255, 0.3)';
-            this.sheafGraphCtx.lineWidth = 2;
-            this.mainAI_worldModel.qualiaSheaf.graph.edges.forEach(([u, v]) => {
-                const uIdx = this.mainAI_worldModel.qualiaSheaf.graph.vertices.indexOf(u);
-                const vIdx = this.mainAI_worldModel.qualiaSheaf.graph.vertices.indexOf(v);
-                if (uIdx === -1 || vIdx === -1 || uIdx >= Object.keys(sheafVertexPositions).length || vIdx >= Object.keys(sheafVertexPositions).length) return;
-                const propV1 = sheafVertexPositions[uIdx];
-                const propV2 = sheafVertexPositions[vIdx];
-                const v1 = { x: propV1.x * graphWidth, y: propV1.y * graphHeight };
-                const v2 = { x: propV2.x * graphWidth, y: propV2.y * graphHeight };
-                this.sheafGraphCtx.beginPath();
-                this.sheafGraphCtx.moveTo(v1.x, v1.y);
-                this.sheafGraphCtx.lineTo(v2.x, v2.y);
-                this.sheafGraphCtx.stroke();
+        });
+        ro.observe(this.gameCanvas);
+        this.setupGameAndAIs();
+        this.isRunning = false;
+        this.frameCount = 0;
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.bindEvents();
+        this.setupTooltips();
+        document.getElementById('status').textContent = 'Ready';
+    }
+
+    setupGameAndAIs() {
+        const dpr = window.devicePixelRatio || 1;
+        const { clientWidth: w, clientHeight: h } = this.gameCanvas;
+        this.gameCanvas.width = w * dpr;
+        this.gameCanvas.height = h * dpr;
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        this.pongGame = new PongGame(this.gameCanvas);
+        const gameBounds = { width: w, height: h, scoreToWin: 10 };
+        this.mainAI_worldModel = new OntologicalWorldModel(10, 3, 7, [16, 32, 16]);
+        this.opponent_worldModel = new OntologicalWorldModel(10, 3, 7, [16, 32, 16]);
+        this.mainAI = new LearningAI(this.mainAI_worldModel, gameBounds, true);
+        this.opponentAI = new LearningAI(this.opponent_worldModel, gameBounds, false);
+        this.mainViz = new NeuralNetworkVisualizer('nn-visualization-container', this.mainAI_worldModel, 'main');
+        this.opponentViz = new NeuralNetworkVisualizer('nn-visualization-container-opponent', this.opponent_worldModel, 'opponent');
+        this.pongGame.render(this.ctx);
+    }
+
+    bindEvents() {
+        document.getElementById('toggleSimButton').onclick = () => this.toggleGame();
+        document.getElementById('resetSimButton').onclick = () => this.resetAI();
+        document.getElementById('tuneButton').onclick = () => this.tuneParameters();
+        document.getElementById('pauseButton').onclick = () => this.stop();
+        document.getElementById('stepButton').onclick = () => this.gameLoop(true);
+        window.addEventListener('keydown', (e) => this.handleKeyDown(e));
+        ['alphaSlider', 'betaSlider', 'gammaSlider'].forEach(id => {
+            const slider = document.getElementById(id);
+            slider.addEventListener('input', () => {
+                const paramName = id.replace('Slider', '');
+                if (this.mainAI_worldModel) this.mainAI_worldModel.qualiaSheaf[paramName] = parseFloat(slider.value);
+                if (this.opponent_worldModel) this.opponent_worldModel.qualiaSheaf[paramName] = parseFloat(slider.value);
+                document.getElementById(`${paramName}-param`).textContent = parseFloat(slider.value).toFixed(3);
+                slider.setAttribute('aria-valuetext', parseFloat(slider.value).toFixed(3));
             });
-        }
-       
+        });
+    }
+
+    setupTooltips() {
+        // Metrics and qualia displays
+        tippy('#phi-display', { content: 'Φ measures integrated information across ontological entities.' });
+        tippy('#free-energy', { content: 'Free Energy (F) quantifies the system’s predictive divergence.' });
+        tippy('#prediction-error', { content: 'Prediction Error measures discrepancy between predicted and actual states.' });
+        tippy('#gestalt-unity', { content: 'Gestalt Unity quantifies holistic coherence across the sheaf.' });
+        tippy('#h1-dimension', { content: 'dim H¹ represents the first cohomology dimension, indicating structural complexity.' });
+        tippy('#inconsistency', { content: 'Gluing Inconsistency measures misalignment in qualia projections.' });
+
+        // Qualia bars
+        tippy('#qualia-being-fill', { content: 'Being reflects the system’s fundamental existence.' });
+        tippy('#qualia-intent-fill', { content: 'Intent captures directed action potential.' });
+        tippy('#qualia-existence-fill', { content: 'Existence models state persistence.' });
+        tippy('#qualia-emergence-fill', { content: 'Emergence represents non-linear state synthesis.' });
+        tippy('#qualia-gestalt-fill', { content: 'Gestalt quantifies holistic coherence.' });
+        tippy('#qualia-context-fill', { content: 'Context incorporates environmental modulation.' });
+        tippy('#qualia-rel-emergence-fill', { content: 'Relational Emergence captures dynamic entity coupling.' });
+
+        // Sliders
+        tippy('#alphaSlider', { content: 'α controls input gain for qualia diffusion.' });
+        tippy('#betaSlider', { content: 'β adjusts diffusion strength across the sheaf.' });
+        tippy('#gammaSlider', { content: 'γ sets the inertia for qualia updates and learning rate.' });
+
+        // Buttons
+        tippy('#toggleSimButton', { content: 'Toggles the simulation on or off.' });
+        tippy('#resetSimButton', { content: 'Resets the game and AI states.' });
+        tippy('#tuneButton', { content: 'Adjusts AI parameters based on system stability.' });
+        tippy('#pauseButton', { content: 'Pauses the simulation.' });
+        tippy('#stepButton', { content: 'Advances the simulation by one step.' });
+
+        // Sheaf graph vertices
+        tippy('#vertex-0', { content: 'P-Y: Player paddle Y position.' });
+        tippy('#vertex-1', { content: 'B-X: Ball X position.' });
+        tippy('#vertex-2', { content: 'B-Y: Ball Y position.' });
+        tippy('#vertex-3', { content: 'B-DX: Ball X velocity.' });
+        tippy('#vertex-4', { content: 'B-DY: Ball Y velocity.' });
+        tippy('#vertex-5', { content: 'P-SC: Player score.' });
+        tippy('#vertex-6', { content: 'AI-SC: AI score.' });
+        tippy('#vertex-7', { content: 'P-DY: Player paddle Y velocity.' });
+        tippy('#vertex-8', { content: 'P-Col: Player collision state.' });
+        tippy('#vertex-9', { content: 'AI-Col: AI collision state.' });
+    }
+
+    drawSheafGraph() {
+        if (!this.sheafGraphCtx) return;
+        const { clientWidth: w, clientHeight: h } = this.sheafGraphCanvas;
+        this.sheafGraphCtx.clearRect(0, 0, w, h);
+        this.sheafGraphCtx.strokeStyle = 'rgba(68, 170, 255, 0.3)';
+        this.sheafGraphCtx.lineWidth = 1;
+        const sheaf = this.mainAI_worldModel.qualiaSheaf;
+        sheaf.graph.edges.forEach(([u, v]) => {
+            const uIdx = sheaf.graph.vertices.indexOf(u);
+            const vIdx = sheaf.graph.vertices.indexOf(v);
+            if (!sheafVertexPositions[uIdx] || !sheafVertexPositions[vIdx]) return;
+            const p1 = sheafVertexPositions[uIdx], p2 = sheafVertexPositions[vIdx];
+            this.sheafGraphCtx.beginPath();
+            this.sheafGraphCtx.moveTo(p1.x * (w - 32) + 16, p1.y * (h - 32) + 16);
+            this.sheafGraphCtx.lineTo(p2.x * (w - 32) + 16, p2.y * (h - 32) + 16);
+            this.sheafGraphCtx.stroke();
+        });
+    }
 
     updateVisualization() {
         const qualia = this.mainAI_worldModel.qualiaSheaf;
-        const stalks = qualia.stalks;
+        const model = this.mainAI_worldModel;
         const avgQualia = Array(qualia.qDim).fill(0);
-        const stalkCount = stalks.size;
-        if (stalkCount > 0) {
-            stalks.forEach(stalk => {
-                if (stalk && isFiniteVector(stalk)) {
-                    stalk.forEach((val, i) => avgQualia[i] += val);
-                }
-            });
-            avgQualia.forEach((_, i) => avgQualia[i] = stalkCount > 0 ? avgQualia[i] / stalkCount : 0);
-        }
-        const clampVal = (v) => clamp(isFinite(v) ? v : 0, 0, 1);
+        let count = 0;
+        qualia.stalks.forEach((stalk) => {
+            if (isFiniteVector(stalk)) {
+                stalk.forEach((v, i) => avgQualia[i] += v);
+                count++;
+            }
+        });
+        if (count > 0) avgQualia.forEach((_, i) => avgQualia[i] /= count);
         const updates = [
-            { id: 'qualia-being-fill', style: { width: `${clampVal(avgQualia[0]) * 100}%` } },
-            { id: 'qualia-intent-fill', style: { width: `${clampVal(avgQualia[1]) * 100}%` } },
-            { id: 'qualia-existence-fill', style: { width: `${clampVal(avgQualia[2]) * 100}%` } },
-            { id: 'qualia-emergence-fill', style: { width: `${clampVal(avgQualia[3]) * 100}%` } },
-            { id: 'qualia-gestalt-fill', style: { width: `${clampVal(avgQualia[4]) * 100}%` } },
-            { id: 'qualia-context-fill', style: { width: `${clampVal(avgQualia[5]) * 100}%` } },
-            { id: 'qualia-rel-emergence-fill', style: { width: `${clampVal(avgQualia[6]) * 100}%` } },
-            { id: 'being-value', textContent: clampVal(avgQualia[0]).toFixed(2) },
-            { id: 'intent-value', textContent: clampVal(avgQualia[1]).toFixed(2) },
-            { id: 'existence-value', textContent: clampVal(avgQualia[2]).toFixed(2) },
-            { id: 'emergence-value', textContent: clampVal(avgQualia[3]).toFixed(2) },
-            { id: 'gestalt-value', textContent: clampVal(avgQualia[4]).toFixed(2) },
-            { id: 'context-value', textContent: clampVal(avgQualia[5]).toFixed(2) },
-            { id: 'rel-emergence-value', textContent: clampVal(avgQualia[6]).toFixed(2) },
-            { id: 'phi-display', textContent: `Φ: ${clampVal(qualia.phi).toFixed(3)}` },
-            { id: 'h1-dimension', textContent: clampVal(qualia.h1Dimension).toFixed(2) },
-            { id: 'gestalt-unity', textContent: clampVal(qualia.gestaltUnity).toFixed(3) },
-            { id: 'free-energy', textContent: clampVal(this.mainAI_worldModel.freeEnergy).toFixed(3) },
-            { id: 'prediction-error', textContent: clampVal(this.mainAI_worldModel.predictionError).toFixed(3) },
-            { id: 'stability-fill', style: { width: `${clampVal(qualia.stability) * 100}%` } },
-            { id: 'alpha-param', textContent: qualia.alpha.toFixed(3) },
-            { id: 'beta-param', textContent: qualia.beta.toFixed(3) },
-            { id: 'gamma-param', textContent: qualia.gamma.toFixed(3) }
+            { id: 'being-value', text: clamp(avgQualia[0], -1, 1).toFixed(3), el: 'qualia-being-fill', w: clamp(avgQualia[0], 0, 1) },
+            { id: 'intent-value', text: clamp(avgQualia[1], -1, 1).toFixed(3), el: 'qualia-intent-fill', w: clamp(avgQualia[1], 0, 1) },
+            { id: 'existence-value', text: clamp(avgQualia[2], -1, 1).toFixed(3), el: 'qualia-existence-fill', w: clamp(avgQualia[2], 0, 1) },
+            { id: 'emergence-value', text: clamp(avgQualia[3], -1, 1).toFixed(3), el: 'qualia-emergence-fill', w: clamp(avgQualia[3], 0, 1) },
+            { id: 'gestalt-value', text: clamp(avgQualia[4], -1, 1).toFixed(3), el: 'qualia-gestalt-fill', w: clamp(avgQualia[4], 0, 1) },
+            { id: 'context-value', text: clamp(avgQualia[5], -1, 1).toFixed(3), el: 'qualia-context-fill', w: clamp(avgQualia[5], 0, 1) },
+            { id: 'rel-emergence-value', text: clamp(avgQualia[6], -1, 1).toFixed(3), el: 'qualia-rel-emergence-fill', w: clamp(avgQualia[6], 0, 1) },
+            { id: 'phi-display', text: `Φ: ${clamp(qualia.phi, 0, 5).toFixed(5)}` },
+            { id: 'free-energy', text: model.freeEnergy.toFixed(5) },
+            { id: 'prediction-error', text: model.predictionError.toFixed(5) },
+            { id: 'h1-dimension', text: clamp(qualia.h1Dimension, 0, 3).toFixed(2) },
+            { id: 'gestalt-unity', text: clamp(qualia.gestaltUnity, 0, 1).toFixed(5) },
+            { id: 'inconsistency', text: (qualia.inconsistency || 0).toFixed(5) },
+            { id: 'stability-fill', w: clamp(qualia.stability, 0, 1) },
+            { id: 'alpha-param', text: qualia.alpha.toFixed(3) },
+            { id: 'beta-param', text: qualia.beta.toFixed(3) },
+            { id: 'gamma-param', text: qualia.gamma.toFixed(3) },
         ];
         requestAnimationFrame(() => {
-            updates.forEach(({ id, style, textContent }) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                if (style) Object.assign(el.style, style);
-                if (textContent) el.textContent = textContent;
+            updates.forEach(u => {
+                const valEl = document.getElementById(u.id);
+                const fillEl = u.el ? document.getElementById(u.el) : null;
+                if (valEl && u.text !== undefined) valEl.textContent = u.text;
+                if (fillEl && u.w !== undefined) fillEl.style.width = `${u.w * 100}%`;
             });
         });
         qualia.visualizeActivity();
         this.drawSheafGraph();
     }
 
-    gameLoop() {
-        if (!this.isRunning || !this.ctx || !this.sheafGraphCtx) return;
-        this.frameCount++;
+    playSound() {
+        try {
+            if (this.audioContext.state !== 'running') return 0;
+            const oscillator = this.audioContext.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, this.audioContext.currentTime);
+            oscillator.connect(this.audioContext.destination);
+            oscillator.start();
+            oscillator.stop(this.audioContext.currentTime + 0.1);
+            return 0.1;
+        } catch (e) {
+            logger.warn('Audio playback failed', e.message);
+            return 0;
+        }
+    }
 
-        const preState = {
+    gameLoop(isStep = false) {
+        if (!this.isRunning && !isStep) return;
+        this.frameCount++;
+        const preGameState = {
             ball: { ...this.pongGame.ball },
             ai: { ...this.pongGame.ai },
             player: { ...this.pongGame.player },
             score: { ...this.pongGame.score }
         };
-
-        this.mainAI_worldModel.qualiaSheaf.diffuseQualia(this.mainAI.lastStateVec || Array(10).fill(0.5));
-        this.opponent_worldModel.qualiaSheaf.diffuseQualia(this.opponentAI.lastStateVec || Array(10).fill(0.5));
-
-        if (this.frameCount % 200 === 0) {
-            this.mainAI_worldModel.qualiaSheaf.computeH1Dimension();
-            this.mainAI_worldModel.qualiaSheaf.computeGestaltUnity();
-            this.mainAI_worldModel.qualiaSheaf.computeIntegratedInformation();
-        }
-
-        const currentPhi = this.mainAI_worldModel.qualiaSheaf.phi;
-        const currentFreeEnergy = this.mainAI_worldModel.freeEnergy;
-        if (!isFinite(currentPhi) || !isFinite(currentFreeEnergy) || currentPhi < 0) {
-            logger.error(`Critical numerical instability detected (Φ: ${currentPhi.toFixed(3)}, Free Energy: ${currentFreeEnergy.toFixed(3)}). Resetting AI.`);
-            this.resetAI();
-            return;
-        }
-
+        const gameUpdateResult = this.pongGame.update();
         let audioAmplitude = 0;
-        const gameUpdate = this.pongGame.update();
-        if (gameUpdate.playerCollision || gameUpdate.aiCollision) {
+        if (gameUpdateResult.playerCollision || gameUpdateResult.aiCollision) {
             audioAmplitude = this.playSound();
         }
-
-        const mainDecision = this.mainAI.makeDecision(preState, audioAmplitude);
-        const opponentDecision = this.opponentAI.makeDecision(preState, audioAmplitude);
-
+        const mainDecision = this.mainAI.makeDecision(preGameState, audioAmplitude);
+        const opponentDecision = this.opponentAI.makeDecision(preGameState, audioAmplitude);
         this.pongGame.setAIAction(mainDecision.action);
         this.pongGame.setPlayerAction(opponentDecision.action);
-
-        const postState = {
+        const postGameState = {
             ball: { ...this.pongGame.ball },
             ai: { ...this.pongGame.ai },
             player: { ...this.pongGame.player },
             score: { ...this.pongGame.score }
         };
-
-        if (gameUpdate.aReward !== 0) {
-            this.mainAI.learn(gameUpdate.aReward, postState, audioAmplitude);
-        }
-        if (gameUpdate.pReward !== 0) {
-            this.opponentAI.learn(gameUpdate.pReward, postState, audioAmplitude);
-        }
-
+        this.mainAI.learn(gameUpdateResult.aReward, postGameState, audioAmplitude);
+        this.opponentAI.learn(gameUpdateResult.pReward, postGameState, audioAmplitude);
         document.getElementById('player-score').textContent = this.pongGame.score.player;
         document.getElementById('ai-score').textContent = this.pongGame.score.ai;
-        
-        if (this.frameCount % 10 === 0) {
+        if (this.frameCount % 5 === 0) {
             this.mainViz.update(mainDecision.activations);
             this.opponentViz.update(opponentDecision.activations);
             this.updateVisualization();
         }
-
         this.pongGame.render(this.ctx);
-        requestAnimationFrame(() => this.gameLoop());
+        if (this.pongGame.gameOver) {
+            this.stop();
+            logger.info(`${this.pongGame.winner} wins the game`);
+        } else if (!isStep) {
+            requestAnimationFrame(() => this.gameLoop());
+        }
     }
 
     toggleGame() {
         this.isRunning = !this.isRunning;
-        const toggleButton = document.getElementById('toggleButton');
-        this.pongGame.isRunning = this.isRunning;
-        toggleButton.textContent = this.isRunning ? '⏸️ Pause Simulation' : '🚀 Toggle Simulation';
-        if (this.isRunning) {
-            document.getElementById('status').textContent = 'Conscious AI Active';
-            this.gameLoop();
-        } else {
-            document.getElementById('status').textContent = 'Paused';
-        }
-    }
-
-    start() {
-        if (!this.ctx || !this.sheafGraphCtx) {
-            document.getElementById('status').textContent = 'Error: Canvas context missing. Cannot start game.';
-            return;
-        }
-        if (this.pongGame.gameOver) {
-            this.resetAI();
-        }
-        this.isRunning = true;
-        document.getElementById('status').textContent = 'Conscious AI Active';
-        this.updateVisualization();
-        this.gameLoop();
+        const btn = document.getElementById('toggleSimButton');
+        btn.textContent = this.isRunning ? '⏸️ Pause Simulation' : '🚀 Toggle Simulation';
+        document.getElementById('status').textContent = this.isRunning ? 'Conscious AI Active' : this.pongGame.gameOver ? `${this.pongGame.winner} Wins! (Paused)` : 'Paused';
+        if (this.isRunning) this.gameLoop();
+        logger.info(this.isRunning ? 'Simulation started' : 'Simulation paused');
     }
 
     stop() {
         this.isRunning = false;
+        document.getElementById('toggleSimButton').textContent = '🚀 Toggle Simulation';
         document.getElementById('status').textContent = this.pongGame.gameOver ? `${this.pongGame.winner} Wins! (Paused)` : 'Paused';
+        logger.info('Simulation stopped');
+    }
+
+    start() {
+        if (!this.ctx) {
+            document.getElementById('status').textContent = 'Error: Canvas context missing. Cannot start game.';
+            logger.error('Cannot start: Missing canvas context');
+            return;
+        }
+        if (this.pongGame.gameOver) this.resetAI();
+        if (!this.isRunning) this.toggleGame();
     }
 
     resetAI() {
+        this.stop();
         this.pongGame.reset();
-        document.getElementById('player-score').textContent = this.pongGame.score.player;
-        document.getElementById('ai-score').textContent = this.pongGame.score.ai;
+        document.getElementById('player-score').textContent = 0;
+        document.getElementById('ai-score').textContent = 0;
         this.setupGameAndAIs();
         this.frameCount = 0;
-        this.isRunning = false;
         document.getElementById('status').textContent = 'Ready';
         this.updateVisualization();
+        this.pongGame.render(this.ctx);
+        logger.info('Simulation reset');
     }
 
     tuneParameters() {
         this.mainAI_worldModel.qualiaSheaf.tuneParameters();
         this.opponent_worldModel.qualiaSheaf.tuneParameters();
         this.updateVisualization();
+        logger.info('Parameters tuned');
     }
 
     handleKeyDown(e) {
         switch (e.key) {
             case ' ': e.preventDefault(); this.toggleGame(); break;
-            case 'r':
-            case 'R': this.resetAI(); break;
-            case 't':
-            case 'T': this.tuneParameters(); break;
-            case 'ArrowUp': this.pongGame.setPlayerAction('UP'); break;
-            case 'ArrowDown': this.pongGame.setPlayerAction('DOWN'); break;
+            case 'r': case 'R': this.resetAI(); break;
+            case 't': case 'T': this.tuneParameters(); break;
+            case 'ArrowUp': this.pongGame.setPlayerAction([1, 0, 0]); break;
+            case 'ArrowDown': this.pongGame.setPlayerAction([0, 1, 0]); break;
         }
     }
 }
 
-// -------------------- INITIALIZATION --------------------
-    window.onload = () => {
-        try {
-            const app = new MainApp();
-            app.start(); // FIX: Automatically start the simulation on page load
-        } catch (e) {
-            document.getElementById('status').textContent = `Initialization Error: ${e.message}`;
+// --- App Initialization ---
+window.onload = () => {
+    function positionVertices() {
+        const graph = document.getElementById('sheafGraph');
+        if (!graph) return;
+        const rect = graph.getBoundingClientRect();
+        for (let i=0;i<10;i++){
+            const v = document.getElementById('vertex-'+i);
+            if (!v) continue;
+            const p = sheafVertexPositions[i] || {x:0.5,y:0.5};
+            v.style.left = Math.round(p.x * (rect.width - 32)) + 'px';
+            v.style.top = Math.round(p.y * (rect.height - 32)) + 'px';
         }
-    };
-})();
+    }
+    window.addEventListener('resize', positionVertices);
+    try {
+        const app = new MainApp();
+        positionVertices();
+        logger.info('UI initialized — ready');
+        app.start();
+    } catch (e) {
+        document.getElementById('status').textContent = `Initialization Error: ${e.message}`;
+        logger.error('Initialization failed', e.message);
+    }
+};
 </script>
 </body>
 </html>
