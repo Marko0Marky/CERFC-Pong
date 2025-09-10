@@ -758,6 +758,48 @@ function matrixDeterminant(M) {
     }
     return det;
 }
+// ----------------- Helpers -----------------
+
+// Clamp value to range [min,max]
+function clamp(x, min, max) {
+    return Math.max(min, Math.min(max, x));
+}
+
+// Check if a vector contains only finite numbers
+function isFiniteVector(v) {
+    return Array.isArray(v) && v.length > 0 && v.every(Number.isFinite);
+}
+
+// Validate windowedStates: minimum rows and columns
+function validateWindowedStates(states, minRows = 3, minCols = 1) {
+    if (!Array.isArray(states) || states.length < minRows) return false;
+    return states.every(row => Array.isArray(row) && row.length >= minCols && row.every(Number.isFinite));
+}
+
+// Rate-limited warnings to prevent log spam
+const warnRateLimit = (function() {
+    const last = new Map();
+    return function(key, msg, ms = 5000) {
+        const now = Date.now();
+        if (!last.has(key) || now - last.get(key) > ms) {
+            last.set(key, now);
+            console.warn(msg);
+        }
+    };
+})();
+
+// Lightweight MI surrogate for safe testing
+function computePhiLight(windowedStates) {
+    const N = windowedStates.length;
+    const D = windowedStates[0].length;
+    let acc = 0;
+    for (let t = 1; t < N; t++) {
+        const prev = windowedStates[t - 1], cur = windowedStates[t];
+        for (let i = 0; i < D; i++) acc += Math.abs(cur[i] - prev[i]);
+    }
+    return clamp(acc / (N * D * 20), 0, 10);
+}
+
 
 
 // EnhancedQualiaSheaf Class
@@ -910,120 +952,92 @@ class EnhancedQualiaSheaf {
     }
 
     diffuseQualia(state) {
-    if (!isFiniteVector(state) || state.length !== this.stateDim) {
-        logger.error('Invalid state vector; resetting stalks');
-        this.resetStalks();
-        return { energy: 0, phi: 0 };
-    }
-    const qInput = [
-        clamp((state[4] + state[5]) / 2, 0.01, 1),
-        clamp(Math.abs(state[6]) + Math.abs(state[7]), 0.01, 1),
-        clamp(state[1], 0.01, 1),
-        clamp(Math.sqrt(state[2] * state[2] + state[3] * state[3]), 0.01, 1),
-        clamp(1 - Math.abs(state[4] - state[5]), 0.01, 1),
-        clamp(state[8] + state[9], 0.01, 1),
-        clamp(Math.abs(state[2] - state[3]), 0.01, 1)
-    ];
-    if (!isFiniteVector(qInput)) {
-        logger.warn('Invalid qInput; resetting stalks');
-        this.resetStalks();
-        return { energy: 0, phi: 0 };
-    }
-    const n = this.graph.vertices.length, N = n * this.qDim;
-    const s = [];
-    for (const v of this.graph.vertices) {
-        const st = this.stalks.get(v);
-        if (!isFiniteVector(st) || st.length !== this.qDim) {
-            logger.warn(`Invalid stalk for vertex ${v}; resetting`);
+        if (!isFiniteVector(state) || state.length !== this.stateDim) {
             this.resetStalks();
             return { energy: 0, phi: 0 };
         }
-        s.push(...st);
-    }
-    const Lnode = this.laplacian || this.buildLaplacian();
-    const Lfull = zeroMatrix(N, N);
-    const idx = new Map(this.graph.vertices.map((v, i) => [v, i]));
-    this.projectionMatrices = this.computeProjectionMatrices();
-    for (const [u, v] of this.graph.edges) {
-        const i = idx.get(u), j = idx.get(v);
-        const P_uv = this.projectionMatrices.get(`${u}-${v}`);
-        for (let qi = 0; qi < this.qDim; qi++) {
-            for (let qj = 0; qj < this.qDim; qj++) {
-                Lfull[i * this.qDim + qi][j * this.qDim + qj] = -Lnode[i][j] * P_uv[qi][qj];
-                Lfull[j * this.qDim + qj][i * this.qDim + qi] = -Lnode[j][i] * P_uv[qj][qi];
-            }
+        
+        const qInput = [
+            clamp((state[4] + state[5]) / 2, 0.01, 1),
+            clamp(Math.abs(state[6]) + Math.abs(state[7]), 0.01, 1),
+            clamp(state[1], 0.01, 1),
+            clamp(Math.sqrt(state[2] * state[2] + state[3] * state[3]), 0.01, 1),
+            clamp(1 - Math.abs(state[4] - state[5]), 0.01, 1),
+            clamp(state[8] + state[9], 0.01, 1),
+            clamp(Math.abs(state[2] - state[3]), 0.01, 1)
+        ];
+
+        const n = this.graph.vertices.length, N = n * this.qDim;
+        const s = [];
+        for (const v of this.graph.vertices) {
+            s.push(...(this.stalks.get(v) || vecZeros(this.qDim)));
         }
-    }
-    for (let i = 0; i < n; i++) {
-        let deg = 0;
-        for (let j = 0; j < n; j++) {
+        
+        const Lnode = this.laplacian || this.buildLaplacian();
+        const Lfull = zeroMatrix(N, N);
+        const idx = new Map(this.graph.vertices.map((v, i) => [v, i]));
+        this.projectionMatrices = this.computeProjectionMatrices();
+        for (const [u, v] of this.graph.edges) {
+            const i = idx.get(u), j = idx.get(v);
+            const P_uv = this.projectionMatrices.get(`${u}-${v}`);
             for (let qi = 0; qi < this.qDim; qi++) {
-                deg += -Lfull[i * this.qDim + qi][j * this.qDim + qi];
-            }
-        }
-        for (let qi = 0; qi < this.qDim; qi++) {
-            Lfull[i * this.qDim + qi][i * this.qDim + qi] = deg + this.eps;
-        }
-    }
-    const f_s = Array(N).fill(0);
-    for (let i = 0; i < n; i++) {
-        const val = qInput[i % qInput.length];
-        for (let qi = 0; qi < this.qDim; qi++) {
-            f_s[i * this.qDim + qi] = this.alpha * val * 0.01;
-        }
-    }
-    const eta = 0.05 / Math.max(1, this.maxEigApprox);
-    const A = zeroMatrix(N, N);
-    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) A[i][j] = (i === j ? 1 : 0) + eta * Lfull[i][j];
-    const rhs = vecAdd(s, vecScale(f_s, eta));
-    let sNext;
-    try {
-        sNext = solveLinearSystem(A, rhs, { tol: 1e-6, maxIter: 30 });
-        if (!isFiniteVector(sNext) || sNext.length !== N) throw new Error('Solve failure');
-        // Add damping to prevent large jumps
-        sNext = sNext.map((v, i) => clamp(0.9 * s[i] + 0.1 * v, 1e-6, 2.0)); // Blend with previous state
-    } catch (e) {
-        logger.warn('CG failed, using damped GS fallback');
-        sNext = s.slice();
-        let maxDelta = 0;
-        for (let iter = 0; iter < 10; iter++) {
-            maxDelta = 0;
-            for (let i = 0; i < N; i++) {
-                let sigma = 0;
-                for (let j = 0; j < N; j++) if (j !== i) sigma += A[i][j] * sNext[j];
-                if (Math.abs(A[i][i]) > 1e-12) {
-                    const newVal = (rhs[i] - sigma) / A[i][i];
-                    maxDelta = Math.max(maxDelta, Math.abs(newVal - sNext[i]));
-                    sNext[i] = clamp(0.9 * sNext[i] + 0.1 * newVal, 1e-6, 2.0); // Damped update
+                for (let qj = 0; qj < this.qDim; qj++) {
+                    Lfull[i * this.qDim + qi][j * this.qDim + qj] = -Lnode[i][j] * P_uv[qi][qj];
+                    Lfull[j * this.qDim + qj][i * this.qDim + qi] = -Lnode[j][i] * P_uv[qj][qi];
                 }
             }
-            if (maxDelta < 1e-6) break;
         }
-        if (!isFiniteVector(sNext)) {
-            logger.warn('GS failed; resetting to damped state');
-            sNext = s.map(v => clamp(v * 0.98, 1e-6, 2.0));
+        for (let i = 0; i < n; i++) {
+            let deg = 0;
+            for (let j = 0; j < n; j++) { for (let qi = 0; qi < this.qDim; qi++) { deg += -Lfull[i * this.qDim + qi][j * this.qDim + qi]; } }
+            for (let qi = 0; qi < this.qDim; qi++) { Lfull[i * this.qDim + qi][i * this.qDim + qi] = deg + this.eps; }
         }
+        const f_s = Array(N).fill(0);
+        for (let i = 0; i < n; i++) {
+            const val = qInput[i % qInput.length];
+            for (let qi = 0; qi < this.qDim; qi++) { f_s[i * this.qDim + qi] = this.alpha * val * 0.01; }
+        }
+        const eta = 0.05 / Math.max(1, this.maxEigApprox);
+        const A = zeroMatrix(N, N);
+        for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) A[i][j] = (i === j ? 1 : 0) + eta * Lfull[i][j];
+        const rhs = vecAdd(s, vecScale(f_s, eta));
+        
+        let sSolved;
+        try {
+            sSolved = solveLinearSystem(A, rhs, { tol: 1e-6, maxIter: 30 });
+        } catch (e) {
+            sSolved = null; // Set to null on solver failure
+        }
+        
+        // ULTIMATE STABILITY FIX: Check the solver's output for validity.
+        // If it's invalid (null or contains NaN), we immediately reset and halt this frame's update.
+        if (!sSolved || !isFiniteVector(sSolved)) {
+            logger.error('Solver produced invalid vector. Halting diffusion and resetting stalks to prevent NaN cascade.');
+            this.resetStalks();
+            return { energy: 0, phi: 0 };
+        }
+
+        // If we get here, sSolved is a valid vector, so we can proceed.
+        const sNext = sSolved.map(v => clamp(v, -2.0, 2.0)); // Clamp to a safe range
+        for (let i = 0; i < n; i++) {
+            this.stalks.set(this.graph.vertices[i], sNext.slice(i * this.qDim, (i + 1) * this.qDim));
+        }
+
+        this.windowedStates.push(sNext.slice());
+        if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
+        
+        this.computeH1Dimension();
+        this.computeGestaltUnity();
+        this.computeIntegratedInformation();
+
+        if (this.h1Dimension > 5 || !isFinite(this.h1Dimension)) {
+            logger.warn('High H1 dimension detected; reducing gamma and resetting stalks.');
+            this.gamma = Math.max(0.01, this.gamma * 0.9);
+            this.resetStalks();
+        }
+        
+        return { energy: this.diffusionEnergy, phi: this.phi };
     }
-    for (let i = 0; i < n; i++) {
-        const vec = sNext.slice(i * this.qDim, (i + 1) * this.qDim).map(v => clamp(v, 1e-6, 2.0));
-        this.stalks.set(this.graph.vertices[i], vec);
-    }
-    let energy = 0;
-    for (const v of this.graph.vertices) energy += norm2(this.stalks.get(v));
-    this.diffusionEnergy = energy / Math.max(1, n);
-    this.windowedStates.push(sNext.slice());
-    if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
-    this.computeH1Dimension();
-    this.computeGestaltUnity();
-    this.computeIntegratedInformation();
-    if (this.h1Dimension > 5) {
-        logger.warn('High H1 dimension; reducing gamma');
-        this.gamma = Math.max(0.01, this.gamma * 0.9);
-        this.resetStalks();
-        return this.diffuseQualia(state); // Recursive call with reset state
-    }
-    return { energy: this.diffusionEnergy, phi: this.phi };
-}
     computeH1Dimension() {
         const eps = 0.01;
         let sum = 0, count = 0;
@@ -1076,41 +1090,51 @@ class EnhancedQualiaSheaf {
         if (!isFinite(this.gestaltUnity)) this.gestaltUnity = 0;
     }
 
+    
     computeIntegratedInformation() {
-    if (!this.windowedStates || this.windowedStates.length < 3 || this.windowedStates.some(s => !isFiniteVector(s))) {
-        this.phi = clamp(Math.log(1 + Math.max(0, this.gestaltUnity)) * this.stability, 0, 10);
-        logger.warn('Insufficient or invalid windowed states for MI; using fallback phi');
-        return;
-    }
-    try {
-        const cov = covarianceMatrix(this.windowedStates, 1e-3); // Increased epsilon
-        const D = cov.length;
-        if (D < 2) {
-            this.phi = clamp(Math.log(1 + Math.max(0, this.gestaltUnity)) * this.stability, 0, 10);
-            logger.warn('Covariance matrix too small; using fallback phi');
+        const fallbackPhi = () => clamp(Math.log(1 + Math.max(0, this.gestaltUnity)) * this.stability, 0, 10);
+
+        // 1. Validate the input data from memory
+        if (!validateWindowedStates(this.windowedStates, 3, this.windowedStates?.[0]?.length || 0)) {
+            this.phi = fallbackPhi();
             return;
         }
-        const mid = Math.floor(D / 2);
-        const SA = subMatrix(cov, 0, 0, mid, mid);
-        const SB = subMatrix(cov, mid, mid, D - mid, D - mid);
-        const detFull = Math.max(1e-8, Math.abs(matrixDeterminant(cov))); // Higher minimum determinant
-        const detA = Math.max(1e-8, Math.abs(matrixDeterminant(SA)));
-        const detB = Math.max(1e-8, Math.abs(matrixDeterminant(SB)));
-        let MI = 0.5 * Math.log((detA * detB) / detFull + 1e-8);
-        MI = clamp(MI, 0, 10);
-        let fimTrace = 0;
-        for (let i = 0; i < D; i++) fimTrace += 1 / Math.max(1e-8, cov[i][i]);
-        this.fimTrace = fimTrace / Math.max(1, D);
-        const connectivity = this.graph.edges.length / (this.graph.vertices.length * (this.graph.vertices.length - 1) / 2 + this.eps);
-        const phi_v = Math.log(1 + MI) * this.stability * this.gestaltUnity * connectivity;
-        this.phi = clamp(phi_v, 0, 10);
-        if (!isFinite(this.phi)) throw new Error('Computed phi is non-finite');
-    } catch (e) {
-        logger.warn(`MI computation failed: ${e.message}; using fallback phi`);
-        this.phi = clamp(Math.log(1 + Math.max(0, this.gestaltUnity)) * this.stability, 0, 10);
-    }
-}
 
+        try {
+            const cov = covarianceMatrix(this.windowedStates, 1e-3);
+
+            // 2. CRITICAL CRASH FIX: Validate the output of the covariance matrix itself.
+            // Ensure it's a usable 2D array before we try to slice and map it.
+            if (!cov || !Array.isArray(cov) || cov.length === 0 || !Array.isArray(cov[0])) {
+                this.phi = fallbackPhi();
+                return;
+            }
+            
+            const D = cov.length;
+            const mid = Math.floor(D / 2);
+
+            const logDetFull = logDeterminantFromDiagonal(cov);
+
+            const covA = cov.slice(0, mid).map(r => r.slice(0, mid));
+            const covB = cov.slice(mid, D).map(r => r.slice(mid, D));
+
+            const logDetA = logDeterminantFromDiagonal(covA);
+            const logDetB = logDeterminantFromDiagonal(covB);
+
+            let MI = 0.5 * (logDetA + logDetB - logDetFull);
+            MI = clamp(MI, 0, 10);
+
+            const vCount = this.graph?.vertices?.length || 1;
+            const connectivity = (this.graph?.edges?.length || 0) / (vCount * (vCount - 1) / 2 + 1e-8);
+            
+            const phi_v = Math.log(1 + MI) * this.stability * this.gestaltUnity * Math.max(1e-6, connectivity);
+            this.phi = isFinite(phi_v) ? clamp(phi_v, 0, 10) : fallbackPhi();
+
+        } catch (e) {
+            console.warn('computeIntegratedInformation encountered an error; using fallback phi', e.message);
+            this.phi = fallbackPhi();
+        }
+    }
     visualizeActivity() {
         const sheafGraphEl = document.querySelector('.sheaf-graph');
         if (!sheafGraphEl) return;
@@ -1959,6 +1983,7 @@ class OntologicalWorldModel {
             if (!isFinite(currentPhi) || !isFinite(currentFreeEnergy) || currentPhi < 0) {
                 logger.error(`Critical numerical instability detected (Φ: ${currentPhi.toFixed(3)}, Free Energy: ${currentFreeEnergy.toFixed(3)}). Resetting AI.`);
                 this.resetAI();
+                // CRITICAL FIX: Stop the current frame to prevent further errors.
                 return;
             }
             // --- End Circuit Breaker ---
@@ -1989,18 +2014,14 @@ class OntologicalWorldModel {
                 this.opponentAI.learn(gameUpdate.pReward, postState, audioAmplitude);
             }
 
-            // --- Decoupled Score Update ---
             document.getElementById('player-score').textContent = this.pongGame.score.player;
             document.getElementById('ai-score').textContent = this.pongGame.score.ai;
-            // --- End Decoupled Score Update ---
-
-            // --- Throttled NN Visualizer Update ---
-            if (this.frameCount % 5 === 0) { // Update every 5 frames
+            
+            if (this.frameCount % 5 === 0) {
                 this.mainViz.update(mainDecision.activations);
                 this.opponentViz.update(opponentDecision.activations);
-                this.updateVisualization(); // Updates OFTCC panel
+                this.updateVisualization();
             }
-            // --- End Throttled NN Visualizer Update ---
 
             this.pongGame.render(this.ctx);
             requestAnimationFrame(() => this.gameLoop());
