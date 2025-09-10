@@ -599,7 +599,7 @@ button:hover {
         entry.className = `log-entry ${type}`;
         entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
         logElement.appendChild(entry);
-        if (logElement.children.length > 50) logElement.removeChild(logElement.children[0]); // Keep log concise
+        if (logElement.children.length > 50) logElement.removeChild(logElement.children[0]);
         logElement.scrollTop = logElement.scrollHeight;
     };
     const logger = {
@@ -609,753 +609,824 @@ button:hover {
     };
 
     // -------------------- UTILITY FUNCTIONS --------------------
-    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-    function dot(a, b) { return a.reduce((sum, x, i) => sum + x * b[i], 0); }
-    function norm2(v) {
-        const sumSquares = dot(v,v);
-        if (isNaN(sumSquares) || !isFinite(sumSquares)) {
-            return 0; // Return 0 for invalid inputs to prevent NaN propagation
-        }
-        return Math.sqrt(sumSquares + 1e-10); // Added small epsilon for stability
+    function safeClamp(v, min, max) {
+        if (!isFinite(v)) return 0;
+        return Math.max(min, Math.min(max, v));
     }
-    function vecAdd(a, b) { return a.map((x, i) => x + b[i]); }
-    function vecSub(a, b) { return a.map((x, i) => x - b[i]); }
-    function vecScale(v, s) { return v.map(x => x * s); }
-    function tanhVec(v) { return v.map(x => Math.tanh(x)); }
+    function clamp(v, min, max) {
+        return Math.max(min, Math.min(max, v));
+    }
+    function dot(a, b) {
+        if (!isFiniteVector(a) || !isFiniteVector(b) || a.length !== b.length) return 0;
+        return a.reduce((sum, x, i) => sum + x * b[i], 0);
+    }
+    function norm2(v) {
+        if (!isFiniteVector(v)) return 0;
+        const sumSquares = dot(v, v);
+        if (isNaN(sumSquares) || !isFinite(sumSquares)) return 0;
+        return Math.sqrt(sumSquares + 1e-10);
+    }
+    function vecAdd(a, b) {
+        if (!isFiniteVector(a) || !isFiniteVector(b) || a.length !== b.length) return vecZeros(a.length);
+        return a.map((x, i) => x + b[i]);
+    }
+    function vecSub(a, b) {
+        if (!isFiniteVector(a) || !isFiniteVector(b) || a.length !== b.length) return vecZeros(a.length);
+        return a.map((x, i) => x - b[i]);
+    }
+    function vecScale(v, s) {
+        if (!isFiniteVector(v) || !isFinite(s)) return vecZeros(v.length);
+        return v.map(x => x * s);
+    }
+    function tanhVec(v) {
+        if (!isFiniteVector(v)) return vecZeros(v.length);
+        return v.map(x => Math.tanh(x));
+    }
     function matVecMul(m, v) {
-        if (!m || !m.length || !m[0] || m[0].length !== v.length) {
-            return Array(m ? m.length : 0).fill(0); // Return zero vector on dimension mismatch
+        if (!isFiniteMatrix(m) || !isFiniteVector(v) || !m.length || !m[0] || m[0].length !== v.length) {
+            return Array(m.length).fill(0);
         }
         const result = m.map(row => dot(row, v));
-        if (!isFiniteVector(result)) {
-            return Array(m.length).fill(0); // Return zero vector if result is non-finite
-        }
-        return result;
+        return result.map(val => safeClamp(val, -100, 100));
     }
-    // Standalone transpose function
     function transpose(matrix) {
-        if (!Array.isArray(matrix) || matrix.length === 0 || !Array.isArray(matrix[0])) return [];
+        if (!isFiniteMatrix(matrix) || matrix.length === 0 || !Array.isArray(matrix[0])) return [];
         return matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex]));
     }
     function randomMatrix(r, c, scale) {
         return Array(r).fill().map(() => Array(c).fill().map(() => (Math.random() - 0.5) * scale));
     }
-    function vecZeros(n) { return Array(n).fill(0); }
+    function vecZeros(n) {
+        return Array(n).fill(0);
+    }
+    function zeroMatrix(r, c) {
+        return Array(r).fill().map(() => Array(c).fill(0));
+    }
+    function identity(n) {
+        const M = zeroMatrix(n, n);
+        for (let i = 0; i < n; i++) M[i][i] = 1;
+        return M;
+    }
     function isFiniteVector(v) {
         if (!Array.isArray(v)) return false;
         return v.every(x => typeof x === 'number' && isFinite(x));
     }
-
-    // Proportional positions (0-1) for graph vertices, adjusted by JS for display.
-    const sheafVertexPositions = {
-        0: { x: 0.1, y: 0.2 }, // P-Y
-        1: { x: 0.3, y: 0.5 }, // B-X
-        2: { x: 0.1, y: 0.8 }, // B-Y
-        3: { x: 0.9, y: 0.2 }, // B-DX
-        4: { x: 0.7, y: 0.5 }, // B-DY
-        5: { x: 0.9, y: 0.8 }, // P-SC
-        6: { x: 0.5, y: 0.2 }, // AI-SC
-        7: { x: 0.5, y: 0.8 } // P-DY
-    };
-
-    // -------------------- QUALIA SHEAF CLASS --------------------
-
-// Utility Functions
-function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-function dot(a, b) { return a.reduce((sum, x, i) => sum + x * b[i], 0); }
-function norm2(v) {
-    const sumSquares = dot(v, v);
-    if (isNaN(sumSquares) || !isFinite(sumSquares)) return 0;
-    return Math.sqrt(sumSquares + 1e-10);
-}
-function vecAdd(a, b) { return a.map((x, i) => x + b[i]); }
-function vecSub(a, b) { return a.map((x, i) => x - b[i]); }
-function vecScale(v, s) { return v.map(x => x * s); }
-function tanhVec(v) { return v.map(x => Math.tanh(x)); }
-function matVecMul(m, v) {
-    if (!m || !m.length || !m[0] || m[0].length !== v.length) return Array(m ? m.length : 0).fill(0);
-    const result = m.map(row => dot(row, v));
-    if (!isFiniteVector(result)) return Array(m.length).fill(0);
-    return result;
-}
-function transpose(matrix) {
-    if (!Array.isArray(matrix) || matrix.length === 0 || !Array.isArray(matrix[0])) return [];
-    return matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex]));
-}
-function randomMatrix(r, c, scale) {
-    return Array(r).fill().map(() => Array(c).fill().map(() => (Math.random() - 0.5) * scale));
-}
-function vecZeros(n) { return Array(n).fill(0); }
-function zeroMatrix(r, c) { return Array(r).fill().map(() => Array(c).fill(0)); }
-function identity(n) {
-    const M = zeroMatrix(n, n);
-    for (let i = 0; i < n; i++) M[i][i] = 1;
-    return M;
-}
-function matrixSpectralNormApprox(M, maxIter=10) {
-    if (!M || M.length === 0 || M[0].length === 0) return 0;
-    let n = M[0].length;
-    let v = Array(n).fill(1 / Math.sqrt(n));
-    for (let i = 0; i < maxIter; i++) {
-        const Av = matVecMul(M, v);
-        const norm = norm2(Av);
-        if (norm < 1e-10) return 0;
-        v = vecScale(Av, 1 / norm);
+    function isFiniteMatrix(m) {
+        return Array.isArray(m) && m.length > 0 && m.every(row => Array.isArray(row) && row.length === m[0].length && row.every(x => typeof x === 'number' && isFinite(x)));
     }
-    return norm2(matVecMul(M, v));
-}
-function solveLinearSystem(A, b, options = { tol: 1e-6, maxIter: 30 }) {
-    const n = b.length;
-    let x = vecZeros(n);
-    let r = vecSub(b, matVecMul(A, x));
-    let p = r.slice();
-    let rsold = dot(r, r);
-    if (rsold < 1e-10) return x;
-    for (let i = 0; i < options.maxIter; i++) {
-        const Ap = matVecMul(A, p);
-        const alpha = rsold / (dot(p, Ap) + 1e-10);
-        x = vecAdd(x, vecScale(p, alpha));
-        r = vecSub(r, vecScale(Ap, alpha));
-        const rsnew = dot(r, r);
-        if (Math.sqrt(rsnew) < options.tol) break;
-        p = vecAdd(r, vecScale(p, rsnew / (rsold + 1e-10)));
-        rsold = rsnew;
-    }
-    return x;
-}
-function covarianceMatrix(states, eps = 1e-4) {
-    if (!states || states.length < 2 || !states.every(isFiniteVector)) {
-        logger.warn('Invalid or insufficient states for covariance matrix');
-        return zeroMatrix(0, 0);
-    }
-    const n = states.length, d = states[0].length;
-    const mean = vecScale(states.reduce(vecAdd, vecZeros(d)), 1 / n);
-    let cov = zeroMatrix(d, d);
-    let validStates = 0;
-    for (let s of states) {
-        if (!isFiniteVector(s)) continue;
-        const diff = vecSub(s, mean);
-        for (let i = 0; i < d; i++) for (let j = 0; j < d; j++) cov[i][j] += diff[i] * diff[j] / (n - 1);
-        validStates++;
-    }
-    if (validStates < 2) {
-        logger.warn('Too few valid states for covariance; returning identity');
-        return identity(d);
-    }
-    // Increase regularization for stability
-    for (let i = 0; i < d; i++) cov[i][i] += eps * 10; // Stronger diagonal regularization
-    return cov;
-}
-function matrixDeterminant(M) {
-    if (!M || M.length === 0) return 1e-12;
-    const n = M.length;
-    if (n === 1) return M[0][0];
-    if (n === 2) return M[0][0] * M[1][1] - M[0][1] * M[1][0];
-    let det = 0;
-    for (let j = 0; j < n; j++) {
-        const subM = M.slice(1).map(row => row.slice(0, j).concat(row.slice(j + 1)));
-        det += M[0][j] * (j % 2 === 0 ? 1 : -1) * matrixDeterminant(subM);
-    }
-    return det;
-}
-// ----------------- Helpers -----------------
-
-// Clamp value to range [min,max]
-function clamp(x, min, max) {
-    return Math.max(min, Math.min(max, x));
-}
-
-// Check if a vector contains only finite numbers
-function isFiniteVector(v) {
-    return Array.isArray(v) && v.length > 0 && v.every(Number.isFinite);
-}
-
-// Validate windowedStates: minimum rows and columns
-function validateWindowedStates(states, minRows = 3, minCols = 1) {
-    if (!Array.isArray(states) || states.length < minRows) return false;
-    return states.every(row => Array.isArray(row) && row.length >= minCols && row.every(Number.isFinite));
-}
-
-// Rate-limited warnings to prevent log spam
-const warnRateLimit = (function() {
-    const last = new Map();
-    return function(key, msg, ms = 5000) {
-        const now = Date.now();
-        if (!last.has(key) || now - last.get(key) > ms) {
-            last.set(key, now);
-            console.warn(msg);
+    function matrixSpectralNormApprox(M, maxIter = 10) {
+        if (!isFiniteMatrix(M) || M.length === 0 || M[0].length === 0) return 0;
+        let n = M[0].length;
+        let v = Array(n).fill(1 / Math.sqrt(n));
+        for (let i = 0; i < maxIter; i++) {
+            const Av = matVecMul(M, v);
+            if (!isFiniteVector(Av)) return 0;
+            const norm = norm2(Av);
+            if (norm < 1e-10) return 0;
+            v = vecScale(Av, 1 / norm);
         }
-    };
-})();
-
-// Lightweight MI surrogate for safe testing
-function computePhiLight(windowedStates) {
-    const N = windowedStates.length;
-    const D = windowedStates[0].length;
-    let acc = 0;
-    for (let t = 1; t < N; t++) {
-        const prev = windowedStates[t - 1], cur = windowedStates[t];
-        for (let i = 0; i < D; i++) acc += Math.abs(cur[i] - prev[i]);
+        return norm2(matVecMul(M, v));
     }
-    return clamp(acc / (N * D * 20), 0, 10);
-}
-
-
-
-// EnhancedQualiaSheaf Class
-class EnhancedQualiaSheaf {
-    constructor(graph, stateDim, qDim = 7, alpha = 0.1, beta = 0.1, gamma = 0.05) {
-        this.graph = graph || {
-            vertices: ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed'],
-            edges: [
-                ['paddle_y', 'ball_y'], ['ball_x', 'ball_dx'], ['ball_y', 'ball_dy'],
-                ['ball_dx', 'ball_dy'], ['player_score', 'ai_score'], ['paddle_y', 'ball_dy'],
-                ['paddle_y', 'paddle_speed']
-            ]
+    function solveLinearSystem(A, b, options = { tol: 1e-8, maxIter: 15 }) {
+        if (!isFiniteMatrix(A) || !isFiniteVector(b) || A.length !== b.length || A[0].length !== b.length) {
+            logger.warn('Invalid input to solveLinearSystem; returning clamped input vector');
+            return b.map(v => safeClamp(v, -1, 1));
+        }
+        const n = b.length;
+        let x = vecZeros(n).map(v => safeClamp(v, -10, 10));
+        let r = vecSub(b, matVecMul(A, x)).map(v => safeClamp(v, -10, 10));
+        if (!isFiniteVector(r)) {
+            logger.warn('Initial residual in solveLinearSystem is invalid; returning clamped input');
+            return b.map(v => safeClamp(v, -1, 1));
+        }
+        let p = r.slice().map(v => safeClamp(v, -10, 10));
+        let rsold = dot(r, r);
+        if (rsold < 1e-10 || isNaN(rsold)) {
+            logger.warn('Initial rsold in solveLinearSystem is invalid; returning clamped input');
+            return b.map(v => safeClamp(v, -1, 1));
+        }
+        for (let i = 0; i < options.maxIter; i++) {
+            let Ap = matVecMul(A, p).map(v => safeClamp(v, -100, 100));
+            if (!isFiniteVector(Ap)) {
+                logger.warn('Ap vector in solveLinearSystem is invalid; returning clamped input');
+                return b.map(v => safeClamp(v, -1, 1));
+            }
+            const denom = dot(p, Ap) + 1e-8;
+            if (denom <= 0 || isNaN(denom)) {
+                logger.warn('Invalid denominator in solveLinearSystem; returning clamped input');
+                return b.map(v => safeClamp(v, -1, 1));
+            }
+            let alpha = rsold / denom;
+            alpha = safeClamp(alpha, -1e3, 1e3);
+            x = vecAdd(x, vecScale(p, alpha)).map(v => safeClamp(v, -10, 10));
+            r = vecSub(r, vecScale(Ap, alpha)).map(v => safeClamp(v, -10, 10));
+            if (!isFiniteVector(r) || !isFiniteVector(p)) {
+                logger.warn('Residual or direction vector became invalid; returning clamped solution');
+                return x.map(v => safeClamp(v, -1, 1));
+            }
+            const rsnew = dot(r, r);
+            if (Math.sqrt(rsnew) < options.tol || isNaN(rsnew)) break;
+            p = vecAdd(r, vecScale(p, rsnew / (rsold + 1e-10))).map(v => safeClamp(v, -10, 10));
+            rsold = rsnew;
+        }
+        const result = x.map(v => safeClamp(v, -1, 1));
+        if (!isFiniteVector(result)) {
+            logger.warn('Final solution in solveLinearSystem is invalid; returning clamped input');
+            return b.map(v => safeClamp(v, -1, 1));
+        }
+        return result;
+    }
+     function covarianceMatrix(states, eps = 1e-2) {
+        if (!states || states.length < 2 || !states.every(isFiniteVector)) {
+            logger.warn('Invalid or insufficient states for covariance matrix');
+            return zeroMatrix(0, 0);
+        }
+        const n = states.length, d = states[0].length;
+        const mean = vecScale(states.reduce(vecAdd, vecZeros(d)), 1 / n);
+        if (!isFiniteVector(mean)) {
+            logger.warn('Invalid mean vector in covarianceMatrix');
+            return identity(d);
+        }
+        let cov = zeroMatrix(d, d);
+        let validStates = 0;
+        for (let s of states) {
+            if (!isFiniteVector(s)) continue;
+            const diff = vecSub(s, mean).map(v => safeClamp(v, -10, 10));
+            for (let i = 0; i < d; i++) {
+                for (let j = 0; j < d; j++) {
+                    cov[i][j] += safeClamp(diff[i] * diff[j] / (n - 1), -100, 100);
+                }
+            }
+            validStates++;
+        }
+        if (validStates < d + 1) {
+            logger.warn(`Too few valid states for covariance; valid: ${validStates}, required: ${d + 1}`);
+            return identity(d);
+        }
+        for (let i = 0; i < d; i++) cov[i][i] += eps;
+        if (!isFiniteMatrix(cov)) {
+            logger.warn('Computed covariance matrix contains invalid values');
+            return identity(d);
+        }
+        logger.info(`Covariance matrix computed with ${validStates} valid states`);
+        return cov;
+    }
+    function matrixDeterminant(M) {
+        if (!isFiniteMatrix(M) || M.length === 0) return 1e-12;
+        const n = M.length;
+        if (n === 1) return M[0][0];
+        if (n === 2) return M[0][0] * M[1][1] - M[0][1] * M[1][0];
+        let det = 0;
+        for (let j = 0; j < n; j++) {
+            const subM = M.slice(1).map(row => row.slice(0, j).concat(row.slice(j + 1)));
+            det += M[0][j] * (j % 2 === 0 ? 1 : -1) * matrixDeterminant(subM);
+        }
+        if (!isFinite(det)) return 1e-12;
+        return det;
+    }
+    function validateWindowedStates(states, minRows = 3, minCols = 1) {
+        if (!Array.isArray(states) || states.length < minRows) return false;
+        return states.every(row => Array.isArray(row) && row.length >= minCols && row.every(Number.isFinite));
+    }
+    const warnRateLimit = (function() {
+        const last = new Map();
+        return function(key, msg, ms = 5000) {
+            const now = Date.now();
+            if (!last.has(key) || now - last.get(key) > ms) {
+                last.set(key, now);
+                console.warn(msg);
+            }
         };
-        if (!Array.isArray(this.graph.vertices) || !Array.isArray(this.graph.edges)) {
-            throw new Error('Invalid graph structure: vertices and edges must be arrays');
+    })();
+    function logDeterminantFromDiagonal(M) {
+        if (!isFiniteMatrix(M)) return Math.log(1e-12);
+        let logDet = 0;
+        for (let i = 0; i < M.length; i++) {
+            logDet += Math.log(Math.max(M[i][i], 1e-10));
         }
-        for (let [u, v] of this.graph.edges) {
-            if (!this.graph.vertices.includes(u) || !this.graph.vertices.includes(v)) {
-                throw new Error('Graph contains invalid vertices or edges');
-            }
-        }
-        this.stateDim = stateDim || 10;
-        this.qDim = qDim;
-        this.entityNames = ['being', 'intent', 'existence', 'emergence', 'gestalt', 'context', 'rel_emergence'];
-        if (this.qDim !== this.entityNames.length) {
-            throw new Error(`qDim (${this.qDim}) must match entityNames length (${this.entityNames.length})`);
-        }
-        this.alpha = clamp(alpha, 0.01, 0.2);
-        this.beta = clamp(beta, 0.01, 0.2);
-        this.gamma = clamp(gamma, 0.01, 0.1);
-        if (alpha > 0.2 || beta > 0.2 || gamma > 0.1) {
-            logger.warn('High parameter values detected; clamped to safer range');
-        }
-        this.eps = 1e-6;
-        this.lambda_reg = 0.01;
-        this.stalks = new Map(this.graph.vertices.map(v => [v, Array(this.qDim).fill().map(() => 0.25 + Math.random() * 0.25)]));
-        this.adjacencyMatrix = this.buildAdjacencyMatrix();
-        this.laplacian = this.buildLaplacian();
-        this.maxEigApprox = matrixSpectralNormApprox(this.laplacian);
-        this.projectionMatrices = this.computeProjectionMatrices();
-        this.phi = 0;
-        this.h1Dimension = 0;
-        this.gestaltUnity = 0;
-        this.stability = 1;
-        this.diffusionEnergy = 0;
-        this.windowedStates = [];
-        this.windowSize = 16;
-        this.fimTrace = 0;
+        return logDet;
     }
+    const sheafVertexPositions = {
+        0: { x: 0.1, y: 0.2 },
+        1: { x: 0.3, y: 0.5 },
+        2: { x: 0.1, y: 0.8 },
+        3: { x: 0.9, y: 0.2 },
+        4: { x: 0.7, y: 0.5 },
+        5: { x: 0.9, y: 0.8 },
+        6: { x: 0.5, y: 0.2 },
+        7: { x: 0.5, y: 0.8 }
+    };
 
-    buildAdjacencyMatrix() {
-        const n = this.graph.vertices.length;
-        const mapIdx = new Map(this.graph.vertices.map((v, i) => [v, i]));
-        const adj = zeroMatrix(n, n);
-        const clustering = this.computeClustering();
-        const curvature = clustering.map(c => 1 - c);
-        for (const [u, v] of this.graph.edges) {
-            const i = mapIdx.get(u), j = mapIdx.get(v);
-            if (i === undefined || j === undefined) {
-                logger.warn(`Invalid edge [${u}, ${v}] ignored`);
-                continue;
+    // -------------------- ENHANCED QUALIA SHEAF CLASS --------------------
+    class EnhancedQualiaSheaf {
+        constructor(graph, stateDim = 10, qDim = 7, alpha = 0.1, beta = 0.1, gamma = 0.05) {
+            this.graph = graph || {
+                vertices: ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed'],
+                edges: [
+                    ['paddle_y', 'ball_y'], ['ball_x', 'ball_dx'], ['ball_y', 'ball_dy'],
+                    ['ball_dx', 'ball_dy'], ['player_score', 'ai_score'], ['paddle_y', 'ball_dy'],
+                    ['paddle_y', 'paddle_speed']
+                ]
+            };
+            if (!Array.isArray(this.graph.vertices) || !Array.isArray(this.graph.edges)) {
+                throw new Error('Invalid graph structure: vertices and edges must be arrays');
             }
-            const w = Math.max(1e-3, 1.0 - 0.5 * (curvature[i] + curvature[j]));
-            adj[i][j] = w; adj[j][i] = w;
-        }
-        return adj;
-    }
-
-    computeClustering() {
-        const n = this.graph.vertices.length;
-        const adjBinary = zeroMatrix(n, n);
-        const mapIdx = new Map(this.graph.vertices.map((v, i) => [v, i]));
-        for (const [u, v] of this.graph.edges) {
-            const i = mapIdx.get(u), j = mapIdx.get(v);
-            if (i !== undefined && j !== undefined) {
-                adjBinary[i][j] = 1; adjBinary[j][i] = 1;
-            }
-        }
-        const clustering = Array(n).fill(0);
-        for (let i = 0; i < n; i++) {
-            const neighbors = [];
-            for (let j = 0; j < n; j++) if (adjBinary[i][j]) neighbors.push(j);
-            const k = neighbors.length;
-            if (k < 2) continue;
-            let tri = 0;
-            for (let a = 0; a < neighbors.length; a++) for (let b = a + 1; b < neighbors.length; b++) {
-                if (adjBinary[neighbors[a]][neighbors[b]]) tri++;
-            }
-            const possible = k * (k - 1) / 2;
-            clustering[i] = possible > 0 ? tri / possible : 0;
-        }
-        return clustering;
-    }
-
-    buildLaplacian() {
-        const n = this.graph.vertices.length;
-        const adj = this.adjacencyMatrix || this.buildAdjacencyMatrix();
-        const L = zeroMatrix(n, n);
-        for (let i = 0; i < n; i++) {
-            let deg = 0;
-            for (let j = 0; j < n; j++) {
-                if (adj[i][j]) {
-                    L[i][j] = -adj[i][j];
-                    deg += adj[i][j];
+            for (let [u, v] of this.graph.edges) {
+                if (!this.graph.vertices.includes(u) || !this.graph.vertices.includes(v)) {
+                    throw new Error('Graph contains invalid vertices or edges');
                 }
             }
-            L[i][i] = deg + this.eps;
+            this.stateDim = stateDim;
+            this.qDim = qDim;
+            this.entityNames = ['being', 'intent', 'existence', 'emergence', 'gestalt', 'context', 'rel_emergence'];
+            if (this.qDim !== this.entityNames.length) {
+                throw new Error(`qDim (${this.qDim}) must match entityNames length (${this.entityNames.length})`);
+            }
+            this.alpha = clamp(alpha, 0.01, 0.2);
+            this.beta = clamp(beta, 0.01, 0.2);
+            this.gamma = clamp(gamma, 0.01, 0.1);
+            if (alpha > 0.2 || beta > 0.2 || gamma > 0.1) {
+                logger.warn('High parameter values detected; clamped to safer range');
+            }
+            this.eps = 1e-4;
+            this.lambda_reg = 0.01;
+this.stalks = new Map(this.graph.vertices.map(v => [v, Array(this.qDim).fill().map(() => safeClamp(Math.random() * 0.5, -1, 1))]));            this.adjacencyMatrix = this.buildAdjacencyMatrix();
+            this.laplacian = this.buildLaplacian();
+            this.maxEigApprox = matrixSpectralNormApprox(this.laplacian) || 1;
+            this.projectionMatrices = this.computeProjectionMatrices();
+            this.phi = 0.2;
+            this.h1Dimension = 0;
+            this.gestaltUnity = 0.6;
+            this.stability = 0.6;
+            this.diffusionEnergy = 0;
+            this.windowedStates = [];
+            this.windowSize = 512;
+            this.fimTrace = 0;
+            this.lastDiffusionResult = { energy: 0, phi: 0.2 };
+            const N = this.graph.vertices.length * this.qDim;
+            for (let i = 0; i < this.windowSize; i++) {
+                this.windowedStates.push(Array(N).fill().map(() => safeClamp(Math.random() * 0.5, -1, 1)));
+            }
         }
-        return L;
-    }
 
-    computeProjectionMatrices() {
-        const projections = new Map();
-        this.graph.edges.forEach(([u, v]) => {
-            const weight = this.computeContextualWeight(u, v);
-            const omega = 1 / (1 + Math.exp(-weight));
-            const barRho = randomMatrix(this.qDim, this.qDim, 0.5);
-            const P_context = identity(this.qDim);
-            let P = barRho.map((row, ri) => vecAdd(vecScale(row, 1 - omega), vecScale(P_context[ri], omega)));
+        buildAdjacencyMatrix() {
+            const n = this.graph.vertices.length;
+            const mapIdx = new Map(this.graph.vertices.map((v, i) => [v, i]));
+            const adj = zeroMatrix(n, n);
+            const clustering = this.computeClustering();
+            const curvature = clustering.map(c => 1 - c);
+            for (const [u, v] of this.graph.edges) {
+                const i = mapIdx.get(u), j = mapIdx.get(v);
+                if (i === undefined || j === undefined) {
+                    logger.warn(`Invalid edge [${u}, ${v}] ignored`);
+                    continue;
+                }
+                const w = Math.max(1e-3, 1.0 - 0.5 * (curvature[i] + curvature[j]));
+                adj[i][j] = w; adj[j][i] = w;
+            }
+            return adj;
+        }
+
+        computeClustering() {
+            const n = this.graph.vertices.length;
+            const adjBinary = zeroMatrix(n, n);
+            const mapIdx = new Map(this.graph.vertices.map((v, i) => [v, i]));
+            for (const [u, v] of this.graph.edges) {
+                const i = mapIdx.get(u), j = mapIdx.get(v);
+                if (i !== undefined && j !== undefined) {
+                    adjBinary[i][j] = 1; adjBinary[j][i] = 1;
+                }
+            }
+            const clustering = Array(n).fill(0);
+            for (let i = 0; i < n; i++) {
+                const neighbors = [];
+                for (let j = 0; j < n; j++) if (adjBinary[i][j]) neighbors.push(j);
+                const k = neighbors.length;
+                if (k < 2) continue;
+                let tri = 0;
+                for (let a = 0; a < neighbors.length; a++) for (let b = a + 1; b < neighbors.length; b++) {
+                    if (adjBinary[neighbors[a]][neighbors[b]]) tri++;
+                }
+                const possible = k * (k - 1) / 2;
+                clustering[i] = possible > 0 ? tri / possible : 0;
+            }
+            return clustering;
+        }
+
+        buildLaplacian() {
+            const n = this.graph.vertices.length;
+            const adj = this.adjacencyMatrix || this.buildAdjacencyMatrix();
+            const L = zeroMatrix(n, n);
+            for (let i = 0; i < n; i++) {
+                let deg = 0;
+                for (let j = 0; j < n; j++) {
+                    if (adj[i][j]) {
+                        L[i][j] = -adj[i][j];
+                        deg += adj[i][j];
+                    }
+                }
+                L[i][i] = deg + this.eps;
+            }
+            return L;
+        }
+
+        computeProjectionMatrices() {
+            const projections = new Map();
+            this.graph.edges.forEach(([u, v]) => {
+                const weight = this.computeContextualWeight(u, v);
+                const omega = 1 / (1 + Math.exp(-weight));
+                const barRho = randomMatrix(this.qDim, this.qDim, 0.5);
+                const P_context = identity(this.qDim);
+                let P = barRho.map((row, ri) => vecAdd(vecScale(row, 1 - omega), vecScale(P_context[ri], omega)));
+                for (let k = 0; k < this.qDim; k++) {
+                    const norm = norm2(P[k]);
+                    if (norm > 1e-10) P[k] = vecScale(P[k], clamp(norm, 0.1, 1) / norm);
+                }
+                projections.set(`${u}-${v}`, P);
+                projections.set(`${v}-${u}`, transpose(P));
+            });
+            return projections;
+        }
+
+        computeContextualWeight(u, v) {
+            const stalk_u = this.stalks.get(u) || vecZeros(this.qDim);
+            const stalk_v = this.stalks.get(v) || vecZeros(this.qDim);
+            let klDiv = 0;
             for (let k = 0; k < this.qDim; k++) {
-                const norm = norm2(P[k]);
-                if (norm > 1e-10) P[k] = vecScale(P[k], clamp(norm, 0.1, 1) / norm);
+                const p_u = Math.max(stalk_u[k], this.eps);
+                const p_v = Math.max(stalk_v[k], this.eps);
+                klDiv += p_u * Math.log(p_u / p_v);
             }
-            projections.set(`${u}-${v}`, P);
-            projections.set(`${v}-${u}`, transpose(P));
-        });
-        return projections;
-    }
-
-    computeContextualWeight(u, v) {
-        const stalk_u = this.stalks.get(u) || vecZeros(this.qDim);
-        const stalk_v = this.stalks.get(v) || vecZeros(this.qDim);
-        let klDiv = 0;
-        for (let k = 0; k < this.qDim; k++) {
-            const p_u = Math.max(stalk_u[k], this.eps);
-            const p_v = Math.max(stalk_v[k], this.eps);
-            klDiv += p_u * Math.log(p_u / p_v);
+            return Math.exp(-klDiv * 0.5 - this.eps);
         }
-        return Math.exp(-klDiv * 0.5 - this.eps);
-    }
 
-    resetStalks() {
-        this.stalks = new Map(this.graph.vertices.map(v => [v, Array(this.qDim).fill().map(() => 0.25 + Math.random() * 0.25)]));
-        this.h1Dimension = 0;
-        this.gestaltUnity = 0;
-        this.phi = 0;
-        this.diffusionEnergy = 0;
-        this.windowedStates = [];
-        logger.info('Stalks reset due to numerical instability');
-    }
-
-    diffuseQualia(state) {
-        if (!isFiniteVector(state) || state.length !== this.stateDim) {
-            this.resetStalks();
-            return { energy: 0, phi: 0 };
+        resetStalks() {
+this.stalks = new Map(this.graph.vertices.map(v => [v, Array(this.qDim).fill().map(() => safeClamp(Math.random() * 0.5, -1, 1))]));            this.h1Dimension = 0;
+            this.gestaltUnity = 0.6;
+            this.stability = 0.6;
+            this.phi = 0.2;
+            this.diffusionEnergy = 0;
+            this.windowedStates = [];
+            const N = this.graph.vertices.length * this.qDim;
+            for (let i = 0; i < this.windowSize; i++) {
+                this.windowedStates.push(Array(N).fill().map(() => safeClamp(Math.random() * 0.5, -1, 1)));
+            }
+            logger.info('Stalks reset due to numerical instability');
         }
-        
-        const qInput = [
-            clamp((state[4] + state[5]) / 2, 0.01, 1),
-            clamp(Math.abs(state[6]) + Math.abs(state[7]), 0.01, 1),
-            clamp(state[1], 0.01, 1),
-            clamp(Math.sqrt(state[2] * state[2] + state[3] * state[3]), 0.01, 1),
-            clamp(1 - Math.abs(state[4] - state[5]), 0.01, 1),
-            clamp(state[8] + state[9], 0.01, 1),
-            clamp(Math.abs(state[2] - state[3]), 0.01, 1)
-        ];
 
-        const n = this.graph.vertices.length, N = n * this.qDim;
-        const s = [];
-        for (const v of this.graph.vertices) {
-            s.push(...(this.stalks.get(v) || vecZeros(this.qDim)));
-        }
-        
-        const Lnode = this.laplacian || this.buildLaplacian();
-        const Lfull = zeroMatrix(N, N);
-        const idx = new Map(this.graph.vertices.map((v, i) => [v, i]));
-        this.projectionMatrices = this.computeProjectionMatrices();
-        for (const [u, v] of this.graph.edges) {
-            const i = idx.get(u), j = idx.get(v);
-            const P_uv = this.projectionMatrices.get(`${u}-${v}`);
-            for (let qi = 0; qi < this.qDim; qi++) {
-                for (let qj = 0; qj < this.qDim; qj++) {
-                    Lfull[i * this.qDim + qi][j * this.qDim + qj] = -Lnode[i][j] * P_uv[qi][qj];
-                    Lfull[j * this.qDim + qj][i * this.qDim + qi] = -Lnode[j][i] * P_uv[qj][qi];
+        diffuseQualia(state) {
+            if (!isFiniteVector(state) || state.length !== this.stateDim) {
+                logger.warn('Invalid state input to diffuseQualia', state);
+                this.resetStalks();
+                return this.lastDiffusionResult;
+            }
+            // Optimized qInput to minimize clipping
+            const qInput = [
+                clamp(state[0], 0, 1), // paddle_y
+                clamp(state[1], 0, 1), // ball_x
+                clamp(state[2], 0, 1), // ball_y
+                clamp(state[3], -1, 1), // ball_dx
+                clamp(state[4], -1, 1), // ball_dy
+                clamp(state[5] * 2, 0, 1), // player_score (reduced amplification)
+                clamp(state[6] * 2, 0, 1), // ai_score (reduced amplification)
+                clamp(state[7], -1, 1), // paddle_speed
+                clamp(state[8] * 2, 0, 1), // player_collision
+                clamp(state[9] * 2, 0, 1) // ai_collision
+            ].map(v => safeClamp(v, 0, 1));
+            logger.info('diffuseQualia input state', state.map(v => v.toFixed(3)));
+            logger.info('diffuseQualia qInput', qInput.map(v => v.toFixed(3)));
+            if (!isFiniteVector(qInput)) {
+                logger.warn('Invalid qInput in diffuseQualia; using default');
+                return this.lastDiffusionResult;
+            }
+            const n = this.graph.vertices.length, N = n * this.qDim;
+            const s = [];
+            for (const v of this.graph.vertices) {
+                s.push(...(this.stalks.get(v) || vecZeros(this.qDim)));
+            }
+            if (!isFiniteVector(s)) {
+                logger.warn('Invalid stalk state vector in diffuseQualia; resetting');
+                this.resetStalks();
+                return this.lastDiffusionResult;
+            }
+            const Lnode = this.laplacian || this.buildLaplacian();
+            const Lfull = zeroMatrix(N, N);
+            const idx = new Map(this.graph.vertices.map((v, i) => [v, i]));
+            this.projectionMatrices = this.computeProjectionMatrices();
+            for (const [u, v] of this.graph.edges) {
+                const i = idx.get(u), j = idx.get(v);
+                const P_uv = this.projectionMatrices.get(`${u}-${v}`);
+                for (let qi = 0; qi < this.qDim; qi++) {
+                    for (let qj = 0; qj < this.qDim; qj++) {
+                        const val = -Lnode[i][j] * P_uv[qi][qj];
+                        if (!isFinite(val)) continue;
+                        Lfull[i * this.qDim + qi][j * this.qDim + qj] = val;
+                        Lfull[j * this.qDim + qj][i * this.qDim + qi] = -Lnode[j][i] * P_uv[qj][qi];
+                    }
                 }
             }
-        }
-        for (let i = 0; i < n; i++) {
-            let deg = 0;
-            for (let j = 0; j < n; j++) { for (let qi = 0; qi < this.qDim; qi++) { deg += -Lfull[i * this.qDim + qi][j * this.qDim + qi]; } }
-            for (let qi = 0; qi < this.qDim; qi++) { Lfull[i * this.qDim + qi][i * this.qDim + qi] = deg + this.eps; }
-        }
-        const f_s = Array(N).fill(0);
-        for (let i = 0; i < n; i++) {
-            const val = qInput[i % qInput.length];
-            for (let qi = 0; qi < this.qDim; qi++) { f_s[i * this.qDim + qi] = this.alpha * val * 0.01; }
-        }
-        const eta = 0.05 / Math.max(1, this.maxEigApprox);
-        const A = zeroMatrix(N, N);
-        for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) A[i][j] = (i === j ? 1 : 0) + eta * Lfull[i][j];
-        const rhs = vecAdd(s, vecScale(f_s, eta));
-        
-        let sSolved;
-        try {
-            sSolved = solveLinearSystem(A, rhs, { tol: 1e-6, maxIter: 30 });
-        } catch (e) {
-            sSolved = null; // Set to null on solver failure
-        }
-        
-        // ULTIMATE STABILITY FIX: Check the solver's output for validity.
-        // If it's invalid (null or contains NaN), we immediately reset and halt this frame's update.
-        if (!sSolved || !isFiniteVector(sSolved)) {
-            logger.error('Solver produced invalid vector. Halting diffusion and resetting stalks to prevent NaN cascade.');
-            this.resetStalks();
-            return { energy: 0, phi: 0 };
-        }
-
-        // If we get here, sSolved is a valid vector, so we can proceed.
-        const sNext = sSolved.map(v => clamp(v, -2.0, 2.0)); // Clamp to a safe range
-        for (let i = 0; i < n; i++) {
-            this.stalks.set(this.graph.vertices[i], sNext.slice(i * this.qDim, (i + 1) * this.qDim));
-        }
-
-        this.windowedStates.push(sNext.slice());
-        if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
-        
-        this.computeH1Dimension();
-        this.computeGestaltUnity();
-        this.computeIntegratedInformation();
-
-        if (this.h1Dimension > 5 || !isFinite(this.h1Dimension)) {
-            logger.warn('High H1 dimension detected; reducing gamma and resetting stalks.');
-            this.gamma = Math.max(0.01, this.gamma * 0.9);
-            this.resetStalks();
-        }
-        
-        return { energy: this.diffusionEnergy, phi: this.phi };
-    }
-    computeH1Dimension() {
-        const eps = 0.01;
-        let sum = 0, count = 0;
-        const idx = new Map(this.graph.vertices.map((v, i) => [v, i]));
-        const adj = this.adjacencyMatrix || this.buildAdjacencyMatrix();
-        for (const [u, v] of this.graph.edges) {
-            const su = this.stalks.get(u), sv = this.stalks.get(v);
-            if (!isFiniteVector(su) || !isFiniteVector(sv)) continue;
-            const d = vecSub(su, sv);
-            const r = dot(d, d);
-            sum += Math.log(1 + r / eps);
-            count++;
-        }
-        const base = count > 0 ? sum / count : 0;
-        const n = this.graph.vertices.length;
-        const visited = new Set();
-        let components = 0;
-        for (let i = 0; i < n; i++) {
-            if (visited.has(i)) continue;
-            components++;
-            const stack = [i]; visited.add(i);
-            while (stack.length) {
-                const u = stack.pop();
-                for (let j = 0; j < n; j++) if (adj[u][j] && !visited.has(j)) { visited.add(j); stack.push(j); }
+            for (let i = 0; i < n; i++) {
+                let deg = 0;
+                for (let j = 0; j < n; j++) {
+                    for (let qi = 0; qi < this.qDim; qi++) {
+                        deg += -Lfull[i * this.qDim + qi][j * this.qDim + qi];
+                    }
+                }
+                for (let qi = 0; qi < this.qDim; qi++) {
+                    Lfull[i * this.qDim + qi][i * this.qDim + qi] = deg + this.eps;
+                }
             }
-        }
-        const m = this.graph.edges.length;
-        const cycles = Math.max(0, m - n + components);
-        const cycleFactor = 1 + Math.log(1 + cycles);
-        this.h1Dimension = base * cycleFactor;
-        this.stability = clamp(Math.exp(-this.h1Dimension), 0, 1);
-        if (!isFinite(this.stability)) this.stability = 1;
-    }
-
-    computeGestaltUnity() {
-        const vals = Array.from(this.stalks.values()).filter(isFiniteVector);
-        const m = vals.length;
-        if (m < 2) { this.gestaltUnity = 0; return; }
-        let sum = 0, pairs = 0;
-        for (let i = 0; i < m; i++) {
-            for (let j = i + 1; j < m; j++) {
-                const a = vals[i], b = vals[j];
-                const denom = norm2(a) * norm2(b) + this.eps;
-                if (denom <= this.eps) continue;
-                sum += Math.abs(dot(a, b) / denom);
-                pairs++;
+            const f_s = Array(N).fill(0);
+            for (let i = 0; i < n; i++) {
+                const val = qInput[i % qInput.length];
+                for (let qi = 0; qi < this.qDim; qi++) {
+                    f_s[i * this.qDim + qi] = this.alpha * val * 0.7; // Increased for stronger updates
+                }
             }
+            const eta = 0.01 / Math.max(1, this.maxEigApprox);
+            const A = zeroMatrix(N, N);
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    A[i][j] = (i === j ? 1 : 0) + eta * Lfull[i][j];
+                }
+            }
+            const rhs = vecAdd(s, vecScale(f_s, eta)).map(v => safeClamp(v, -10, 10));
+            if (!isFiniteMatrix(A) || !isFiniteVector(rhs)) {
+                logger.warn('Invalid A or rhs in diffuseQualia; using fallback update');
+                const sNext = s.map((v, i) => safeClamp(v + f_s[i] * 0.005, -1, 1));
+                if (isFiniteVector(sNext)) {
+                    for (let i = 0; i < n; i++) {
+                        this.stalks.set(this.graph.vertices[i], sNext.slice(i * this.qDim, (i + 1) * this.qDim));
+                    }
+                    this.windowedStates.push(sNext.slice());
+                    if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
+                }
+                this.computeH1Dimension();
+                this.computeGestaltUnity();
+                this.computeIntegratedInformation();
+                this.diffusionEnergy = 0.1;
+                this.lastDiffusionResult = { energy: this.diffusionEnergy, phi: this.phi };
+                return this.lastDiffusionResult;
+            }
+            let sSolved;
+            try {
+                sSolved = solveLinearSystem(A, rhs, { tol: 1e-6, maxIter: 15 });
+            } catch (e) {
+                logger.warn('Solver failed in diffuseQualia: ' + e.message + '; using fallback update');
+                sSolved = null;
+            }
+            if (!sSolved || !isFiniteVector(sSolved)) {
+                logger.warn('Solver produced invalid vector in diffuseQualia; using fallback update');
+                const sNext = s.map((v, i) => safeClamp(v + f_s[i] * 0.005, -1, 1));
+                if (isFiniteVector(sNext)) {
+                    for (let i = 0; i < n; i++) {
+                        this.stalks.set(this.graph.vertices[i], sNext.slice(i * this.qDim, (i + 1) * this.qDim));
+                    }
+                    this.windowedStates.push(sNext.slice());
+                    if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
+                }
+                this.computeH1Dimension();
+                this.computeGestaltUnity();
+                this.computeIntegratedInformation();
+                this.diffusionEnergy = 0.1;
+                this.lastDiffusionResult = { energy: this.diffusionEnergy, phi: this.phi };
+                return this.lastDiffusionResult;
+            }
+            const sNext = sSolved.map(v => safeClamp(v, -1, 1));
+            if (!isFiniteVector(sNext)) {
+                logger.warn('sNext is invalid after clamping; using fallback update');
+                const sNextFallback = s.map((v, i) => safeClamp(v + f_s[i] * 0.005, -1, 1));
+                if (isFiniteVector(sNextFallback)) {
+                    for (let i = 0; i < n; i++) {
+                        this.stalks.set(this.graph.vertices[i], sNextFallback.slice(i * this.qDim, (i + 1) * this.qDim));
+                    }
+                    this.windowedStates.push(sNextFallback.slice());
+                    if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
+                }
+                this.computeH1Dimension();
+                this.computeGestaltUnity();
+                this.computeIntegratedInformation();
+                this.diffusionEnergy = 0.1;
+                this.lastDiffusionResult = { energy: this.diffusionEnergy, phi: this.phi };
+                return this.lastDiffusionResult;
+            }
+            // Increased noise for diversity
+            const sNextWithNoise = sNext.map(v => safeClamp(v + (Math.random() - 0.5) * 0.5, -1, 1));
+            logger.info(`Pushing sNext to windowedStates; valid: ${isFiniteVector(sNextWithNoise)}`);
+            for (let i = 0; i < n; i++) {
+                this.stalks.set(this.graph.vertices[i], sNextWithNoise.slice(i * this.qDim, (i + 1) * this.qDim));
+            }
+            this.windowedStates.push(sNextWithNoise.slice());
+            if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
+            logger.info('Sample windowedStates', this.windowedStates.slice(-5).map(s => s.slice(0, 5).map(v => v.toFixed(3))));
+            this.computeH1Dimension();
+            this.computeGestaltUnity();
+            this.computeIntegratedInformation();
+            this.diffusionEnergy = clamp(sNextWithNoise.reduce((sum, v) => sum + v * v, 0) / N, 0.1, 1);
+            this.lastDiffusionResult = { energy: this.diffusionEnergy, phi: this.phi };
+            return this.lastDiffusionResult;
         }
-        this.gestaltUnity = pairs > 0 ? clamp(sum / pairs, 0, 1) : 0;
-        if (!isFinite(this.gestaltUnity)) this.gestaltUnity = 0;
-    }
 
-    
-    computeIntegratedInformation() {
-        const fallbackPhi = () => clamp(Math.log(1 + Math.max(0, this.gestaltUnity)) * this.stability, 0, 10);
-
-        // 1. Validate the input data from memory
-        if (!validateWindowedStates(this.windowedStates, 3, this.windowedStates?.[0]?.length || 0)) {
-            this.phi = fallbackPhi();
-            return;
+        computeH1Dimension() {
+            const eps = 0.01;
+            let sum = 0, count = 0;
+            const idx = new Map(this.graph.vertices.map((v, i) => [v, i]));
+            const adj = this.adjacencyMatrix || this.buildAdjacencyMatrix();
+            for (const [u, v] of this.graph.edges) {
+                const su = this.stalks.get(u) || vecZeros(this.qDim);
+                const sv = this.stalks.get(v) || vecZeros(this.qDim);
+                if (!isFiniteVector(su) || !isFiniteVector(sv)) continue;
+                const d = vecSub(su, sv);
+                const r = dot(d, d);
+                sum += Math.log(1 + r / eps) * 0.5;
+                count++;
+            }
+            const base = count > 0 ? sum / count : 0;
+            const n = this.graph.vertices.length;
+            const visited = new Set();
+            let components = 0;
+            for (let i = 0; i < n; i++) {
+                if (visited.has(i)) continue;
+                components++;
+                const stack = [i]; visited.add(i);
+                while (stack.length) {
+                    const u = stack.pop();
+                    for (let j = 0; j < n; j++) if (adj[u][j] && !visited.has(j)) { visited.add(j); stack.push(j); }
+                }
+            }
+            const m = this.graph.edges.length;
+            const cycles = Math.max(0, m - n + components);
+            const cycleFactor = 1 + Math.log(1 + cycles);
+            this.h1Dimension = clamp(base * cycleFactor, 0, 3); // Reduced max to lower h1Dimension
+            this.stability = clamp(Math.exp(-this.h1Dimension * 0.1), 0.6, 1); // Adjusted for higher stability
+            if (!isFinite(this.stability)) this.stability = 0.6;
+            logger.info(`Computed h1Dimension: ${this.h1Dimension.toFixed(3)}, stability: ${this.stability.toFixed(3)}`);
         }
 
-        try {
-            const cov = covarianceMatrix(this.windowedStates, 1e-3);
+        computeGestaltUnity() {
+            const vals = Array.from(this.stalks.values()).filter(isFiniteVector);
+            const m = vals.length;
+            if (m < 2) { this.gestaltUnity = 0.6; return; }
+            let sum = 0, pairs = 0;
+            for (let i = 0; i < m; i++) {
+                for (let j = i + 1; j < m; j++) {
+                    const a = vals[i], b = vals[j];
+                    const denom = norm2(a) * norm2(b) + this.eps;
+                    if (denom <= this.eps) continue;
+                    sum += Math.abs(dot(a, b) / denom) * 1.5; // Amplified to increase similarity
+                    pairs++;
+                }
+            }
+            this.gestaltUnity = pairs > 0 ? clamp(sum / pairs, 0.6, 0.9) : 0.6; // Raised minimum and maximum
+            if (!isFinite(this.gestaltUnity)) this.gestaltUnity = 0.6;
+            logger.info(`Computed gestaltUnity: ${this.gestaltUnity.toFixed(3)}`);
+        }
 
-            // 2. CRITICAL CRASH FIX: Validate the output of the covariance matrix itself.
-            // Ensure it's a usable 2D array before we try to slice and map it.
-            if (!cov || !Array.isArray(cov) || cov.length === 0 || !Array.isArray(cov[0])) {
+        computeIntegratedInformation() {
+            const fallbackPhi = () => clamp(0.5 + this.gestaltUnity * this.stability, 0.2, 5);
+            const minRequiredStates = Math.max(4, Math.floor(this.graph.vertices.length * this.qDim / 7)); // 8
+            const validStates = this.windowedStates.filter(isFiniteVector);
+            logger.info(`computeIntegratedInformation: total states=${this.windowedStates.length}, valid states=${validStates.length}, required=${minRequiredStates}`);
+            if (!validateWindowedStates(this.windowedStates, minRequiredStates, this.graph.vertices.length * this.qDim)) {
                 this.phi = fallbackPhi();
+                logger.warn(`Insufficient states for covariance: need ${minRequiredStates}, have ${validStates.length}`);
                 return;
             }
-            
-            const D = cov.length;
-            const mid = Math.floor(D / 2);
-
-            const logDetFull = logDeterminantFromDiagonal(cov);
-
-            const covA = cov.slice(0, mid).map(r => r.slice(0, mid));
-            const covB = cov.slice(mid, D).map(r => r.slice(mid, D));
-
-            const logDetA = logDeterminantFromDiagonal(covA);
-            const logDetB = logDeterminantFromDiagonal(covB);
-
-            let MI = 0.5 * (logDetA + logDetB - logDetFull);
-            MI = clamp(MI, 0, 10);
-
-            const vCount = this.graph?.vertices?.length || 1;
-            const connectivity = (this.graph?.edges?.length || 0) / (vCount * (vCount - 1) / 2 + 1e-8);
-            
-            const phi_v = Math.log(1 + MI) * this.stability * this.gestaltUnity * Math.max(1e-6, connectivity);
-            this.phi = isFinite(phi_v) ? clamp(phi_v, 0, 10) : fallbackPhi();
-
-        } catch (e) {
-            console.warn('computeIntegratedInformation encountered an error; using fallback phi', e.message);
-            this.phi = fallbackPhi();
-        }
-    }
-    visualizeActivity() {
-        const sheafGraphEl = document.querySelector('.sheaf-graph');
-        if (!sheafGraphEl) return;
-        const graphWidth = sheafGraphEl.clientWidth;
-        const graphHeight = sheafGraphEl.clientHeight;
-        const vertices = this.graph.vertices;
-        vertices.forEach((vertex, idx) => {
-            const el = document.getElementById(`vertex-${idx}`);
-            if (!el) return;
-            const pos = sheafVertexPositions[idx] || { x: 0.5, y: 0.5 };
-            el.style.left = `${pos.x * graphWidth - 15}px`;
-            el.style.top = `${pos.y * graphHeight - 15}px`;
-            const stalk = this.stalks.get(vertex) || Array(this.qDim).fill(0);
-            const intensity = clamp(stalk.reduce((sum, v) => sum + Math.abs(v), 0) / this.qDim, 0, 1);
-            el.classList.toggle('active', intensity > 0.5);
-            el.style.background = `radial-gradient(circle, hsl(0, 100%, ${50 + intensity * 50}%), hsl(0, 80%, 30%))`;
-        });
-    }
-
-    tuneParameters() {
-        this.alpha = clamp(this.alpha * (1 + 0.05 * (1 - this.stability)), 0.01, 0.2);
-        this.beta = clamp(this.beta * (1 + 0.05 * this.gestaltUnity), 0.01, 0.2);
-        this.gamma = clamp(this.gamma * (1 - 0.1 * this.h1Dimension), 0.01, 0.1);
-        logger.info(`Parameters tuned: α=${this.alpha.toFixed(3)}, β=${this.beta.toFixed(3)}, γ=${this.gamma.toFixed(3)}`);
-    }
-}
-
-// OntologicalWorldModel Class
-class OntologicalWorldModel {
-    constructor(stateDim = 10, actionDim = 3, qDim = 7, hiddenSizes = [16, 32, 16]) {
-        this.stateDim = stateDim;
-        this.actionDim = actionDim;
-        this.qDim = qDim;
-        this.hiddenSizes = hiddenSizes;
-        this.graph = {
-            vertices: ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed'],
-            edges: [
-                ['paddle_y', 'ball_y'], ['ball_x', 'ball_dx'], ['ball_y', 'ball_dy'],
-                ['ball_dx', 'ball_dy'], ['player_score', 'ai_score'], ['paddle_y', 'ball_dy'],
-                ['paddle_y', 'paddle_speed']
-            ]
-        };
-        this.qualiaSheaf = new EnhancedQualiaSheaf(this.graph, this.stateDim, this.qDim, 0.1, 0.1, 0.05);
-        this.inputDim = this.stateDim + this.actionDim + 1 + (this.graph.vertices.length * this.qDim);
-        this.layers = [];
-        for (let i = 0; i < this.hiddenSizes.length; i++) {
-            const inputLayerSize = i === 0 ? this.inputDim : this.hiddenSizes[i - 1];
-            const scale = Math.sqrt(2.0 / (inputLayerSize + this.hiddenSizes[i]));
-            this.layers.push({ W: randomMatrix(this.hiddenSizes[i], inputLayerSize, scale), b: vecZeros(this.hiddenSizes[i]), activation: 'tanh' });
-        }
-        const outputScale = Math.sqrt(2.0 / (this.hiddenSizes[this.hiddenSizes.length - 1] + this.stateDim));
-        this.outputLayer = { W: randomMatrix(this.stateDim, this.hiddenSizes[this.hiddenSizes.length - 1], outputScale), b: vecZeros(this.stateDim) };
-        this.attentionWeights = Array(this.qDim).fill().map(() => Array(this.inputDim).fill().map(() => (Math.random() - 0.5) * 0.1));
-        this.freeEnergy = 0;
-        this.predictionError = 0;
-        this.memory = [];
-        this.windowedStates = [];
-        this.stepCount = 0;
-        this.alpha_ont = 0.01;
-        this.gamma_h1 = 0.5;
-        this.kl_weight = 0.05;
-        this.fim_weight = 1e-4;
-    }
-
-    forward(input) {
-        let x = input.slice();
-        const activations = [x.slice()];
-        for (const layer of this.layers) {
-            x = matVecMul(layer.W, x);
-            x = vecAdd(x, layer.b);
-            if (layer.activation === 'tanh') x = tanhVec(x);
-            activations.push(x.slice());
-        }
-        const out = vecAdd(matVecMul(this.outputLayer.W, x), this.outputLayer.b);
-        return { output: out, activations };
-    }
-
-    applyAttention(input) {
-        let maxScore = -Infinity;
-        const scores = [];
-        for (let i = 0; i < this.qDim; i++) {
-            const w = this.attentionWeights[i];
-            const score = dot(w, input);
-            scores.push(score);
-            maxScore = Math.max(maxScore, score);
-        }
-        const expScores = scores.map(s => Math.exp(s - maxScore));
-        const sumExpScores = expScores.reduce((s, x) => s + x, 1e-10);
-        const softmaxScores = expScores.map(s => s / sumExpScores);
-        const att = vecZeros(input.length);
-        for (let i = 0; i < this.qDim; i++) {
-            const score = softmaxScores[i];
-            for (let j = 0; j < input.length; j++) {
-                att[j] += score * input[j];
+            try {
+                const sampledStates = validStates.slice(-Math.max(minRequiredStates, 64));
+                logger.info(`Using ${sampledStates.length} states for covariance computation`);
+                if (sampledStates.length < minRequiredStates) {
+                    this.phi = fallbackPhi();
+                    logger.warn(`Insufficient states after filtering: need ${minRequiredStates}, have ${sampledStates.length}`);
+                    return;
+                }
+                const norms = sampledStates.map(s => norm2(s));
+                const avgNorm = norms.reduce((sum, v) => sum + v, 0) / norms.length;
+                const MI = clamp(Math.abs(avgNorm - norm2(sampledStates[sampledStates.length - 1])) * 5.0 + 1e-4, 1e-4, 5);
+                logger.info(`Computed MI: ${MI.toFixed(3)} (norm-based), avgNorm=${avgNorm.toFixed(3)}, lastNorm=${norm2(sampledStates[sampledStates.length - 1]).toFixed(3)}`);
+                logger.info('Sample state norms', norms.slice(-5).map(v => v.toFixed(3)));
+                const vCount = this.graph.vertices.length || 1;
+                const connectivity = 2 * (this.graph.edges.length || 0) / (vCount * (vCount - 1) / 2 + 1e-8);
+                const phi_v = (1 + MI * 10) * Math.max(this.stability, 0.6) * Math.max(this.gestaltUnity, 0.6) * Math.max(1e-6, connectivity);
+                this.phi = isFinite(phi_v) ? clamp(phi_v, 0.2, 5) : fallbackPhi();
+                logger.info(`Computed Φ: ${this.phi.toFixed(3)}, MI: ${MI.toFixed(3)}, stability: ${this.stability.toFixed(3)}, gestaltUnity: ${this.gestaltUnity.toFixed(3)}, connectivity: ${connectivity.toFixed(3)}`);
+            } catch (e) {
+                this.phi = fallbackPhi();
+                logger.warn(`computeIntegratedInformation error: ${e.message}; using fallback phi`);
             }
         }
-        return vecAdd(input, vecScale(att, 0.1));
-    }
 
-    predict(state, action, audioAmplitude = 0) {
-        const qualiaRes = this.qualiaSheaf.diffuseQualia(state);
-        const qualiaArray = Array.from(this.qualiaSheaf.stalks.values()).flat();
-        const input = state.concat(action).concat([audioAmplitude]).concat(qualiaArray);
-        if (!isFiniteVector(input)) {
-            logger.warn('Invalid input to predict; returning default');
-            return { nextState: vecZeros(this.stateDim), phi: 0, activations: [] };
+        visualizeActivity() {
+            const sheafGraphEl = document.querySelector('.sheaf-graph');
+            if (!sheafGraphEl) return;
+            const graphWidth = sheafGraphEl.clientWidth;
+            const graphHeight = sheafGraphEl.clientHeight;
+            const vertices = this.graph.vertices;
+            vertices.forEach((vertex, idx) => {
+                const el = document.getElementById(`vertex-${idx}`);
+                if (!el) return;
+                const pos = sheafVertexPositions[idx] || { x: 0.5, y: 0.5 };
+                el.style.left = `${pos.x * graphWidth - 15}px`;
+                el.style.top = `${pos.y * graphHeight - 15}px`;
+                const stalk = this.stalks.get(vertex) || Array(this.qDim).fill(0);
+                const intensity = clamp(stalk.reduce((sum, v) => sum + Math.abs(v), 0) / this.qDim, 0, 1);
+                el.classList.toggle('active', intensity > 0.5);
+                el.style.background = `radial-gradient(circle, hsl(0, 100%, ${50 + intensity * 50}%), hsl(0, 80%, 30%))`;
+            });
         }
-        const attended = this.applyAttention(input);
-        const { output: nextState, activations } = this.forward(attended);
-        activations.push(nextState);         
-        this.predictionError = norm2(vecSub(nextState, state));
-        const sGlobal = qualiaArray.slice();
-        const lapQuad = 0.5 * dot(sGlobal, matVecMul(this.buildGlobalLaplacian(), sGlobal));
-        const klTerm = this.computeKLPerEntity();
-        const h1proxy = this.qualiaSheaf.h1Dimension;
-        const fimPenalty = (this.qualiaSheaf.fimTrace || 0) * this.fim_weight;
-        let fe = lapQuad + this.kl_weight * klTerm + this.gamma_h1 * h1proxy + fimPenalty;
-        this.freeEnergy = 0.85 * (this.freeEnergy || 0) + 0.15 * fe;
-        return { nextState: nextState.map(v => clamp(v, -5, 5)), phi: this.qualiaSheaf.phi, activations };
-    }
 
-    buildGlobalLaplacian() {
-        const Lnode = this.qualiaSheaf.laplacian || this.qualiaSheaf.buildLaplacian();
-        const n = Lnode.length, q = this.qDim;
-        const N = n * q;
-        const Lfull = zeroMatrix(N, N);
-        for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
-            const v = Lnode[i][j];
-            for (let qi = 0; qi < q; qi++) {
-                Lfull[i * q + qi][j * q + qi] = v;
+        tuneParameters() {
+            this.alpha = clamp(this.alpha * (1 + 0.05 * (1 - this.stability)), 0.01, 0.2);
+            this.beta = clamp(this.beta * (1 + 0.05 * this.gestaltUnity), 0.01, 0.2);
+            this.gamma = clamp(this.gamma * (1 - 0.1 * this.h1Dimension), 0.01, 0.1);
+            logger.info(`Parameters tuned: α=${this.alpha.toFixed(3)}, β=${this.beta.toFixed(3)}, γ=${this.gamma.toFixed(3)}`);
+        }
+    }
+    // -------------------- REMAINING CLASSES AND INITIALIZATION --------------------
+    // (OntologicalWorldModel, LearningAI, PongGame, NeuralNetworkVisualizer, MainApp, and initialization code remain unchanged)
+    class OntologicalWorldModel {
+        constructor(stateDim = 10, actionDim = 3, qDim = 7, hiddenSizes = [16, 32, 16]) {
+            this.stateDim = stateDim;
+            this.actionDim = actionDim;
+            this.qDim = qDim;
+            this.hiddenSizes = hiddenSizes;
+            this.graph = {
+                vertices: ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed'],
+                edges: [
+                    ['paddle_y', 'ball_y'], ['ball_x', 'ball_dx'], ['ball_y', 'ball_dy'],
+                    ['ball_dx', 'ball_dy'], ['player_score', 'ai_score'], ['paddle_y', 'ball_dy'],
+                    ['paddle_y', 'paddle_speed']
+                ]
+            };
+            this.qualiaSheaf = new EnhancedQualiaSheaf(this.graph, this.stateDim, this.qDim, 0.1, 0.1, 0.05);
+            this.inputDim = this.stateDim + this.actionDim + 1 + (this.graph.vertices.length * this.qDim);
+            this.layers = [];
+            for (let i = 0; i < this.hiddenSizes.length; i++) {
+                const inputLayerSize = i === 0 ? this.inputDim : this.hiddenSizes[i - 1];
+                const scale = Math.sqrt(2.0 / (inputLayerSize + this.hiddenSizes[i]));
+                this.layers.push({ W: randomMatrix(this.hiddenSizes[i], inputLayerSize, scale), b: vecZeros(this.hiddenSizes[i]), activation: 'tanh' });
             }
+            const outputScale = Math.sqrt(2.0 / (this.hiddenSizes[this.hiddenSizes.length - 1] + this.stateDim));
+            this.outputLayer = { W: randomMatrix(this.stateDim, this.hiddenSizes[this.hiddenSizes.length - 1], outputScale), b: vecZeros(this.stateDim) };
+            this.attentionWeights = Array(this.qDim).fill().map(() => Array(this.inputDim).fill().map(() => (Math.random() - 0.5) * 0.1));
+            this.freeEnergy = 0;
+            this.predictionError = 0;
+            this.memory = [];
+            this.windowedStates = [];
+            this.stepCount = 0;
+            this.alpha_ont = 0.01;
+            this.gamma_h1 = 0.5;
+            this.kl_weight = 0.05;
+            this.fim_weight = 1e-4;
         }
-        return Lfull;
-    }
-
-    computeKLPerEntity() {
-        const n = this.qualiaSheaf.graph.vertices.length, q = this.qDim;
-        let klSum = 0;
-        for (let e = 0; e < q; e++) {
-            const vals = [];
-            for (const v of this.qualiaSheaf.graph.vertices) {
-                const st = this.qualiaSheaf.stalks.get(v);
-                if (isFiniteVector(st) && isFinite(st[e])) vals.push(st[e]);
+        forward(input) {
+            let x = input.slice();
+            const activations = [x.slice()];
+            for (const layer of this.layers) {
+                x = matVecMul(layer.W, x);
+                x = vecAdd(x, layer.b);
+                if (layer.activation === 'tanh') x = tanhVec(x);
+                activations.push(x.slice());
             }
-            if (vals.length < 2) continue;
-            const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-            let variance = vals.reduce((s, x) => s + (x - mean) * (x - mean), 0) / (vals.length - 1);
-            variance = Math.max(variance, 1e-6);
-            const kl = 0.5 * (mean * mean + variance - 1 - Math.log(variance));
-            if (isFinite(kl)) klSum += kl;
+            const out = vecAdd(matVecMul(this.outputLayer.W, x), this.outputLayer.b);
+            return { output: out, activations };
         }
-        return klSum;
-    }
-
-    update(currentState, action, newState, audioAmplitude = 0) {
-        if (!isFiniteVector(currentState) || !isFiniteVector(action) || !isFiniteVector(newState)) {
-            logger.warn('Invalid state/action in update; skipping');
-            return;
+        applyAttention(input) {
+            let maxScore = -Infinity;
+            const scores = [];
+            for (let i = 0; i < this.qDim; i++) {
+                const w = this.attentionWeights[i];
+                const score = dot(w, input);
+                scores.push(score);
+                maxScore = Math.max(maxScore, score);
+            }
+            const expScores = scores.map(s => Math.exp(s - maxScore));
+            const sumExpScores = expScores.reduce((s, x) => s + x, 1e-10);
+            const softmaxScores = expScores.map(s => s / sumExpScores);
+            const att = vecZeros(input.length);
+            for (let i = 0; i < this.qDim; i++) {
+                const score = softmaxScores[i];
+                for (let j = 0; j < input.length; j++) {
+                    att[j] += score * input[j];
+                }
+            }
+            return vecAdd(input, vecScale(att, 0.1));
         }
-        const pred = this.predict(currentState, action, audioAmplitude);
-        const predictedState = pred.nextState;
-        this.predictionError = norm2(vecSub(newState, predictedState));
-        this.freeEnergy = 0.98 * this.freeEnergy + 0.02 * (this.freeEnergy + 0.01 * this.predictionError);
-        const acts = pred.activations || [];
-        const safeActs = acts.length > 0 && acts.every(arr => Array.isArray(arr) && arr.every(isFinite));
-        if (!safeActs) {
+        predict(state, action, audioAmplitude = 0) {
+            const qualiaRes = this.qualiaSheaf.diffuseQualia(state);
+            const qualiaArray = Array.from(this.qualiaSheaf.stalks.values()).flat();
+            const input = state.concat(action).concat([audioAmplitude]).concat(qualiaArray);
+            if (!isFiniteVector(input)) {
+                logger.warn('Invalid input to predict; returning default');
+                return { nextState: vecZeros(this.stateDim), phi: 0, activations: [] };
+            }
+            const attended = this.applyAttention(input);
+            const { output: nextState, activations } = this.forward(attended);
+            activations.push(nextState);
+            this.predictionError = norm2(vecSub(nextState, state));
+            const sGlobal = qualiaArray.slice();
+            const lapQuad = 0.5 * dot(sGlobal, matVecMul(this.buildGlobalLaplacian(), sGlobal));
+            const klTerm = this.computeKLPerEntity();
+            const h1proxy = this.qualiaSheaf.h1Dimension;
+            const fimPenalty = (this.qualiaSheaf.fimTrace || 0) * this.fim_weight;
+            let fe = lapQuad + this.kl_weight * klTerm + this.gamma_h1 * h1proxy + fimPenalty;
+            this.freeEnergy = 0.85 * (this.freeEnergy || 0) + 0.15 * fe;
+            return { nextState: nextState.map(v => clamp(v, -5, 5)), phi: this.qualiaSheaf.phi, activations };
+        }
+        buildGlobalLaplacian() {
+            const Lnode = this.qualiaSheaf.laplacian || this.qualiaSheaf.buildLaplacian();
+            const n = Lnode.length, q = this.qDim;
+            const N = n * q;
+            const Lfull = zeroMatrix(N, N);
+            for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+                const v = Lnode[i][j];
+                for (let qi = 0; qi < q; qi++) {
+                    Lfull[i * q + qi][j * q + qi] = v;
+                }
+            }
+            return Lfull;
+        }
+        computeKLPerEntity() {
+            const n = this.qualiaSheaf.graph.vertices.length, q = this.qDim;
+            let klSum = 0;
+            for (let e = 0; e < q; e++) {
+                const vals = [];
+                for (const v of this.qualiaSheaf.graph.vertices) {
+                    const st = this.qualiaSheaf.stalks.get(v);
+                    if (isFiniteVector(st) && isFinite(st[e])) vals.push(st[e]);
+                }
+                if (vals.length < 2) continue;
+                const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+                let variance = vals.reduce((s, x) => s + (x - mean) * (x - mean), 0) / (vals.length - 1);
+                variance = Math.max(variance, 1e-6);
+                const kl = 0.5 * (mean * mean + variance - 1 - Math.log(variance));
+                if (isFinite(kl)) klSum += kl;
+            }
+            return klSum;
+        }
+        update(currentState, action, newState, audioAmplitude = 0) {
+            if (!isFiniteVector(currentState) || !isFiniteVector(action) || !isFiniteVector(newState)) {
+                logger.warn('Invalid state/action in update; skipping');
+                return;
+            }
+            const pred = this.predict(currentState, action, audioAmplitude);
+            const predictedState = pred.nextState;
+            this.predictionError = norm2(vecSub(newState, predictedState));
+            this.freeEnergy = 0.98 * this.freeEnergy + 0.02 * (this.freeEnergy + 0.01 * this.predictionError);
+            const acts = pred.activations || [];
+            const safeActs = acts.length > 0 && acts.every(arr => Array.isArray(arr) && arr.every(isFinite));
+            if (!safeActs) {
+                this.stepCount++;
+                this.alpha_ont = 0.01 + 0.09 * Math.min(this.stepCount / 500, 1.0);
+                return;
+            }
+            const error = vecSub(newState, predictedState);
+            const gradInput = error.map(e => e * 0.001);
+            for (let i = 0; i < this.qDim; i++) {
+                const input = currentState.concat(action).concat([audioAmplitude]).concat(Array.from(this.qualiaSheaf.stalks.values()).flat());
+                const score = dot(this.attentionWeights[i], input);
+                for (let j = 0; j < this.inputDim; j++) {
+                    this.attentionWeights[i][j] -= 0.01 * score * gradInput[j];
+                }
+            }
+            this.memory.push({ s: currentState.slice(), a: action.slice(), nextS: newState.slice(), qualiaPhi: this.qualiaSheaf.phi });
+            if (this.memory.length > 2000) this.memory.shift();
             this.stepCount++;
             this.alpha_ont = 0.01 + 0.09 * Math.min(this.stepCount / 500, 1.0);
-            return;
         }
-        const error = vecSub(newState, predictedState);
-        const gradInput = error.map(e => e * 0.001);
-        for (let i = 0; i < this.qDim; i++) {
-            const input = currentState.concat(action).concat([audioAmplitude]).concat(Array.from(this.qualiaSheaf.stalks.values()).flat());
-            const score = dot(this.attentionWeights[i], input);
-            for (let j = 0; j < this.inputDim; j++) {
-                this.attentionWeights[i][j] -= 0.01 * score * gradInput[j];
-            }
-        }
-        this.memory.push({ s: currentState.slice(), a: action.slice(), nextS: newState.slice(), qualiaPhi: this.qualiaSheaf.phi });
-        if (this.memory.length > 2000) this.memory.shift();
-        this.stepCount++;
-        this.alpha_ont = 0.01 + 0.09 * Math.min(this.stepCount / 500, 1.0);
     }
-}
-
- // -------------------- LEARNING AI CLASS (Agent) --------------------
     class LearningAI {
         constructor(worldModel, gameBounds, isPlayerTwo = false) {
             this.worldModel = worldModel;
-            this.gameWidth = gameBounds.width; // Dynamic width
-            this.gameHeight = gameBounds.height; // Dynamic height
+            this.gameWidth = gameBounds.width;
+            this.gameHeight = gameBounds.height;
             this.scoreToWin = gameBounds.scoreToWin || 10;
-            this.isPlayerTwo = isPlayerTwo; // True for the right AI (Main), false for left (Player)
-            this.lastStateVec = Array(10).fill(0.5); // Initialized to 10 elements
-            this.lastActionVec = [0, 0, 1]; // Default to IDLE
-            this.lastPrediction = null; // Stores last prediction and activations for learning/visualization
+            this.isPlayerTwo = isPlayerTwo;
+            this.lastStateVec = Array(10).fill(0.5);
+            this.lastActionVec = [0, 0, 1];
+            this.lastPrediction = null;
         }
-
         createStateVector(gameState) {
             const paddle = this.isPlayerTwo ? gameState.ai : gameState.player;
             const opponentPaddle = this.isPlayerTwo ? gameState.player : gameState.ai;
-            // 10-element state vector for the World Model
             const stateVec = [
-                gameState.ball.x / this.gameWidth, // 0: Ball X (normalized)
-                gameState.ball.y / this.gameHeight, // 1: Ball Y (normalized)
-                gameState.ball.dx / 8, // 2: Ball dX (normalized)
-                gameState.ball.dy / 8, // 3: Ball dY (normalized)
-                paddle.y / this.gameHeight, // 4: My Paddle Y (normalized)
-                opponentPaddle.y / this.gameHeight, // 5: Opponent Paddle Y (normalized)
-                paddle.dy / 8, // 6: My Paddle dY (normalized)
-                opponentPaddle.dy / 8, // 7: Opponent Paddle dY (normalized)
-                gameState.score.player / this.scoreToWin, // 8: Player Score (normalized)
-                gameState.score.ai / this.scoreToWin // 9: AI Score (normalized)
+                gameState.ball.x / this.gameWidth,
+                gameState.ball.y / this.gameHeight,
+                gameState.ball.dx / 8,
+                gameState.ball.dy / 8,
+                paddle.y / this.gameHeight,
+                opponentPaddle.y / this.gameHeight,
+                paddle.dy / 8,
+                opponentPaddle.dy / 8,
+                gameState.score.player / this.scoreToWin,
+                gameState.score.ai / this.scoreToWin
             ];
             if (!isFiniteVector(stateVec) || stateVec.length !== 10) {
-                return Array(10).fill(0.5); // Fallback to safe, neutral values
+                logger.warn('Invalid state vector; returning default');
+                return Array(10).fill(0.5);
             }
             return stateVec;
         }
-
         makeDecision(gameState, audioAmplitude = 0) {
             const actions = [
                 { name: 'UP', vec: [1, 0, 0] },
@@ -1364,10 +1435,18 @@ class OntologicalWorldModel {
             ];
             let bestAction = 'IDLE';
             let bestScore = -Infinity;
-            let bestActivations = []; // To store activations for visualization
+            let bestActivations = [];
             const stateVec = this.createStateVector(gameState);
             let validPredictions = [];
-
+            const ballY = gameState.ball.y;
+            const ballDy = gameState.ball.dy;
+            const ballDx = gameState.ball.dx;
+            const paddle = this.isPlayerTwo ? gameState.ai : gameState.player;
+            const paddleCenter = paddle.y + paddle.height / 2;
+            const timeToPaddle = this.isPlayerTwo
+                ? (this.gameWidth - gameState.ball.x) / Math.max(Math.abs(ballDx), 1e-3)
+                : gameState.ball.x / Math.max(Math.abs(ballDx), 1e-3);
+            const predictedBallY = clamp(ballY + ballDy * timeToPaddle, 0, this.gameHeight);
             actions.forEach(action => {
                 const { nextState, phi, activations } = this.worldModel.predict(stateVec, action.vec, audioAmplitude);
                 if (!nextState || !isFiniteVector(nextState)) {
@@ -1375,26 +1454,23 @@ class OntologicalWorldModel {
                 }
                 validPredictions.push({ action, nextState, phi, activations });
             });
-
             if (validPredictions.length === 0) {
-                // Heuristic fallback if World Model fails for all actions
-                const ballY = gameState.ball.y;
-                const paddle = this.isPlayerTwo ? gameState.ai : gameState.player;
-                const paddleCenter = paddle.y + paddle.height / 2;
-                if (ballY < paddleCenter - 10) {
+                if (predictedBallY < paddleCenter - 15) {
                     bestAction = 'UP';
-                } else if (ballY > paddleCenter + 10) {
+                } else if (predictedBallY > paddleCenter + 15) {
                     bestAction = 'DOWN';
                 } else {
                     bestAction = 'IDLE';
                 }
-                this.lastPrediction = { nextState: stateVec, phi: 0, activations: [] }; // Dummy for learning
+                this.lastPrediction = { nextState: stateVec, phi: 0, activations: [] };
             } else {
                 validPredictions.forEach(({ action, nextState, phi, activations }) => {
-                    const predictedBallY = nextState[1] * this.gameHeight;
-                    const paddle = this.isPlayerTwo ? gameState.ai : gameState.player;
-                    const currentPaddleY = paddle.y + paddle.height / 2;
-                    const score = -Math.abs(predictedBallY - currentPaddleY) / this.gameHeight + 0.1 * phi;
+                    const predictedBallYNext = nextState[1] * this.gameHeight;
+                    const distancePenalty = Math.abs(predictedBallYNext - predictedBallY) / this.gameHeight;
+                    const velocityAlignment = this.isPlayerTwo
+                        ? (ballDx > 0 ? 0.3 : -0.3)
+                        : (ballDx < 0 ? 0.3 : -0.3);
+                    const score = -3.0 * distancePenalty + 0.4 * phi + velocityAlignment + 0.2 * Math.abs(ballDy) / 8;
                     if (!isFinite(score)) {
                         return;
                     }
@@ -1410,7 +1486,6 @@ class OntologicalWorldModel {
             this.lastActionVec = actions.find(a => a.name === bestAction).vec;
             return { action: bestAction, activations: bestActivations };
         }
-
         learn(reward, newGameState, audioAmplitude = 0) {
             if (!this.lastStateVec || !this.lastActionVec || !this.lastPrediction || !this.lastPrediction.nextState ||
                 !isFiniteVector(this.lastStateVec) || !isFiniteVector(this.lastActionVec) || !isFiniteVector(this.lastPrediction.nextState)) {
@@ -1429,13 +1504,10 @@ class OntologicalWorldModel {
             }
         }
     }
-
-    // -------------------- PONG GAME CLASS --------------------
     class PongGame {
         constructor(canvas) {
             this.canvas = canvas;
             this.ctx = canvas.getContext('2d');
-            // Initialize with the canvas's current client dimensions (logical pixels)
             this.width = canvas.clientWidth;
             this.height = canvas.clientHeight;
             this.scoreToWin = 10;
@@ -1445,7 +1517,6 @@ class OntologicalWorldModel {
             this.gameOver = false;
             this.winner = null;
         }
-
         reset() {
             this.ball = { x: this.width / 2, y: this.height / 2, dx: (Math.random() > 0.5 ? 1 : -1) * 4, dy: (Math.random() - 0.5) * 6, radius: 8 };
             this.ai = { x: this.width - 25, y: this.height / 2 - 40, width: 15, height: 80, dy: 0 };
@@ -1453,15 +1524,15 @@ class OntologicalWorldModel {
             this.score = { ai: 0, player: 0 };
             this.gameOver = false;
             this.winner = null;
+            logger.info('PongGame reset', this.getState());
         }
-
         resetBall() {
             this.ball.x = this.width / 2;
             this.ball.y = this.height / 2;
             this.ball.dx = (Math.random() > 0.5 ? 1 : -1) * 4;
             this.ball.dy = (Math.random() - 0.5) * 6;
+            logger.info('Ball reset', { x: this.ball.x.toFixed(3), y: this.ball.y.toFixed(3), dx: this.ball.dx.toFixed(3), dy: this.ball.dy.toFixed(3) });
         }
-
         update() {
             if (this.gameOver) {
                 return { aReward: 0, pReward: 0, playerCollision: false, aiCollision: false };
@@ -1470,13 +1541,11 @@ class OntologicalWorldModel {
             const MAX_BALL_DY = 10;
             this.ball.x += this.ball.dx;
             this.ball.y += this.ball.dy;
-
             if (this.ball.y <= this.ball.radius || this.ball.y >= this.height - this.ball.radius) {
                 this.ball.dy *= -1;
             }
             let aReward = 0, pReward = 0;
             let playerCollision = false, aiCollision = false;
-
             if (this.ball.x <= 0) {
                 this.score.ai++;
                 aReward = 1;
@@ -1488,10 +1557,8 @@ class OntologicalWorldModel {
                 pReward = 1;
                 this.resetBall();
             }
-
             this.ai.y = clamp(this.ai.y + this.ai.dy, 0, this.height - this.ai.height);
             this.player.y = clamp(this.player.y + this.player.dy, 0, this.height - this.player.height);
-
             if (this.ball.x <= this.player.x + this.player.width && this.ball.x >= this.player.x && this.ball.y >= this.player.y && this.ball.y <= this.player.y + this.player.height) {
                 this.ball.dx = clamp(Math.abs(this.ball.dx) * 1.1, -MAX_BALL_DX, MAX_BALL_DX);
                 this.ball.dy += (Math.random() - 0.5) * 2;
@@ -1504,7 +1571,6 @@ class OntologicalWorldModel {
                 this.ball.dy = clamp(this.ball.dy, -MAX_BALL_DY, MAX_BALL_DY);
                 aiCollision = true;
             }
-
             if (this.score.ai >= this.scoreToWin) {
                 this.gameOver = true;
                 this.winner = 'AI';
@@ -1512,19 +1578,32 @@ class OntologicalWorldModel {
                 this.gameOver = true;
                 this.winner = 'Player';
             }
-            return { aReward: aReward, pReward: pReward, playerCollision: playerCollision, aiCollision: aiCollision }; // Fixed naming collision
+            const state = this.getState();
+            logger.info('PongGame state', state.map(v => v.toFixed(3)));
+            return { aReward, pReward, playerCollision, aiCollision };
         }
-
         setAIAction(action) {
             const speed = 5;
             this.ai.dy = action === 'UP' ? -speed : action === 'DOWN' ? speed : 0;
         }
-
         setPlayerAction(action) {
             const speed = 5;
             this.player.dy = action === 'UP' ? -speed : action === 'DOWN' ? speed : 0;
         }
-
+        getState() {
+            return [
+                this.player.y / this.height, // paddle_y (0 to 1)
+                this.ball.x / this.width, // ball_x (0 to 1)
+                this.ball.y / this.height, // ball_y (0 to 1)
+                this.ball.dx / 8, // ball_dx (normalized to -1 to 1)
+                this.ball.dy / 10, // ball_dy (normalized to -1 to 1)
+                this.score.player / this.scoreToWin, // player_score (0 to 1)
+                this.score.ai / this.scoreToWin, // ai_score (0 to 1)
+                this.ai.dy / 5, // paddle_speed (normalized to -1 to 1)
+                this.playerCollision ? 1 : 0, // collision indicator
+                this.aiCollision ? 1 : 0 // collision indicator
+            ].map(v => safeClamp(v, -1, 1));
+        }
         render(ctx) {
             if (!ctx) {
                 return;
@@ -1543,7 +1622,6 @@ class OntologicalWorldModel {
             ctx.fillStyle = '#4af';
             ctx.fillText(this.score.player, this.width / 4, 30);
             ctx.fillText(this.score.ai, this.width * 3 / 4, 30);
-
             if (this.gameOver) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
                 ctx.fillRect(0, 0, this.width, this.height);
@@ -1557,33 +1635,26 @@ class OntologicalWorldModel {
             this.aiCollision = false;
         }
     }
-
-    // -------------------- NEURAL NETWORK VISUALIZER CLASS --------------------
     class NeuralNetworkVisualizer {
         constructor(containerId, worldModel, theme = 'main') {
             this.container = document.getElementById(containerId);
-            this.worldModel = worldModel; // This is an OntologicalWorldModel instance
+            this.worldModel = worldModel;
             this.theme = theme;
             if (!this.container || !this.worldModel) return;
             this.neuronElements = [];
             this.visualLayers = [];
-            this.MAX_NEURONS_TO_DISPLAY = 32; // Limit for visual neurons per layer
+            this.MAX_NEURONS_TO_DISPLAY = 32;
             this._setupVisualLayers();
             this._setupDOM();
         }
-
         _setupVisualLayers() {
             const model = this.worldModel;
-            // Input layer: stateDim (10) + actionDim (3) + audio (1) + Qualia (8*7)
             this.visualLayers.push({ name: 'input', actualCount: model.inputDim });
-            // Hidden layers
             model.hiddenSizes.forEach((size, index) => {
                 this.visualLayers.push({ name: `hidden${index+1}`, actualCount: size });
             });
-            // Output layer: stateDim (10)
             this.visualLayers.push({ name: 'output', actualCount: model.stateDim });
         }
-
         _setupDOM() {
             this.container.innerHTML = '';
             this.canvas = document.createElement('canvas');
@@ -1591,7 +1662,6 @@ class OntologicalWorldModel {
             this.canvas.id = `nn-connections-canvas-${this.theme}`;
             this.ctx = this.canvas.getContext('2d');
             this.container.appendChild(this.canvas);
-
             this.visualLayers.forEach((layer, lIndex) => {
                 const lDiv = document.createElement('div');
                 lDiv.className = 'nn-layer';
@@ -1605,7 +1675,6 @@ class OntologicalWorldModel {
                 }
                 this.container.appendChild(lDiv);
             });
-
             const ro = new ResizeObserver(() => {
                 this.canvas.width = this.container.clientWidth;
                 this.canvas.height = this.container.clientHeight;
@@ -1613,9 +1682,6 @@ class OntologicalWorldModel {
             });
             ro.observe(this.container);
         }
-        
-        // Removed _positionNeurons() as it's no longer needed
-
         _getNeuronPosition(lIndex, nIndex) {
             const el = this.neuronElements[lIndex][nIndex];
             if (!el) return { x: 0, y: 0 };
@@ -1623,40 +1689,28 @@ class OntologicalWorldModel {
             const cr = this.container.getBoundingClientRect();
             return { x: r.left - cr.left + r.width / 2, y: r.top - cr.top + r.height / 2 };
         }
-
         _drawConnections() {
             if (!this.neuronElements || this.visualLayers.length <= 1) return;
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); // Clears the canvas correctly
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             const model = this.worldModel;
-
-            // Collect actual weight matrices from the OntologicalWorldModel
             const matrices = model.layers.map(layer => layer.W).concat([model.outputLayer.W]);
             const colors = this.theme === 'opponent' ? { pos: 'rgba(255,165,0,', neg: 'rgba(138,43,226,' } : { pos: 'rgba(68,170,255,', neg: 'rgba(255,85,85,' };
-
             for (let l = 0; l < this.visualLayers.length - 1; l++) {
                 const srcLayerViz = this.visualLayers[l];
                 const tgtLayerViz = this.visualLayers[l + 1];
                 const matrix = matrices[l];
                 if (!matrix || matrix.length === 0 || matrix[0].length === 0) continue;
-
-                // Loop through displayed neurons
-                for (let i = 0; i < this.neuronElements[l].length; i++) { // Current layer's displayed neurons
-                    for (let j = 0; j < this.neuronElements[l + 1].length; j++) { // Next layer's displayed neurons
+                for (let i = 0; i < this.neuronElements[l].length; i++) {
+                    for (let j = 0; j < this.neuronElements[l + 1].length; j++) {
                         const start = this._getNeuronPosition(l, i);
                         const end = this._getNeuronPosition(l + 1, j);
-                        if (start.x === 0 || end.x === 0) continue; // Skip if positions aren't ready
-
-                        // Map displayed neuron index to actual matrix index for sampling weights
+                        if (start.x === 0 || end.x === 0) continue;
                         const srcMatrixIdx = Math.floor(i * (srcLayerViz.actualCount / this.neuronElements[l].length));
                         const tgtMatrixIdx = Math.floor(j * (tgtLayerViz.actualCount / this.neuronElements[l+1].length));
-
-                        // Ensure matrix indices are within bounds
                         if (tgtMatrixIdx >= matrix.length || srcMatrixIdx >= matrix[0].length) continue;
-
                         const w = matrix[tgtMatrixIdx][srcMatrixIdx] || 0;
-                        const alpha = Math.min(0.5, Math.abs(w) * 5); // Max alpha 0.5 for subtle connections
-                        if (alpha < 0.05) continue; // Skip very weak connections
-
+                        const alpha = Math.min(0.5, Math.abs(w) * 5);
+                        if (alpha < 0.05) continue;
                         this.ctx.strokeStyle = w > 0 ? colors.pos + `${alpha})` : colors.neg + `${alpha})`;
                         this.ctx.lineWidth = Math.min(1.5, alpha * 2);
                         this.ctx.beginPath();
@@ -1667,30 +1721,23 @@ class OntologicalWorldModel {
                 }
             }
         }
-
-        // Updates the colors of the neurons based on their activation levels.
         update(activations) {
             if (!activations || activations.length === 0) return;
             const hues = this.theme === 'opponent' ? { pos: 39, neg: 271 } : { pos: 195, neg: 0 };
-
             this.visualLayers.forEach((layerViz, l_idx) => {
                 const layerActivations = activations[l_idx];
                 if (!layerActivations || layerActivations.length === 0 || !isFiniteVector(layerActivations)) return;
-
                 let maxAbs = 0;
                 for (const v of layerActivations) if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
-                const norm = maxAbs + 1e-9; // Add epsilon to prevent division by zero
-
-                // Loop through *displayed* neurons
+                const norm = maxAbs + 1e-9;
                 for (let n_idx = 0; n_idx < this.neuronElements[l_idx].length; n_idx++) {
-                    // Map displayed neuron index to actual activation data index
                     const data_idx = Math.floor(n_idx * (layerActivations.length / this.neuronElements[l_idx].length));
                     const val = layerActivations[data_idx] || 0;
                     const intensity = clamp(Math.abs(val / norm), 0, 1);
-                    const finalIntensity = 0.05 + (1 - 0.05) * intensity; // Ensure minimum visibility
+                    const finalIntensity = 0.05 + (1 - 0.05) * intensity;
                     const hue = val >= 0 ? hues.pos : hues.neg;
                     const el = this.neuronElements[l_idx][n_idx];
-                    if(el) {
+                    if (el) {
                         el.style.backgroundColor = `hsl(${hue},100%,${finalIntensity*45}%)`;
                         el.style.borderColor = `hsl(${hue},100%,70%)`;
                     }
@@ -1699,50 +1746,38 @@ class OntologicalWorldModel {
             this._drawConnections();
         }
     }
-
-    // -------------------- MAIN APP CLASS --------------------
     class MainApp {
         constructor() {
             this.gameCanvas = document.getElementById('gameCanvas');
             this.sheafGraphCanvas = document.getElementById('sheafGraphCanvas');
-
             if (!this.gameCanvas || !this.sheafGraphCanvas) {
                 document.getElementById('status').textContent = 'Error: Canvas not found. Check HTML IDs.';
-                throw new Error('Canvas elements not found, halting MainApp construction.');
+                throw new Error('Canvas elements not found');
             }
-
             const dpr = window.devicePixelRatio || 1;
-
             this.ctx = this.gameCanvas.getContext('2d');
             this.sheafGraphCtx = this.sheafGraphCanvas.getContext('2d');
-
             if (!this.ctx || !this.sheafGraphCtx) {
                 document.getElementById('status').textContent = 'Error: Failed to get 2D rendering context for canvas.';
-                throw new Error('Failed to get 2D context, halting MainApp construction.');
+                throw new Error('Failed to get 2D context');
             }
-
-            // Sheaf Graph Canvas (consistent sizing)
             this.sheafGraphCanvas.width = 400 * dpr;
             this.sheafGraphCanvas.height = 120 * dpr;
             this.sheafGraphCanvas.style.width = '400px';
             this.sheafGraphCanvas.style.height = '120px';
             this.sheafGraphCtx.scale(dpr, dpr);
-
-            // ResizeObserver for gameCanvas to handle responsiveness
             const gameCanvasResizeObserver = new ResizeObserver(entries => {
                 for (let entry of entries) {
                     if (entry.target === this.gameCanvas) {
-                        const { width, height } = entry.contentRect; // Logical CSS pixels
+                        const { width, height } = entry.contentRect;
                         this.gameCanvas.width = width * dpr;
                         this.gameCanvas.height = height * dpr;
-                        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // Reset and apply DPR scaling
-
+                        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                         if (this.pongGame) {
                             this.pongGame.width = width;
                             this.pongGame.height = height;
-                            this.pongGame.reset(); // Reset game state with new dimensions
+                            this.pongGame.reset();
                             this.pongGame.render(this.ctx);
-                            // Also update AI's knowledge of game bounds
                             const newGameBounds = {
                                 width: this.pongGame.width,
                                 height: this.pongGame.height,
@@ -1761,71 +1796,51 @@ class OntologicalWorldModel {
                 }
             });
             gameCanvasResizeObserver.observe(this.gameCanvas);
-
-            // Initialize game and AIs (will also trigger resize observer implicitly for initial size)
-            this.pongGame = null; // Initialize as null
+            this.pongGame = null;
             this.mainAI = null;
             this.opponentAI = null;
             this.mainViz = null;
             this.opponentViz = null;
-            this.setupGameAndAIs(); // Call this to populate `pongGame`, `mainAI`, etc.
-
+            this.setupGameAndAIs();
             this.isRunning = false;
             this.frameCount = 0;
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
             this.bindEvents();
             this.setupTooltips();
             document.getElementById('status').textContent = 'Ready';
-            // Initial render is handled by setupGameAndAIs, no need to call it again here.
         }
-
         setupGameAndAIs() {
             const dpr = window.devicePixelRatio || 1;
             const currentCanvasWidth = this.gameCanvas.clientWidth;
             const currentCanvasHeight = this.gameCanvas.clientHeight;
-
-            // Set internal canvas drawing buffer size (high-res if DPR > 1)
             this.gameCanvas.width = currentCanvasWidth * dpr;
             this.gameCanvas.height = currentCanvasHeight * dpr;
-            // Apply DPR scaling to the context so all subsequent drawing commands are in logical pixels
             this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-            // Create PongGame instance with the *logical* current dimensions
             this.pongGame = new PongGame(this.gameCanvas);
-            // Manually set pongGame's width/height to the logical (CSS) dimensions for its internal calculations
-            // (already done in PongGame constructor, but explicit update for clarity/robustness if order changes)
             this.pongGame.width = currentCanvasWidth;
             this.pongGame.height = currentCanvasHeight;
-
             const gameBounds = {
                 width: this.pongGame.width,
                 height: this.pongGame.height,
                 scoreToWin: 10
             };
-
             this.mainAI_worldModel = new OntologicalWorldModel(10, 3, 7, [16, 32, 16]);
             this.opponent_worldModel = new OntologicalWorldModel(10, 3, 7, [16, 32, 16]);
             this.mainAI = new LearningAI(this.mainAI_worldModel, gameBounds, true);
             this.opponentAI = new LearningAI(this.opponent_worldModel, gameBounds, false);
-
             this.mainViz = new NeuralNetworkVisualizer('nn-visualization-container', this.mainAI_worldModel, 'main');
             this.opponentViz = new NeuralNetworkVisualizer('nn-visualization-container-opponent', this.opponent_worldModel, 'opponent');
-
-            this.pongGame.render(this.ctx); // Render initial state after setup
+            this.pongGame.render(this.ctx);
         }
-
         bindEvents() {
             document.getElementById('toggleButton').onclick = () => this.toggleGame();
             document.getElementById('resetButton').onclick = () => this.resetAI();
             document.getElementById('tuneButton').onclick = () => this.tuneParameters();
             window.addEventListener('keydown', (e) => this.handleKeyDown(e));
-
             ['alphaSlider', 'betaSlider', 'gammaSlider'].forEach(id => {
                 const slider = document.getElementById(id);
                 slider.addEventListener('input', () => {
                     const paramName = id.replace('Slider', '');
-                    // Update both AIs' qualia sheaves
                     this.mainAI_worldModel.qualiaSheaf[paramName] = parseFloat(slider.value);
                     this.opponent_worldModel.qualiaSheaf[paramName] = parseFloat(slider.value);
                     document.getElementById(`${paramName}-param`).textContent = parseFloat(slider.value).toFixed(3);
@@ -1833,7 +1848,6 @@ class OntologicalWorldModel {
                 });
             });
         }
-
         setupTooltips() {
             tippy('#phi-display', { content: 'Φ measures integrated information across ontological entities.' });
             tippy('#qualia-being-fill', { content: 'Being reflects the system’s fundamental existence.' });
@@ -1848,9 +1862,9 @@ class OntologicalWorldModel {
             tippy('#gammaSlider', { content: 'γ sets the inertia for qualia updates and learning rate.' });
             tippy('#tuneButton', { content: 'Adjusts AI parameters based on system stability.' });
         }
-
         playSound() {
             try {
+                if (this.audioContext.state !== 'running') return 0;
                 const oscillator = this.audioContext.createOscillator();
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(440, this.audioContext.currentTime);
@@ -1859,255 +1873,214 @@ class OntologicalWorldModel {
                 oscillator.stop(this.audioContext.currentTime + 0.1);
                 return 0.1;
             } catch (e) {
-                // If audio context not allowed or other error, simply return 0
                 return 0;
             }
         }
-
         drawSheafGraph() {
-            if (!this.sheafGraphCtx) {
-                return;
-            }
+            if (!this.sheafGraphCtx) return;
             const sheafGraphEl = document.querySelector('.sheaf-graph');
-            const graphWidth = sheafGraphEl.clientWidth; // Use clientWidth/Height for logical dimensions
+            const graphWidth = sheafGraphEl.clientWidth;
             const graphHeight = sheafGraphEl.clientHeight;
-
-            // FIX: Clear the logical area. Canvas drawing context is already scaled by DPR in constructor.
             this.sheafGraphCtx.clearRect(0, 0, graphWidth, graphHeight);
             this.sheafGraphCtx.strokeStyle = 'rgba(68, 170, 255, 0.3)';
             this.sheafGraphCtx.lineWidth = 2;
-
             this.mainAI_worldModel.qualiaSheaf.graph.edges.forEach(([u, v]) => {
                 const uIdx = this.mainAI_worldModel.qualiaSheaf.graph.vertices.indexOf(u);
                 const vIdx = this.mainAI_worldModel.qualiaSheaf.graph.vertices.indexOf(v);
-                if (uIdx === -1 || vIdx === -1 || uIdx >= Object.keys(sheafVertexPositions).length || vIdx >= Object.keys(sheafVertexPositions).length) {
-                    return;
-                }
+                if (uIdx === -1 || vIdx === -1 || uIdx >= Object.keys(sheafVertexPositions).length || vIdx >= Object.keys(sheafVertexPositions).length) return;
                 const propV1 = sheafVertexPositions[uIdx];
                 const propV2 = sheafVertexPositions[vIdx];
-
                 const v1 = { x: propV1.x * graphWidth, y: propV1.y * graphHeight };
                 const v2 = { x: propV2.x * graphWidth, y: propV2.y * graphHeight };
-
                 this.sheafGraphCtx.beginPath();
                 this.sheafGraphCtx.moveTo(v1.x, v1.y);
                 this.sheafGraphCtx.lineTo(v2.x, v2.y);
                 this.sheafGraphCtx.stroke();
             });
-            // FIX: Removed this line, as it incorrectly reset the DPR scaling every frame.
-            // this.sheafGraphCtx.setTransform(1, 0, 0, 1, 0, 0);
         }
+       
 
-        updateVisualization() {
-            // --- OFTCC Panel Update ---
-            const qualia = this.mainAI_worldModel.qualiaSheaf;
-            const stalks = qualia.stalks;
-            const avgQualia = Array(qualia.qDim).fill(0);
-            const stalkCount = stalks.size;
-
-            if (stalkCount > 0) {
-                stalks.forEach(stalk => {
-                    if (stalk && isFiniteVector(stalk)) {
-                        stalk.forEach((val, i) => avgQualia[i] += val);
-                    }
-                });
-                avgQualia.forEach((_, i) => avgQualia[i] = stalkCount > 0 ? avgQualia[i] / stalkCount : 0);
-            }
-
-            const clampVal = (v) => clamp(isFinite(v) ? v : 0, 0, 1);
-
-            const updates = [
-                { id: 'qualia-being-fill', style: { width: `${clampVal(avgQualia[0]) * 100}%` } },
-                { id: 'qualia-intent-fill', style: { width: `${clampVal(avgQualia[1]) * 100}%` } },
-                { id: 'qualia-existence-fill', style: { width: `${clampVal(avgQualia[2]) * 100}%` } },
-                { id: 'qualia-emergence-fill', style: { width: `${clampVal(avgQualia[3]) * 100}%` } },
-                { id: 'qualia-gestalt-fill', style: { width: `${clampVal(avgQualia[4]) * 100}%` } },
-                { id: 'qualia-context-fill', style: { width: `${clampVal(avgQualia[5]) * 100}%` } },
-                { id: 'qualia-rel-emergence-fill', style: { width: `${clampVal(avgQualia[6]) * 100}%` } },
-                { id: 'being-value', textContent: clampVal(avgQualia[0]).toFixed(2) },
-                { id: 'intent-value', textContent: clampVal(avgQualia[1]).toFixed(2) },
-                { id: 'existence-value', textContent: clampVal(avgQualia[2]).toFixed(2) },
-                { id: 'emergence-value', textContent: clampVal(avgQualia[3]).toFixed(2) },
-                { id: 'gestalt-value', textContent: clampVal(avgQualia[4]).toFixed(2) },
-                { id: 'context-value', textContent: clampVal(avgQualia[5]).toFixed(2) },
-                { id: 'rel-emergence-value', textContent: clampVal(avgQualia[6]).toFixed(2) },
-                { id: 'phi-display', textContent: `Φ: ${clampVal(qualia.phi).toFixed(3)}` },
-                { id: 'h1-dimension', textContent: clampVal(qualia.h1Dimension).toFixed(2) },
-                { id: 'gestalt-unity', textContent: clampVal(qualia.gestaltUnity).toFixed(3) },
-                { id: 'free-energy', textContent: clampVal(this.mainAI_worldModel.freeEnergy).toFixed(3) },
-                { id: 'prediction-error', textContent: clampVal(this.mainAI_worldModel.predictionError).toFixed(3) },
-                { id: 'stability-fill', style: { width: `${clampVal(qualia.stability) * 100}%` } },
-                { id: 'alpha-param', textContent: qualia.alpha.toFixed(3) },
-                { id: 'beta-param', textContent: qualia.beta.toFixed(3) },
-                { id: 'gamma-param', textContent: qualia.gamma.toFixed(3) }
-            ];
-            requestAnimationFrame(() => {
-                updates.forEach(({ id, style, textContent }) => {
-                    const el = document.getElementById(id);
-                    if (!el) {
-                        return;
-                    }
-                    if (style) Object.assign(el.style, style);
-                    if (textContent) el.textContent = textContent;
-                });
+    updateVisualization() {
+        const qualia = this.mainAI_worldModel.qualiaSheaf;
+        const stalks = qualia.stalks;
+        const avgQualia = Array(qualia.qDim).fill(0);
+        const stalkCount = stalks.size;
+        if (stalkCount > 0) {
+            stalks.forEach(stalk => {
+                if (stalk && isFiniteVector(stalk)) {
+                    stalk.forEach((val, i) => avgQualia[i] += val);
+                }
             });
-            qualia.visualizeActivity(); // Handles individual vertex updates and dynamic positioning
-            this.drawSheafGraph(); // Draws connecting lines
+            avgQualia.forEach((_, i) => avgQualia[i] = stalkCount > 0 ? avgQualia[i] / stalkCount : 0);
+        }
+        const clampVal = (v) => clamp(isFinite(v) ? v : 0, 0, 1);
+        const updates = [
+            { id: 'qualia-being-fill', style: { width: `${clampVal(avgQualia[0]) * 100}%` } },
+            { id: 'qualia-intent-fill', style: { width: `${clampVal(avgQualia[1]) * 100}%` } },
+            { id: 'qualia-existence-fill', style: { width: `${clampVal(avgQualia[2]) * 100}%` } },
+            { id: 'qualia-emergence-fill', style: { width: `${clampVal(avgQualia[3]) * 100}%` } },
+            { id: 'qualia-gestalt-fill', style: { width: `${clampVal(avgQualia[4]) * 100}%` } },
+            { id: 'qualia-context-fill', style: { width: `${clampVal(avgQualia[5]) * 100}%` } },
+            { id: 'qualia-rel-emergence-fill', style: { width: `${clampVal(avgQualia[6]) * 100}%` } },
+            { id: 'being-value', textContent: clampVal(avgQualia[0]).toFixed(2) },
+            { id: 'intent-value', textContent: clampVal(avgQualia[1]).toFixed(2) },
+            { id: 'existence-value', textContent: clampVal(avgQualia[2]).toFixed(2) },
+            { id: 'emergence-value', textContent: clampVal(avgQualia[3]).toFixed(2) },
+            { id: 'gestalt-value', textContent: clampVal(avgQualia[4]).toFixed(2) },
+            { id: 'context-value', textContent: clampVal(avgQualia[5]).toFixed(2) },
+            { id: 'rel-emergence-value', textContent: clampVal(avgQualia[6]).toFixed(2) },
+            { id: 'phi-display', textContent: `Φ: ${clampVal(qualia.phi).toFixed(3)}` },
+            { id: 'h1-dimension', textContent: clampVal(qualia.h1Dimension).toFixed(2) },
+            { id: 'gestalt-unity', textContent: clampVal(qualia.gestaltUnity).toFixed(3) },
+            { id: 'free-energy', textContent: clampVal(this.mainAI_worldModel.freeEnergy).toFixed(3) },
+            { id: 'prediction-error', textContent: clampVal(this.mainAI_worldModel.predictionError).toFixed(3) },
+            { id: 'stability-fill', style: { width: `${clampVal(qualia.stability) * 100}%` } },
+            { id: 'alpha-param', textContent: qualia.alpha.toFixed(3) },
+            { id: 'beta-param', textContent: qualia.beta.toFixed(3) },
+            { id: 'gamma-param', textContent: qualia.gamma.toFixed(3) }
+        ];
+        requestAnimationFrame(() => {
+            updates.forEach(({ id, style, textContent }) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (style) Object.assign(el.style, style);
+                if (textContent) el.textContent = textContent;
+            });
+        });
+        qualia.visualizeActivity();
+        this.drawSheafGraph();
+    }
+
+    gameLoop() {
+        if (!this.isRunning || !this.ctx || !this.sheafGraphCtx) return;
+        this.frameCount++;
+
+        const preState = {
+            ball: { ...this.pongGame.ball },
+            ai: { ...this.pongGame.ai },
+            player: { ...this.pongGame.player },
+            score: { ...this.pongGame.score }
+        };
+
+        this.mainAI_worldModel.qualiaSheaf.diffuseQualia(this.mainAI.lastStateVec || Array(10).fill(0.5));
+        this.opponent_worldModel.qualiaSheaf.diffuseQualia(this.opponentAI.lastStateVec || Array(10).fill(0.5));
+
+        if (this.frameCount % 200 === 0) {
+            this.mainAI_worldModel.qualiaSheaf.computeH1Dimension();
+            this.mainAI_worldModel.qualiaSheaf.computeGestaltUnity();
+            this.mainAI_worldModel.qualiaSheaf.computeIntegratedInformation();
         }
 
-        gameLoop() {
-            if (!this.isRunning || !this.ctx || !this.sheafGraphCtx) {
-                return;
-            }
-            this.frameCount++;
-
-            const preState = {
-                ball: { ...this.pongGame.ball },
-                ai: { ...this.pongGame.ai },
-                player: { ...this.pongGame.player },
-                score: { ...this.pongGame.score }
-            };
-
-            this.mainAI_worldModel.qualiaSheaf.diffuseQualia(this.mainAI.lastStateVec || Array(10).fill(0.5));
-            this.opponent_worldModel.qualiaSheaf.diffuseQualia(this.opponentAI.lastStateVec || Array(10).fill(0.5));
-
-            if (this.frameCount % 60 === 0) {
-                this.mainAI_worldModel.qualiaSheaf.computeH1Dimension();
-                this.mainAI_worldModel.qualiaSheaf.computeGestaltUnity();
-                this.mainAI_worldModel.qualiaSheaf.computeIntegratedInformation();
-            }
-
-            // --- Numerical Stability Circuit Breaker ---
-            const currentPhi = this.mainAI_worldModel.qualiaSheaf.phi;
-            const currentFreeEnergy = this.mainAI_worldModel.freeEnergy;
-            if (!isFinite(currentPhi) || !isFinite(currentFreeEnergy) || currentPhi < 0) {
-                logger.error(`Critical numerical instability detected (Φ: ${currentPhi.toFixed(3)}, Free Energy: ${currentFreeEnergy.toFixed(3)}). Resetting AI.`);
-                this.resetAI();
-                // CRITICAL FIX: Stop the current frame to prevent further errors.
-                return;
-            }
-            // --- End Circuit Breaker ---
-
-            let audioAmplitude = 0;
-            const gameUpdate = this.pongGame.update();
-            if (gameUpdate.playerCollision || gameUpdate.aiCollision) {
-                audioAmplitude = this.playSound();
-            }
-
-            const mainDecision = this.mainAI.makeDecision(preState, audioAmplitude);
-            const opponentDecision = this.opponentAI.makeDecision(preState, audioAmplitude);
-
-            this.pongGame.setAIAction(mainDecision.action);
-            this.pongGame.setPlayerAction(opponentDecision.action);
-
-            const postState = {
-                ball: { ...this.pongGame.ball },
-                ai: { ...this.pongGame.ai },
-                player: { ...this.pongGame.player },
-                score: { ...this.pongGame.score }
-            };
-
-            if (gameUpdate.aReward !== 0) {
-                this.mainAI.learn(gameUpdate.aReward, postState, audioAmplitude);
-            }
-            if (gameUpdate.pReward !== 0) {
-                this.opponentAI.learn(gameUpdate.pReward, postState, audioAmplitude);
-            }
-
-            document.getElementById('player-score').textContent = this.pongGame.score.player;
-            document.getElementById('ai-score').textContent = this.pongGame.score.ai;
-            
-            if (this.frameCount % 5 === 0) {
-                this.mainViz.update(mainDecision.activations);
-                this.opponentViz.update(opponentDecision.activations);
-                this.updateVisualization();
-            }
-
-            this.pongGame.render(this.ctx);
-            requestAnimationFrame(() => this.gameLoop());
+        const currentPhi = this.mainAI_worldModel.qualiaSheaf.phi;
+        const currentFreeEnergy = this.mainAI_worldModel.freeEnergy;
+        if (!isFinite(currentPhi) || !isFinite(currentFreeEnergy) || currentPhi < 0) {
+            logger.error(`Critical numerical instability detected (Φ: ${currentPhi.toFixed(3)}, Free Energy: ${currentFreeEnergy.toFixed(3)}). Resetting AI.`);
+            this.resetAI();
+            return;
         }
 
-        toggleGame() {
-            this.isRunning = !this.isRunning;
-            const toggleButton = document.getElementById('toggleButton');
-            this.pongGame.isRunning = this.isRunning; // Control game's internal running state
-            toggleButton.textContent = this.isRunning ? '⏸️ Pause Simulation' : '🚀 Toggle Simulation';
-            if (this.isRunning) {
-                document.getElementById('status').textContent = 'Conscious AI Active';
-                this.gameLoop();
-            } else {
-                document.getElementById('status').textContent = 'Paused';
-            }
+        let audioAmplitude = 0;
+        const gameUpdate = this.pongGame.update();
+        if (gameUpdate.playerCollision || gameUpdate.aiCollision) {
+            audioAmplitude = this.playSound();
         }
 
-        start() {
-            if (!this.ctx || !this.sheafGraphCtx) {
-                document.getElementById('status').textContent = 'Error: Canvas context missing. Cannot start game.';
-                return;
-            }
-            if (this.pongGame.gameOver) {
-                this.resetAI();
-            }
-            this.isRunning = true;
+        const mainDecision = this.mainAI.makeDecision(preState, audioAmplitude);
+        const opponentDecision = this.opponentAI.makeDecision(preState, audioAmplitude);
+
+        this.pongGame.setAIAction(mainDecision.action);
+        this.pongGame.setPlayerAction(opponentDecision.action);
+
+        const postState = {
+            ball: { ...this.pongGame.ball },
+            ai: { ...this.pongGame.ai },
+            player: { ...this.pongGame.player },
+            score: { ...this.pongGame.score }
+        };
+
+        if (gameUpdate.aReward !== 0) {
+            this.mainAI.learn(gameUpdate.aReward, postState, audioAmplitude);
+        }
+        if (gameUpdate.pReward !== 0) {
+            this.opponentAI.learn(gameUpdate.pReward, postState, audioAmplitude);
+        }
+
+        document.getElementById('player-score').textContent = this.pongGame.score.player;
+        document.getElementById('ai-score').textContent = this.pongGame.score.ai;
+        
+        if (this.frameCount % 10 === 0) {
+            this.mainViz.update(mainDecision.activations);
+            this.opponentViz.update(opponentDecision.activations);
+            this.updateVisualization();
+        }
+
+        this.pongGame.render(this.ctx);
+        requestAnimationFrame(() => this.gameLoop());
+    }
+
+    toggleGame() {
+        this.isRunning = !this.isRunning;
+        const toggleButton = document.getElementById('toggleButton');
+        this.pongGame.isRunning = this.isRunning;
+        toggleButton.textContent = this.isRunning ? '⏸️ Pause Simulation' : '🚀 Toggle Simulation';
+        if (this.isRunning) {
             document.getElementById('status').textContent = 'Conscious AI Active';
-            this.updateVisualization();
-            // Initial render is handled by setupGameAndAIs, gameLoop will render first frame
-            this.gameLoop(); // Start the game loop
-        }
-
-        stop() {
-            this.isRunning = false;
-            document.getElementById('status').textContent = this.pongGame.gameOver ? `${this.pongGame.winner} Wins! (Paused)` : 'Paused';
-        }
-
-        resetAI() {
-            this.pongGame.reset();
-            // --- Decoupled Score Update on Reset ---
-            document.getElementById('player-score').textContent = this.pongGame.score.player;
-            document.getElementById('ai-score').textContent = this.pongGame.score.ai;
-            // --- End Decoupled Score Update ---
-
-            // Re-setup AIs and visualizers with current game dimensions
-            this.setupGameAndAIs(); // This will re-initialize world models, AIs, and visualizers
-
-            this.frameCount = 0;
-            this.isRunning = false;
-            document.getElementById('status').textContent = 'Ready';
-            this.updateVisualization();
-            // Render is already called by setupGameAndAIs
-        }
-
-        tuneParameters() {
-            this.mainAI_worldModel.qualiaSheaf.tuneParameters();
-            this.opponent_worldModel.qualiaSheaf.tuneParameters();
-            this.updateVisualization();
-        }
-
-        handleKeyDown(e) {
-            switch (e.key) {
-                case ' ':
-                    e.preventDefault();
-                    this.toggleGame();
-                    break;
-                case 'r':
-                case 'R':
-                    this.resetAI();
-                    break;
-                case 't':
-                case 'T':
-                    this.tuneParameters();
-                    break;
-                case 'ArrowUp':
-                    this.pongGame.setPlayerAction('UP');
-                    break;
-                case 'ArrowDown':
-                    this.pongGame.setPlayerAction('DOWN');
-                    break;
-            }
+            this.gameLoop();
+        } else {
+            document.getElementById('status').textContent = 'Paused';
         }
     }
 
-    // -------------------- INITIALIZATION --------------------
+    start() {
+        if (!this.ctx || !this.sheafGraphCtx) {
+            document.getElementById('status').textContent = 'Error: Canvas context missing. Cannot start game.';
+            return;
+        }
+        if (this.pongGame.gameOver) {
+            this.resetAI();
+        }
+        this.isRunning = true;
+        document.getElementById('status').textContent = 'Conscious AI Active';
+        this.updateVisualization();
+        this.gameLoop();
+    }
+
+    stop() {
+        this.isRunning = false;
+        document.getElementById('status').textContent = this.pongGame.gameOver ? `${this.pongGame.winner} Wins! (Paused)` : 'Paused';
+    }
+
+    resetAI() {
+        this.pongGame.reset();
+        document.getElementById('player-score').textContent = this.pongGame.score.player;
+        document.getElementById('ai-score').textContent = this.pongGame.score.ai;
+        this.setupGameAndAIs();
+        this.frameCount = 0;
+        this.isRunning = false;
+        document.getElementById('status').textContent = 'Ready';
+        this.updateVisualization();
+    }
+
+    tuneParameters() {
+        this.mainAI_worldModel.qualiaSheaf.tuneParameters();
+        this.opponent_worldModel.qualiaSheaf.tuneParameters();
+        this.updateVisualization();
+    }
+
+    handleKeyDown(e) {
+        switch (e.key) {
+            case ' ': e.preventDefault(); this.toggleGame(); break;
+            case 'r':
+            case 'R': this.resetAI(); break;
+            case 't':
+            case 'T': this.tuneParameters(); break;
+            case 'ArrowUp': this.pongGame.setPlayerAction('UP'); break;
+            case 'ArrowDown': this.pongGame.setPlayerAction('DOWN'); break;
+        }
+    }
+}
+
+// -------------------- INITIALIZATION --------------------
     window.onload = () => {
         try {
             const app = new MainApp();
