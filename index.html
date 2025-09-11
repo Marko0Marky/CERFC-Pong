@@ -1966,23 +1966,28 @@ class OntologicalWorldModel {
         }
     }
 
-    async forward(input) {
+     async forward(input) {
         if (!isFiniteVector(input) || input.length !== this.inputDim) {
             logger.error('OWM.forward: Invalid input for forward pass, length mismatch or non-finite values. Returning zeros.', input);
             return { output: vecZeros(this.stateDim), activations: [] };
         }
 
         let x = new Float32Array(input);
-        const activations = [x.slice()];
+        const activations = [x.slice()]; // activations[0] -> input
 
         for (const layer of this.layers) {
             // Offload matVecMul to worker
             x = await runWorkerTask('matVecMul', { matrix: flattenMatrix(layer.W), vector: x });
             x = vecAdd(x, layer.b);
             if (layer.activation === 'tanh') x = tanhVec(x);
-            activations.push(x.slice());
+            activations.push(x.slice()); // activations for hidden layers (lIndex 1, 2, 3)
         }
         const out = vecAdd(await runWorkerTask('matVecMul', { matrix: flattenMatrix(this.outputLayer.W), vector: x }), this.outputLayer.b);
+        
+        // --- FIX START ---
+        activations.push(out.slice()); // ADD THIS LINE: Push the final output layer activations (lIndex 4)
+        // --- FIX END ---
+
         return { output: out, activations };
     }
 
@@ -2141,12 +2146,23 @@ class OntologicalWorldModel {
         const errorVector = vecSub(predictedNextState, actualNextState);
         if (norm2(errorVector) < 1e-3) return; // No significant error to learn from
 
-        // This is a placeholder for a complex learning process.
-        // In a real scenario, this would involve backpropagation through the NN layers,
-        // and potentially adapting the sheaf structure or projection matrices.
-        // For demonstration purposes, we will slightly adjust the output layer weights.
-        const lastHiddenActivation = this.lastActivations[this.lastActivations.length - 1]; // Assuming last activations stored
+        // --- FIX START ---
+        // Ensure there are enough activations recorded to get the last hidden layer.
+        // We need at least the input layer, one hidden layer, and the output layer.
+        // If hiddenSizes is empty, we'd only have input and output, so index would be -1.
+        // With hidden layers, the last hidden is at activations.length - 2.
+        if (this.lastActivations.length < 2) {
+            logger.warn('Skipping OWM learning: Not enough activations captured to identify last hidden layer. Array length:', this.lastActivations.length);
+            return;
+        }
 
+        // Get the activations of the *last hidden layer*.
+        const lastHiddenActivation = this.lastActivations[this.lastActivations.length - 2]; 
+        // --- FIX END ---
+
+        // The condition `lastHiddenActivation.length === this.outputLayer.W[0].length`
+        // is correct, as the input dimension of the output layer's weights (W[0].length)
+        // should match the output dimension of the last hidden layer (lastHiddenActivation.length).
         if (lastHiddenActivation && isFiniteVector(lastHiddenActivation) && lastHiddenActivation.length === this.outputLayer.W[0].length) {
             const gradOutput = vecScale(errorVector, learningRate);
             
