@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,8 +15,8 @@
             --bg-gradient-start: #0a0a15;
             --bg-gradient-end: #1a0a2e;
             --primary-blue: #4af;
-            --primary-blue-glow: rgba(68, 170, 255, 0.8);
-            --secondary-dark: rgba(10, 10, 30, 0.9);
+            --primary-blue-glow: rgba(68, 170, 255, 0.6); /* Slightly less intense glow */
+            --secondary-dark: rgba(10, 10, 30, 0.95); /* Slightly darker for better contrast */
             --border-dark: #2a2a4a;
             --text-light: #e0e0e0;
             --text-medium: #aaa;
@@ -28,17 +29,18 @@
         body {
             margin: 0;
             background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
-            font-family: 'Courier Prime', monospace; /* Modern monospace font */
+            font-family: 'Courier Prime', monospace;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Align items to start for better scroll */
+            align-items: flex-start;
             min-height: 100vh;
             padding: 20px;
             color: var(--primary-blue);
             box-sizing: border-box;
-            overflow-y: auto; /* Enable vertical scrolling */
+            overflow-y: auto;
             overflow-x: hidden;
             line-height: 1.5;
+            font-size: 16px; /* Base font size */
         }
         .main-container {
             display: flex;
@@ -81,13 +83,13 @@
             display: flex;
             flex-direction: row;
             gap: 20px;
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            flex-wrap: wrap;
             justify-content: center;
-            align-items: stretch; /* Ensure children stretch to full height */
+            align-items: stretch;
         }
         /* --- Metrics Panel (Left, Full Height and Width) --- */
         .metrics-panel {
-            flex: 0 0 400px; /* Fixed width */
+            flex: 0 0 400px;
             background: var(--secondary-dark);
             border-radius: 12px;
             border: 1px solid var(--border-dark);
@@ -95,10 +97,10 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            height: 100%;
-            min-height: 80vh;
-            overflow-y: auto; /* Scrollable content */
-            position: relative; /* For loading overlay */
+            height: 100%; /* Important for stretch */
+            min-height: 80vh; /* Minimum height for scroll */
+            overflow-y: auto;
+            position: relative;
         }
         .metrics-panel h3 {
             margin-top: 0;
@@ -121,15 +123,15 @@
         }
         .metric-label {
             color: var(--text-medium);
-            flex-shrink: 0; /* Prevent label from shrinking */
+            flex-shrink: 0;
         }
         .metric-value {
             font-weight: bold;
             color: var(--text-light);
             text-align: right;
-            white-space: nowrap; /* Prevent value from wrapping */
+            white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis; /* Add ellipsis if too long */
+            text-overflow: ellipsis;
         }
         .qualia-bar-container {
             height: 22px;
@@ -144,7 +146,7 @@
         .qualia-bar {
             height: 100%;
             border-radius: 3px;
-            transition: width 0.3s ease-out; /* Smoother transition */
+            transition: width 0.3s ease-out;
             position: relative;
             width: 0%;
             will-change: width;
@@ -165,7 +167,7 @@
             height: 100%;
             background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
             animation: qualiaWave 2s infinite linear;
-            mix-blend-mode: overlay; /* Subtle shimmer effect */
+            mix-blend-mode: overlay;
         }
         @keyframes qualiaWave {
             from { transform: translateX(-100%); }
@@ -179,7 +181,7 @@
             font-size: 13px;
             font-weight: bold;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
-            pointer-events: none; /* Allow interaction with underlying bar */
+            pointer-events: none;
         }
         .qualia-label { left: 8px; }
         .qualia-value { right: 8px; }
@@ -213,7 +215,7 @@
             font-size: 17px;
             font-weight: bold;
             margin-bottom: 10px;
-            border-bottom: none !important; /* Override H3 border for status */
+            border-bottom: none !important;
         }
         .stability-gauge {
             width: 100%;
@@ -282,16 +284,27 @@
             box-shadow: 0 0 5px var(--primary-blue-glow);
         }
 
+        /* Flash animation for tuned parameters */
+        @keyframes param-flash {
+            0% { background-color: transparent; }
+            30% { background-color: rgba(68, 170, 255, 0.3); }
+            60% { background-color: transparent; }
+            100% { background-color: transparent; }
+        }
+        .param-flash-active {
+            animation: param-flash 1s ease-out;
+        }
+
         .sheaf-graph {
             position: relative;
-            height: 160px; /* Increased height for better vertex spacing */
+            height: 160px;
             width: 100%;
             margin: 15px 0;
             padding: 10px;
             background: rgba(0, 0, 0, 0.2);
             border-radius: 8px;
             box-shadow: inset 0 0 8px rgba(0,0,0,0.3);
-            overflow: hidden; /* Ensure vertices stay within bounds */
+            overflow: hidden;
         }
         .sheaf-vertex-canvas {
             position: absolute;
@@ -301,7 +314,7 @@
             height: 100%;
         }
         .vertex {
-            width: 36px; /* Slightly larger vertices */
+            width: 36px;
             height: 36px;
             border-radius: 50%;
             display: flex;
@@ -315,12 +328,12 @@
             z-index: 10;
             background: radial-gradient(circle, #ff6b6b, #e74c3c);
             box-shadow: 0 0 8px rgba(255,107,107,0.5);
-            cursor: help; /* Indicate tooltip */
+            cursor: help;
             will-change: transform, box-shadow;
         }
         .vertex.active {
             animation: pulse 1.5s infinite;
-            background: radial-gradient(circle, #00ff99, #00cc66); /* Greenish for active */
+            background: radial-gradient(circle, #00ff99, #00cc66);
             box-shadow: 0 0 12px rgba(0,255,153,0.8), 0 0 20px rgba(0,255,153,0.4);
         }
         @keyframes pulse {
@@ -335,7 +348,7 @@
             background: rgba(0, 0, 0, 0.1);
             padding: 10px;
             border-radius: 6px;
-            white-space: pre-wrap; /* Preserve formatting for equations */
+            white-space: pre-wrap;
             overflow-x: auto;
         }
         /* --- Right Column (Game + Visualizers) --- */
@@ -343,8 +356,8 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            flex: 1; /* Allow it to grow */
-            min-width: 550px; /* Adjusted minimum width for better layout */
+            flex: 1;
+            min-width: 550px;
         }
         .game-container {
             width: 100%;
@@ -355,7 +368,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            position: relative; /* For loading overlay */
+            position: relative;
         }
         #gameCanvas {
             width: 100%;
@@ -365,11 +378,11 @@
             border: 1px solid #333;
             border-radius: 6px;
             margin-bottom: 12px;
-            image-rendering: pixelated; /* For sharp pixel art if any */
+            image-rendering: pixelated;
         }
         .score-container {
             display: flex;
-            justify-content: space-around; /* Spread scores more */
+            justify-content: space-around;
             gap: 20px;
             width: 100%;
             padding: 5px 0;
@@ -377,7 +390,7 @@
         }
         .score-metric {
             display: flex;
-            flex-direction: column; /* Stack label and value */
+            flex-direction: column;
             align-items: center;
             font-size: 1.2em;
         }
@@ -387,17 +400,17 @@
             margin-bottom: 3px;
         }
         .player-score .metric-value {
-            color: #ff9900; /* Player specific color */
+            color: #ff9900;
             font-size: 1.5em;
         }
         .ai-score .metric-value {
-            color: #44aaff; /* AI specific color */
+            color: #44aaff;
             font-size: 1.5em;
         }
         /* --- Visualizer Column (Stacked) --- */
         .visualizer-row {
             display: flex;
-            flex-direction: column; /* Stack vertically */
+            flex-direction: column;
             gap: 20px;
             justify-content: flex-start;
             flex-grow: 1;
@@ -408,8 +421,8 @@
             border-radius: 10px;
             padding: 15px;
             box-sizing: border-box;
-            width: 100%; /* Full width of parent */
-            position: relative; /* For loading overlay */
+            width: 100%;
+            position: relative;
         }
         .panel h3 {
             margin-top: 0;
@@ -426,7 +439,7 @@
             text-align: center;
         }
         .nn-visualizer-panel {
-            min-height: 120px; /* Minimum height for NN viz */
+            min-height: 120px;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
@@ -437,8 +450,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 15px; /* More padding */
-            min-height: 80px; /* Minimum height for container */
+            padding: 0 15px;
+            min-height: 80px;
         }
         .nn-layer {
             display: flex;
@@ -446,13 +459,13 @@
             justify-content: space-around;
             height: 100%;
             align-items: center;
-            gap: 6px; /* Increased gap */
+            gap: 6px;
             z-index: 10;
             position: relative;
             min-height: 60px;
         }
         .nn-neuron {
-            width: 8px; /* Larger neurons */
+            width: 8px;
             height: 8px;
             border-radius: 50%;
             border: 1px solid #888;
@@ -470,7 +483,7 @@
             height: 100%;
             pointer-events: none;
             z-index: 5;
-            opacity: 0.7; /* Slightly less opaque connections */
+            opacity: 0.7;
         }
         .neuron-flash {
             animation: neuron-flash-anim 0.8s ease-out forwards;
@@ -483,7 +496,7 @@
         /* --- Controls & Log --- */
         .controls-section {
             display: flex;
-            gap: 15px; /* Increased gap */
+            gap: 15px;
             flex-wrap: wrap;
             justify-content: center;
             margin: 10px 0;
@@ -495,13 +508,13 @@
             background: linear-gradient(135deg, #2a2a4a, #3a3a5a);
             color: var(--text-light);
             border: 1px solid #555;
-            padding: 10px 18px; /* More padding */
+            padding: 10px 18px;
             cursor: pointer;
-            border-radius: 8px; /* More rounded */
+            border-radius: 8px;
             font-family: inherit;
             transition: all 0.2s ease;
             font-weight: bold;
-            min-width: 140px; /* Wider buttons */
+            min-width: 140px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             font-size: 1.05em;
         }
@@ -557,7 +570,7 @@
             border: 1px solid #444;
             border-radius: 4px;
             padding: 12px;
-            height: 150px; /* Slightly taller log */
+            height: 150px;
             overflow-y: auto;
             font-family: 'Courier Prime', monospace;
             font-size: 12px;
@@ -616,13 +629,13 @@
             color: var(--text-medium);
         }
 
-        /* --- NEW Performance Chart Styles --- */
+        /* --- Performance Chart Styles --- */
         .performance-charts-container {
             background: var(--secondary-dark);
             border-radius: 12px;
             border: 1px solid var(--border-dark);
             padding: 15px;
-            margin-top: 20px; /* Add margin to separate from the main content */
+            margin-top: 20px;
         }
         .charts-grid {
             display: grid;
@@ -645,7 +658,7 @@
             height: 120px;
         }
 
-        /* --- NEW Qualia Attention Styles --- */
+        /* --- Qualia Attention Styles --- */
         .qualia-attention-panel {
             background: rgba(0,0,0,0.2);
             border-radius: 8px;
@@ -666,7 +679,7 @@
             font-size: 12px;
         }
         .attention-label {
-            width: 110px; /* Fixed width for alignment */
+            width: 110px;
             color: var(--text-medium);
             text-align: right;
             flex-shrink: 0;
@@ -695,13 +708,13 @@
             .metrics-panel {
                 flex: 0 0 auto;
                 width: 100%;
-                max-width: 800px; /* Constrain width on smaller screens */
+                max-width: 800px;
                 min-height: auto;
             }
             .right-column {
                 min-width: unset;
                 width: 100%;
-                max-width: 800px; /* Constrain width on smaller screens */
+                max-width: 800px;
             }
         }
         @media (max-width: 768px) {
@@ -736,7 +749,7 @@
                 font-size: 1.2em;
             }
             .charts-grid {
-                grid-template-columns: 1fr; /* Stack charts on small screens */
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -760,9 +773,9 @@
                     Φ: 0.000
                  </div>
                 <div class="btn-group">
-                    <button id="toggleSimButton" aria-label="Toggle simulation run/pause">🚀 Toggle Simulation</button>
-                    <button id="resetSimButton" aria-label="Reset game and AI to initial state">🔄 Reset All</button>
-                    <button id="tuneButton" aria-label="Tune AI parameters adaptively">⚙️ Tune</button>
+                    <button id="toggleSimButton" aria-label="Toggle simulation run/pause (Spacebar)">🚀 Toggle Simulation</button>
+                    <button id="resetSimButton" aria-label="Reset game and AI to initial state (R key)">🔄 Reset All</button>
+                    <button id="tuneButton" aria-label="Tune AI parameters adaptively (T key)">⚙️ Tune</button>
                 </div>
                 <div class="qualia-viz" role="region" aria-labelledby="qualia-dynamics-heading">
                     <h3 id="qualia-dynamics-heading" class="status">Qualia Diffusion Dynamics</h3>
@@ -804,17 +817,17 @@
                 </div>
                 <div class="metric-group" role="group" aria-labelledby="metric-group-heading">
                     <h3 id="metric-group-heading" class="status">System Metrics</h3>
-                    <div class="metric"><span class="metric-label">Free Energy F:</span><span class="metric-value" id="free-energy">0.000</span></div>
-                    <div class="metric"><span class="metric-label">Prediction Error:</span><span class="metric-value" id="prediction-error">0.000</span></div>
-                    <div class="metric"><span class="metric-label">Gestalt Unity:</span><span class="metric-value" id="gestalt-unity">0.000</span></div>
-                    <div class="metric"><span class="metric-label">dim H¹:</span><span class="metric-value" id="h1-dimension">0.00</span></div>
-                    <div class="metric"><span class="metric-label">Gluing Inconsistency:</span><span class="metric-value" id="inconsistency">0.000</span></div>
+                    <div class="metric"><span class="metric-label">Free Energy F:</span><span class="metric-value" id="free-energy" aria-live="polite" aria-atomic="true">0.000</span></div>
+                    <div class="metric"><span class="metric-label">Prediction Error:</span><span class="metric-value" id="prediction-error" aria-live="polite" aria-atomic="true">0.000</span></div>
+                    <div class="metric"><span class="metric-label">Gestalt Unity:</span><span class="metric-value" id="gestalt-unity" aria-live="polite" aria-atomic="true">0.000</span></div>
+                    <div class="metric"><span class="metric-label">dim H¹:</span><span class="metric-value" id="h1-dimension" aria-live="polite" aria-atomic="true">0.00</span></div>
+                    <div class="metric"><span class="metric-label">Gluing Inconsistency:</span><span class="metric-value" id="inconsistency" aria-live="polite" aria-atomic="true">0.000</span></div>
                 </div>
                 <div class="qualia-attention-panel" id="qualiaAttentionPanel" role="region" aria-labelledby="qualia-attention-heading">
                     <h4 id="qualia-attention-heading">Qualia Attention (Main AI)</h4>
                     </div>
                 <div class="sheaf-graph" id="sheafGraph" role="img" aria-label="Sheaf graph visualizing information flow between concepts">
-                    <canvas id="sheafGraphCanvas" class="sheaf-vertex-canvas"></canvas>
+                    <canvas id="sheafGraphCanvas" class="sheaf-vertex-canvas" aria-hidden="true"></canvas>
                     <div class="vertex" id="vertex-0" aria-label="Player Paddle Y">P-Y</div>
                     <div class="vertex" id="vertex-1" aria-label="Ball X">B-X</div>
                     <div class="vertex" id="vertex-2" aria-label="Ball Y">B-Y</div>
@@ -856,11 +869,11 @@
                     <div class="score-container">
                         <div class="score-metric player-score">
                             <span class="metric-label">Player (Left) Score:</span>
-                            <span id="player-score" class="metric-value">0</span>
+                            <span id="player-score" class="metric-value" aria-live="polite" aria-atomic="true">0</span>
                         </div>
                         <div class="score-metric ai-score">
                             <span class="metric-label">AI (Right) Score:</span>
-                            <span id="ai-score" class="metric-value">0</span>
+                            <span id="ai-score" class="metric-value" aria-live="polite" aria-atomic="true">0</span>
                         </div>
                     </div>
                     <div class="difficulty-controls" role="group" aria-label="Game Difficulty Settings">
@@ -900,29 +913,29 @@
             <div class="charts-grid">
                 <div class="chart-container">
                     <h4>Avg. Q-Value (Confidence)</h4>
-                    <svg id="qValueChart" class="chart-svg"></svg>
+                    <svg id="qValueChart" class="chart-svg" role="img" aria-label="Average Q-Value over time"></svg>
                 </div>
                 <div class="chart-container">
                     <h4>Prediction Error (Uncertainty)</h4>
-                    <svg id="predErrorChart" class="chart-svg"></svg>
+                    <svg id="predErrorChart" class="chart-svg" role="img" aria-label="Prediction Error over time"></svg>
                 </div>
                 <div class="chart-container">
                     <h4>Epsilon (Exploration Rate)</h4>
-                    <svg id="epsilonChart" class="chart-svg"></svg>
+                    <svg id="epsilonChart" class="chart-svg" role="img" aria-label="Epsilon exploration rate over time"></svg>
                 </div>
                 <div class="chart-container">
                     <h4>Score Difference (AI - Player)</h4>
-                    <svg id="scoreChart" class="chart-svg"></svg>
+                    <svg id="scoreChart" class="chart-svg" role="img" aria-label="Score difference between AI and Player over time"></svg>
                 </div>
             </div>
         </div>
         <div class="controls-section" role="group" aria-label="Simulation Controls">
-             <button id="stepButton" aria-label="Advance simulation by one step">⏭️ Step</button>
-             <button id="pauseButton" aria-label="Pause the simulation">⏸️ Pause</button>
+             <button id="stepButton" aria-label="Advance simulation by one step (S key)">⏭️ Step</button>
+             <button id="pauseButton" aria-label="Pause the simulation (P key)">⏸️ Pause</button>
         </div>
         <div class="log-container" role="log" aria-labelledby="system-console-heading">
             <h3 id="system-console-heading">🔧 System Console</h3>
-            <div id="log" tabindex="0"></div>
+            <div id="log" tabindex="0" aria-live="polite" aria-atomic="true"></div>
         </div>
     </div>
     <script src="https://unpkg.com/@popperjs/core@2"></script>
@@ -1004,7 +1017,7 @@ function norm2(v) {
         const val = v[i];
         s += (Number.isFinite(val) ? val : 0) * (Number.isFinite(val) ? val : 0);
     }
-    return Math.sqrt(s + 1e-12);
+    return Math.sqrt(s + 1e-12); // Add small epsilon for robustness
 }
 
 function isFiniteVector(v) {
@@ -1116,19 +1129,28 @@ function solveLinearSystemCG(A_flat_data, b, opts={tol:1e-6, maxIter:200}) {
         Ap.set(matVecMul(A, p)); // Use robust matVecMul
 
         const denom = dot(p, Ap);
-        if (!Number.isFinite(denom) || denom <= 1e-20) break;
+        if (!Number.isFinite(denom) || denom <= 1e-20) {
+            break;
+        }
 
         const alpha = rsold / denom;
-        if (!Number.isFinite(alpha)) break; // Break if alpha is NaN/Infinity
+        if (!Number.isFinite(alpha)) {
+            break; // Break if alpha is NaN/Infinity
+        }
 
-        for (let i = 0; i < n; i++) x[i] += (Number.isFinite(alpha) ? alpha : 0) * (Number.isFinite(p[i]) ? p[i] : 0);
-        for (let i = 0; i < n; i++) r[i] -= (Number.isFinite(alpha) ? alpha : 0) * (Number.isFinite(Ap[i]) ? Ap[i] : 0);
+        for (let i = 0; i < n; i++) x[i] = (Number.isFinite(x[i]) ? x[i] : 0) + (Number.isFinite(alpha) ? alpha : 0) * (Number.isFinite(p[i]) ? p[i] : 0);
+        for (let i = 0; i < n; i++) r[i] = (Number.isFinite(r[i]) ? r[i] : 0) - (Number.isFinite(alpha) ? alpha : 0) * (Number.isFinite(Ap[i]) ? Ap[i] : 0);
 
         const rsnew = dot(r, r);
-        if (!Number.isFinite(rsnew) || Math.sqrt(rsnew) < (opts.tol || 1e-6)) break; // Check rsnew for finiteness
+        if (!Number.isFinite(rsnew)) {
+            break;
+        }
+        if (Math.sqrt(rsnew) < (opts.tol || 1e-6)) break;
 
         const beta = rsnew / (rsold + 1e-20);
-        if (!Number.isFinite(beta)) break; // Break if beta is NaN/Infinity
+        if (!Number.isFinite(beta)) {
+            break; // Break if beta is NaN/Infinity
+        }
 
         for (let i = 0; i < n; i++) p[i] = (Number.isFinite(r[i]) ? r[i] : 0) + (Number.isFinite(beta) ? beta : 0) * (Number.isFinite(p[i]) ? p[i] : 0);
         rsold = rsnew;
@@ -1138,11 +1160,15 @@ function solveLinearSystemCG(A_flat_data, b, opts={tol:1e-6, maxIter:200}) {
 
 function covarianceMatrix(states_array, eps = 1e-3) {
     const states = states_array.filter(s => isFiniteVector(s));
-    if (!Array.isArray(states) || states.length === 0) return [[eps]];
+    if (!Array.isArray(states) || states.length < 2) { // Need at least 2 states for covariance
+        return [[eps]]; // Return a minimal valid covariance
+    }
     
     const n = states.length;
     const d = states[0]?.length || 0;
-    if (d === 0) return [[eps]];
+    if (d === 0) {
+        return [[eps]];
+    }
 
     const mean = new Float32Array(d).fill(0);
     for (let i = 0; i < n; i++) {
@@ -1167,7 +1193,7 @@ function covarianceMatrix(states_array, eps = 1e-3) {
     for (let i = 0; i < d; i++) {
         for (let j = 0; j < i; j++) cov[j][i] = cov[i][j];
     }
-    for (let i = 0; i < d; i++) cov[i][i] = (Number.isFinite(cov[i][i]) ? cov[i][i] : 0) + eps;
+    for (let i = 0; i < d; i++) cov[i][i] = (Number.isFinite(cov[i][i]) ? cov[i][i] : 0) + eps; // Add regularization
     
     // Final check for the output covariance matrix to ensure it's finite
     for (let i = 0; i < d; i++) {
@@ -1183,33 +1209,41 @@ function covarianceMatrix(states_array, eps = 1e-3) {
 
 function matrixSpectralNormApprox(M_flat_data, maxIter = 10) {
     const M = unflattenMatrix(M_flat_data);
-    if (!isFiniteMatrix(M)) return 0;
+    if (!isFiniteMatrix(M)) {
+        return 0;
+    }
     let n = M.length;
     if (n === 0) return 0;
     
-    let v = new Float32Array(n).fill(1 / Math.sqrt(n));
+    let v = new Float32Array(n).fill(1 / Math.sqrt(n)); // Initial vector
 
     for (let i = 0; i < maxIter; i++) {
         const Av = matVecMul(M, v);
-        if (!isFiniteVector(Av)) return 0;
+        if (!isFiniteVector(Av)) {
+            return 0;
+        }
         const norm = norm2(Av);
-        if (norm < 1e-10) return 0;
-        for(let k=0; k<n; k++) v[k] = (Av[k] || 0) / norm;
+        if (norm < 1e-10) return 0; // If norm is zero, spectral norm is zero
+        for(let k=0; k<n; k++) v[k] = (Av[k] || 0) / norm; // Normalize v
     }
     const finalAv = matVecMul(M, v);
-    if (!isFiniteVector(finalAv)) return 0;
+    if (!isFiniteVector(finalAv)) {
+        return 0;
+    }
     return norm2(finalAv);
 }
 
 function matrixRank(M_flat_data) {
     const M = unflattenMatrix(M_flat_data);
-    if (!isFiniteMatrix(M)) return 0;
+    if (!isFiniteMatrix(M)) {
+        return 0;
+    }
     const m = M.length;
     if (m === 0) return 0;
     const n = M[0]?.length || 0;
     if (n === 0) return 0;
 
-    const A = M.map(row => new Float32Array(row));
+    const A = M.map(row => new Float32Array(row)); // Create a copy
     let rank = 0;
     const tol = 1e-10;
 
@@ -1219,18 +1253,25 @@ function matrixRank(M_flat_data) {
             if (Math.abs(A[i][col]) > Math.abs(A[pivotRow][col])) pivotRow = i;
         }
 
-        if (Math.abs(A[pivotRow][col]) < tol) continue;
+        if (Math.abs(A[pivotRow][col]) < tol) continue; // Column is effectively zero
 
+        // Swap pivot row
         [A[rank], A[pivotRow]] = [A[pivotRow], A[rank]];
 
         const pivot = A[rank][col];
-        if (!Number.isFinite(pivot) || Math.abs(pivot) < tol) continue;
+        if (!Number.isFinite(pivot) || Math.abs(pivot) < tol) {
+             continue;
+        }
+        // Normalize pivot row
         for (let j = col; j < n; j++) A[rank][j] = (A[rank][j] || 0) / pivot;
 
+        // Eliminate other rows
         for (let i = 0; i < m; i++) {
             if (i === rank) continue;
             const factor = A[i][col];
-            if (!Number.isFinite(factor)) continue;
+            if (!Number.isFinite(factor)) {
+                continue;
+            }
             for (let j = col; j < n; j++) A[i][j] = (A[i][j] || 0) - (factor * (A[rank][j] || 0));
         }
         rank++;
@@ -1281,12 +1322,13 @@ self.onmessage = function(e) {
         const workerCallbacks = new Map();
         let nextWorkerTaskId = 0;
 
-        function runWorkerTask(type, data, timeout = 2000) {
+        function runWorkerTask(type, data, timeout = 10000) { // Default timeout increased to 10 seconds for initial heavy ops
             return new Promise((resolve, reject) => {
                 const id = nextWorkerTaskId++;
                 const timer = setTimeout(() => {
                     workerCallbacks.delete(id);
-                    reject(new Error(`Worker task '${type}' timed out after ${timeout}ms.`));
+                    logger.error(`Worker task '${type}' (id: ${id}) timed out after ${timeout}ms. Rejecting.`);
+                    reject(new Error(`Worker task '${type}' (id: ${id}) timed out after ${timeout}ms.`));
                 }, timeout);
                 workerCallbacks.set(id, {
                     resolve: (result) => { clearTimeout(timer); resolve(result); },
@@ -1299,13 +1341,16 @@ self.onmessage = function(e) {
             const { id, result, error } = e.data;
             const callback = workerCallbacks.get(id);
             if (callback) {
-                if (error) callback.reject(error);
+                if (error) {
+                    logger.error(`Worker task ${e.data.type.replace('Result', '')} (id: ${id}) error: ${error}`);
+                    callback.reject(error);
+                }
                 else callback.resolve(result);
                 workerCallbacks.delete(id);
             }
         };
         worker.onerror = function(error) {
-            logger.error('Worker global error:', error.message);
+            logger.error('Worker global error:', error.message || error.toString()); // More robust error logging
             workerCallbacks.forEach(cb => cb.reject(new Error('Worker crashed')));
             workerCallbacks.clear();
         };
@@ -1318,7 +1363,7 @@ function dot(a, b) {
     let s = 0.0;
     for (let i = 0, n = a.length; i < n; ++i) {
         const ai = a[i], bi = b[i];
-        if (!Number.isFinite(ai) || !Number.isFinite(bi)) return 0;
+        if (!Number.isFinite(ai) || !Number.isFinite(bi)) return 0; // Ensure finite values
         s += ai * bi;
     }
     return s;
@@ -1330,44 +1375,44 @@ function norm2(v) {
         const val = v[i];
         s += (Number.isFinite(val) ? val : 0) * (Number.isFinite(val) ? val : 0);
     }
-    return Math.sqrt(s + 1e-12);
+    return Math.sqrt(s + 1e-12); // Add small epsilon for robustness
 }
 function vecAdd(a, b) {
     const n = Math.max(a?.length||0, b?.length||0);
     const out = new Float32Array(n);
-    for (let i = 0; i < n; ++i) out[i] = (a[i] || 0) + (b[i] || 0);
+    for (let i = 0; i < n; ++i) out[i] = (Number.isFinite(a[i]) ? a[i] : 0) + (Number.isFinite(b[i]) ? b[i] : 0);
     return out;
 }
 function vecSub(a, b) {
     const n = Math.max(a?.length||0, b?.length||0);
     const out = new Float32Array(n);
-    for (let i = 0; i < n; ++i) out[i] = (a[i] || 0) - (b[i] || 0);
+    for (let i = 0; i < n; ++i) out[i] = (Number.isFinite(a[i]) ? a[i] : 0) - (Number.isFinite(b[i]) ? b[i] : 0);
     return out;
 }
 function vecScale(v, s) {
     const n = v?.length || 0;
     const out = new Float32Array(n);
-    for (let i = 0; i < n; ++i) out[i] = (v[i] || 0) * s;
+    for (let i = 0; i < n; ++i) out[i] = (Number.isFinite(v[i]) ? v[i] : 0) * (Number.isFinite(s) ? s : 0);
     return out;
 }
 function tanhVec(v) {
-    if (!isFiniteVector(v)) return vecZeros(v?.length || 0);
+    if (!isFiniteVector(v)) { logger.warn('tanhVec: Input vector is not finite. Returning zeros.'); return vecZeros(v?.length || 0); }
     return new Float32Array(v.map(x => Math.tanh(x)));
 }
 // NEW: Sigmoid function for LSTM-like gates
 function sigmoidVec(v) {
-    if (!isFiniteVector(v)) return vecZeros(v?.length || 0);
+    if (!isFiniteVector(v)) { logger.warn('sigmoidVec: Input vector is not finite. Returning zeros.'); return vecZeros(v?.length || 0); }
     return new Float32Array(v.map(x => 1 / (1 + Math.exp(-x))));
 }
 // NEW: Element-wise vector multiplication
 function vecMul(a, b) {
     const n = Math.max(a?.length||0, b?.length||0);
     const out = new Float32Array(n);
-    for (let i = 0; i < n; ++i) out[i] = (a[i] || 0) * (b[i] || 0);
+    for (let i = 0; i < n; ++i) out[i] = (Number.isFinite(a[i]) ? a[i] : 0) * (Number.isFinite(b[i]) ? b[i] : 0);
     return out;
 }
 function randomMatrix(r, c, scale) {
-    return Array(r).fill().map(() => new Float32Array(c).fill().map(() => (Math.random() - 0.5) * scale));
+    return Array(r).fill().map(() => new Float32Array(c).fill().map(() => clamp((Math.random() - 0.5) * scale, -1, 1))); // Clamp random values
 }
 function vecZeros(n) { return new Float32Array(n).fill(0); }
 function zeroMatrix(r, c) { return Array(r).fill().map(() => new Float32Array(c).fill(0)); }
@@ -1386,7 +1431,7 @@ function isFiniteMatrix(m) {
     return m.every(row => (Array.isArray(row) || row instanceof Float32Array) && row.length === firstRowLength && isFiniteVector(row));
 }
 function flattenMatrix(matrix) {
-    if (!isFiniteMatrix(matrix)) return { flatData: new Float32Array(0), rows: 0, cols: 0 };
+    if (!isFiniteMatrix(matrix)) { logger.warn('flattenMatrix: Input matrix is not finite. Returning empty.'); return { flatData: new Float32Array(0), rows: 0, cols: 0 }; }
     const rows = matrix.length;
     const cols = matrix[0]?.length || 0;
     if (rows === 0 || cols === 0) return { flatData: new Float32Array(0), rows, cols };
@@ -1394,7 +1439,7 @@ function flattenMatrix(matrix) {
     for (let i = 0; i < rows; i++) for(let j = 0; j < cols; j++) flatData[i * cols + j] = matrix[i][j];
     return { flatData, rows, cols };
 }
-function unflattenMatrix(data) {
+function unflattenMatrix(data) { // This version is only used in main thread for deserialization when needed
     const { flatData, rows, cols } = data;
     if (!flatData || flatData.length !== rows * cols) return [];
     const matrix = [];
@@ -1408,9 +1453,13 @@ function unflattenMatrix(data) {
     return matrix;
 }
 function logDeterminantFromDiagonal(M) {
-    if (!Array.isArray(M) || M.length === 0) return Math.log(1e-12);
+    if (!Array.isArray(M) || M.length === 0) return Math.log(1e-12); // Return log(epsilon) for empty
     let s = 0;
-    for (let i=0;i<M.length;i++) s += Math.log(Math.max(Math.abs(M[i][i]), 1e-12)); // Use Math.abs for robustness
+    for (let i=0;i<M.length;i++) {
+        const val = M[i]?.[i];
+        if (!Number.isFinite(val)) { logger.warn('logDeterminantFromDiagonal: Non-finite diagonal element. Skipping.'); continue; }
+        s += Math.log(Math.max(Math.abs(val), 1e-12)); // Use Math.abs and small epsilon
+    }
     return s;
 }
 
@@ -1424,6 +1473,7 @@ const sheafVertexPositions = {
 // --- APPLICATION CLASSES ---
 class EnhancedQualiaSheaf {
     constructor(graph, stateDim = 10, initialQDim = 7, alpha = 0.1, beta = 0.1, gamma = 0.05) {
+        // logger.info('EnhancedQualiaSheaf: Constructor started.'); // Removed verbose log
         this.stateDim = stateDim;
         this.entityNames = ['being', 'intent', 'existence', 'emergence', 'gestalt', 'context', 'rel_emergence'];
         this.qDim = this.entityNames.length; // This should always be 7
@@ -1476,14 +1526,14 @@ class EnhancedQualiaSheaf {
         };
         this.simplicialComplex = {
             vertices: finalVertices,
-            edges: finalEdges, // Ensure simplicialComplex edges match graph edges
+            edges: finalEdges,
             triangles: finalTriangles
         };
 
-        this.alpha = clamp(alpha, 0.01, 1); // Alpha range up to 1
-        this.beta = clamp(beta, 0.01, 1);   // Beta range up to 1
-        this.gamma = clamp(gamma, 0.01, 0.5); // Gamma range up to 0.5 (learning rate)
-        this.eps = 1e-6; // Epsilon for numerical stability, slightly smaller
+        this.alpha = clamp(alpha, 0.01, 1);
+        this.beta = clamp(beta, 0.01, 1);
+        this.gamma = clamp(gamma, 0.01, 0.5);
+        this.eps = 1e-6; // Epsilon for numerical stability
 
         this.stalks = new Map(this.graph.vertices.map(v =>
             [v, new Float32Array(this.qDim).fill(0).map(() => clamp((Math.random() - 0.5) * 0.5, -1, 1))]
@@ -1504,11 +1554,11 @@ class EnhancedQualiaSheaf {
         this.h1Dimension = 0;
         this.gestaltUnity = 0.6;
         this.stability = 0.6;
-        this.diffusionEnergy = 0; // Placeholder, could be derived more rigorously
+        this.diffusionEnergy = 0;
         this.inconsistency = 0;
         this.windowedStates = [];
-        this.windowSize = 50; // Keep 50 states for covariance calculation
         const N_total_stalk_dim = this.graph.vertices.length * this.qDim;
+        this.windowSize = Math.max(50, N_total_stalk_dim * 2); // Ensure window is large enough relative to state dim
         for (let i = 0; i < this.windowSize; i++) {
             this.windowedStates.push(new Float32Array(N_total_stalk_dim).fill(0).map(() => clamp((Math.random() - 0.5) * 0.1, -1, 1)));
         }
@@ -1516,13 +1566,16 @@ class EnhancedQualiaSheaf {
     }
 
     async initialize() {
+        logger.info('EnhancedQualiaSheaf.initialize() called.');
         try {
             await this._updateGraphStructureAndMetrics();
+            await this._updateDerivedMetrics(); // Ensure metrics are calculated initially
             this.ready = true;
             logger.info('EnhancedQualiaSheaf ready.');
         } catch (e) {
             logger.error('Error during Sheaf initialization:', e);
             this.ready = false;
+            throw e; // Re-throw to propagate to MainApp
         }
     }
 
@@ -1531,6 +1584,8 @@ class EnhancedQualiaSheaf {
         if (this.stalkHistory.length < this.stalkHistorySize) return;
 
         const numVertices = this.graph.vertices.length;
+        if (numVertices === 0) return;
+
         const means = new Float32Array(numVertices).fill(0);
 
         // Calculate means for each vertex's stalk norm over history
@@ -1548,8 +1603,8 @@ class EnhancedQualiaSheaf {
                 let denom_i = 0;
                 let denom_j = 0;
                 for (let t = 0; t < this.stalkHistorySize; t++) {
-                    const diff_i = this.stalkHistory[t][i] - means[i];
-                    const diff_j = this.stalkHistory[t][j] - means[j];
+                    const diff_i = (this.stalkHistory[t][i] || 0) - (means[i] || 0);
+                    const diff_j = (this.stalkHistory[t][j] || 0) - (means[j] || 0);
                     numerator += diff_i * diff_j;
                     denom_i += diff_i * diff_i;
                     denom_j += diff_j * diff_j;
@@ -1609,10 +1664,11 @@ class EnhancedQualiaSheaf {
             const correlationFactor = (1 + correlation) / 2;
 
             // Combine base structure with learned functional correlation
-            const finalWeight = baseWeight * correlationFactor;
+            // Ensure a minimum non-zero weight for connectivity, scaled by correlation factor
+            const finalWeight = baseWeight * (0.1 + 0.9 * correlationFactor); // Minimum 0.1 weight
             
-            adj[i][j] = clamp(finalWeight, 0.1, 1.0); // Ensure a minimum connectivity
-            adj[j][i] = clamp(finalWeight, 0.1, 1.0);
+            adj[i][j] = clamp(finalWeight, 0.01, 1.0); // Ensure a minimum connectivity
+            adj[j][i] = clamp(finalWeight, 0.01, 1.0);
         }
         return adj;
     }
@@ -1660,48 +1716,43 @@ class EnhancedQualiaSheaf {
                     deg += adj[i][j];
                 }
             }
-            L[i][i] = deg + this.eps;
+            L[i][i] = deg + this.eps; // Add self-loop for robustness
         }
         return L;
     }
 
     async computeProjectionMatrices() {
         const projections = new Map();
-        const identityMatrix = identity(this.qDim); // The stable identity matrix
+        const identityMatrix = identity(this.qDim); // The stable identity matrix (no worker needed for this)
 
         for (const [u, v] of this.graph.edges) {
-            // FIX: Always use a stable identity matrix for projections.
-            // This removes the chaotic randomness that was causing the solver to fail.
             const P_uv = identityMatrix;
-            const P_vu = identityMatrix; // The transpose of an identity matrix is itself.
+            const P_vu = identityMatrix; // Transpose of identity is itself.
 
             projections.set(`${u}-${v}`, P_uv);
             projections.set(`${v}-${u}`, P_vu);
         }
-        
-        // No need for worker tasks anymore, this is instantaneous.
         return projections;
-    }
-    computeContextualWeight(u, v) {
-        const stalk_u = this.stalks.get(u) || vecZeros(this.qDim);
-        const stalk_v = this.stalks.get(v) || vecZeros(this.qDim);
-
-        const squaredDist = vecSub(stalk_u, stalk_v).reduce((sum, val) => sum + val * val, 0);
-        const safeSquaredDist = Number.isFinite(squaredDist) && squaredDist >= 0 ? squaredDist : 0;
-        const weight = Math.exp(-safeSquaredDist / 0.5);
-        return Number.isFinite(weight) ? weight : 0.5;
     }
 
     async _updateGraphStructureAndMetrics() {
+        // logger.info('EnhancedQualiaSheaf._updateGraphStructureAndMetrics() started.'); // Removed verbose log
         try {
             this.adaptSheafTopology(); // Adapt topology before rebuilding matrices
             this.adjacencyMatrix = this.buildAdjacencyMatrix();
             this.laplacian = this.buildLaplacian();
-            this.maxEigApprox = await runWorkerTask('matrixSpectralNormApprox', { matrix: flattenMatrix(this.laplacian) }) || 1;
+            // logger.info('Calling worker for matrixSpectralNormApprox (initialization)...'); // Removed verbose log
+            this.maxEigApprox = await runWorkerTask('matrixSpectralNormApprox', { matrix: flattenMatrix(this.laplacian) }, 10000) || 1; // 10s timeout
+            // logger.info('matrixSpectralNormApprox completed.'); // Removed verbose log
             this.projectionMatrices = await this.computeProjectionMatrices();
+            if (!Number.isFinite(this.maxEigApprox) || this.maxEigApprox <= 0) {
+                logger.warn(`maxEigApprox was invalid (${this.maxEigApprox}). Resetting to 1.`);
+                this.maxEigApprox = 1; // Fallback
+            }
+            // logger.info('EnhancedQualiaSheaf._updateGraphStructureAndMetrics() completed.'); // Removed verbose log
         } catch (e) {
             logger.error("Failed to update graph structure and metrics", e);
-            throw e;
+            throw e; // Propagate error for loading overlay to catch
         }
     }
     async diffuseQualia(state) {
@@ -1721,6 +1772,7 @@ class EnhancedQualiaSheaf {
         if (aiCollision) tempEdges.push(['ball_x', 'ai_collision']);
 
         const originalEdges = this.graph.edges.slice();
+        // Only add temporary edges if they are not already present
         this.graph.edges = [...originalEdges, ...tempEdges.filter(e => !originalEdges.some(oe => oe[0] === e[0] && oe[1] === e[1]))];
 
         await this._updateGraphStructureAndMetrics(); 
@@ -1744,7 +1796,7 @@ class EnhancedQualiaSheaf {
                 stalkValue = vecZeros(this.qDim);
                 this.stalks.set(vertexName, stalkValue); // Update the map with a clean vector
             }
-            s.set(stalkValue, currentOffset);
+            s.set(stalkValue.map(v => Number.isFinite(v) ? v : 0), currentOffset); // Ensure elements are finite on copy
             currentOffset += this.qDim;
         }
 
@@ -1770,7 +1822,10 @@ class EnhancedQualiaSheaf {
             const P_uv = this.projectionMatrices.get(`${u}-${v}`);
             const P_vu = this.projectionMatrices.get(`${v}-${u}`);
 
-            if (!isFiniteMatrix(P_uv) || !isFiniteMatrix(P_vu)) continue;
+            if (!isFiniteMatrix(P_uv) || !isFiniteMatrix(P_vu)) {
+                logger.warn(`Non-finite projection matrix for edge ${u}-${v}. Skipping block.`);
+                continue;
+            }
 
             // Off-diagonal block (i, j) is -W_ij * P_uv
             for (let qi = 0; qi < this.qDim; qi++) {
@@ -1778,6 +1833,8 @@ class EnhancedQualiaSheaf {
                     const val_uv = -weight * (P_uv[qi]?.[qj] || 0);
                     if (Number.isFinite(val_uv)) {
                         Lfull[i * this.qDim + qi][j * this.qDim + qj] = val_uv;
+                    } else {
+                        Lfull[i * this.qDim + qi][j * this.qDim + qj] = 0;
                     }
                 }
             }
@@ -1787,6 +1844,8 @@ class EnhancedQualiaSheaf {
                      const val_vu = -weight * (P_vu[qi]?.[qj] || 0); // weight is symmetric
                      if (Number.isFinite(val_vu)) {
                         Lfull[j * this.qDim + qi][i * this.qDim + qj] = val_vu;
+                     } else {
+                         Lfull[j * this.qDim + qi][i * this.qDim + qj] = 0;
                      }
                 }
             }
@@ -1794,27 +1853,41 @@ class EnhancedQualiaSheaf {
 
         // 2. Build the diagonal blocks
         for (let i = 0; i < n; i++) {
-            let degree = this.adjacencyMatrix[i].reduce((sum, w) => sum + (Number.isFinite(w) ? w : 0), 0);
+            let degree = 0;
+            // Sum of weights of edges incident to vertex i
+            for (let j = 0; j < n; j++) {
+                if (i !== j) { // Don't include self-loop degree here, it's added explicitly
+                    degree += (this.adjacencyMatrix[i]?.[j] || 0);
+                }
+            }
+            // The diagonal block (i, i) is degree_i * Identity - Sum_{k!=i} W_ik * P_ik
+            // Since P_ik = Identity, the second term is just Sum_{k!=i} W_ik * Identity
+            // So, Diag(L_ii) = (degree_i + eps) * Identity
             for (let qi = 0; qi < this.qDim; qi++) {
-                // Diagonal block (i, i) is Sum(W_ik) * Identity
-                Lfull[i * this.qDim + qi][i * this.qDim + qi] = degree + this.eps;
+                Lfull[i * this.qDim + qi][i * this.qDim + qi] = (Number.isFinite(degree) ? degree : 0) + this.eps;
             }
         }
+
         const f_s = new Float32Array(N).fill(0);
         for (let i = 0; i < n; i++) {
             const inputVal = qInput[i % qInput.length];
             for (let qi = 0; qi < this.qDim; qi++) {
-                f_s[i * this.qDim + qi] = this.alpha * inputVal * 0.7;
+                f_s[i * this.qDim + qi] = this.alpha * inputVal * 0.7; // Sensory input
             }
         }
 
-        const eta = this.gamma / Math.max(1, this.maxEigApprox);
-        const A = identity(N).map((row, i) => new Float32Array(row.map((v, j) => v + eta * (Lfull[i]?.[j] || 0))));
+        const eta = this.gamma / Math.max(1, this.maxEigApprox); // Time step / effective learning rate
+        
+        // Ensure A is constructed robustly
+        const A = identity(N).map((row, i) => new Float32Array(row.map((v, j) => {
+            const val = v + eta * (Lfull[i]?.[j] || 0);
+            return Number.isFinite(val) ? val : 0; // Sanitize A elements
+        })));
+        
         const rhs = vecAdd(s, vecScale(f_s, eta)).map(v => Number.isFinite(v) ? clamp(v, -10, 10) : 0); // Explicitly sanitize rhs
 
         if (!isFiniteMatrix(A) || !isFiniteVector(rhs)) {
             logger.error('diffuseQualia: Matrix A or RHS vector contains non-finite values before CG solve. Skipping diffusion or using fallback.');
-            // Fallback for A or rhs corruption: revert to a clean zero state
             const sNext = new Float32Array(N).fill(0); 
             this._updateStalksAndWindow(sNext, n);
             await this._updateDerivedMetrics();
@@ -1824,21 +1897,18 @@ class EnhancedQualiaSheaf {
 
         let sSolved;
         try {
-            sSolved = await runWorkerTask('solveLinearSystemCG', { A: flattenMatrix(A), b: rhs, opts: { tol: 1e-6, maxIter: 15 } });
+            sSolved = await runWorkerTask('solveLinearSystemCG', { A: flattenMatrix(A), b: rhs, opts: { tol: 1e-6, maxIter: 15 } }, 5000); // 5s timeout
         } catch (e) {
-            logger.error('Error solving linear system in worker. Falling back to zero vector:', e);
+            logger.error('Error solving linear system in worker (CG). Falling back to zero vector:', e);
             sSolved = new Float32Array(N).fill(0); // Fallback to a clean zero vector on worker error
         }
 
         // --- Stronger Circuit Breaker ---
-        // If sSolved from the worker or a fallback still contains non-finite values,
-        // it indicates a severe issue. Explicitly sanitize to a zero vector.
         if (!isFiniteVector(sSolved)) {
             logger.error('CRITICAL: Solver output or fallback contained non-finite values. Resetting sSolved to zero vector.', { sSolved });
             sSolved = new Float32Array(N).fill(0); 
         }
         
-        // Ensure sNext is fully sanitized, even after the circuit breaker
         const sNext = new Float32Array(sSolved.map(v => Number.isFinite(v) ? clamp(v, -1, 1) : 0));
 
         this._updateStalksAndWindow(sNext, n);
@@ -1869,11 +1939,17 @@ class EnhancedQualiaSheaf {
     }
 
     async _updateDerivedMetrics() {
+        // logger.info('EnhancedQualiaSheaf._updateDerivedMetrics() started.'); // Removed verbose log
         try {
+            // logger.info('EnhancedQualiaSheaf._updateDerivedMetrics(): Calling computeH1Dimension().'); // Removed verbose log
             await this.computeH1Dimension();
+            // logger.info('EnhancedQualiaSheaf._updateDerivedMetrics(): computeH1Dimension() completed. Calling computeGluingInconsistency().'); // Removed verbose log
             await this.computeGluingInconsistency();
-            this.computeGestaltUnity();
+            // logger.info('EnhancedQualiaSheaf._updateDerivedMetrics(): computeGluingInconsistency() completed. Calling computeGestaltUnity().'); // Removed verbose log
+            this.computeGestaltUnity(); // Not async
+            // logger.info('EnhancedQualiaSheaf._updateDerivedMetrics(): computeGestaltUnity() completed. Calling computeIntegratedInformation().'); // Removed verbose log
             await this.computeIntegratedInformation();
+            // logger.info('EnhancedQualiaSheaf._updateDerivedMetrics() completed.'); // Removed verbose log
         } catch (e) {
             logger.error("Error during derived metrics update:", e);
             // Fallback values in case of error
@@ -1886,6 +1962,7 @@ class EnhancedQualiaSheaf {
     }
 
     async computeH1Dimension() {
+        // logger.info('EnhancedQualiaSheaf.computeH1Dimension() started.'); // Removed verbose log
         const { boundary1, boundary2 } = this.buildBoundaryMatrices();
         if (!isFiniteMatrix(boundary1) || !isFiniteMatrix(boundary2)) {
             logger.warn("Non-finite boundary matrices detected. Setting H1 to default max/min.");
@@ -1912,7 +1989,9 @@ class EnhancedQualiaSheaf {
 
         let rankB1, rankB2;
         try {
-            rankB1 = await runWorkerTask('matrixRank', { matrix: flatBoundary1 });
+            // logger.info('Calling worker for matrixRank (B1)...'); // Removed verbose log
+            rankB1 = await runWorkerTask('matrixRank', { matrix: flatBoundary1 }, 10000); // 10s timeout
+            // logger.info('matrixRank for B1 completed.'); // Removed verbose log
         } catch (e) {
             logger.error('Error computing rankB1 in worker:', e);
             this.h1Dimension = 1;
@@ -1920,7 +1999,9 @@ class EnhancedQualiaSheaf {
             return;
         }
         try {
-            rankB2 = await runWorkerTask('matrixRank', { matrix: flatBoundary2 });
+            // logger.info('Calling worker for matrixRank (B2)...'); // Removed verbose log
+            rankB2 = await runWorkerTask('matrixRank', { matrix: flatBoundary2 }, 10000); // 10s timeout
+            // logger.info('matrixRank for B2 completed.'); // Removed verbose log
         } catch (e) {
             logger.error('Error computing rankB2 in worker:', e);
             this.h1Dimension = 1;
@@ -1937,9 +2018,11 @@ class EnhancedQualiaSheaf {
 
         this.stability = clamp(Math.exp(-this.h1Dimension * 0.2), 0.01, 1);
         if (!Number.isFinite(this.stability)) this.stability = 0.5;
+        // logger.info('EnhancedQualiaSheaf.computeH1Dimension() completed.'); // Removed verbose log
     }
 
     async computeGluingInconsistency() {
+        // logger.info('EnhancedQualiaSheaf.computeGluingInconsistency() started.'); // Removed verbose log
         let sum = 0;
         for (const [u, v] of this.graph.edges) {
             const stalk_u = this.stalks.get(u);
@@ -1953,7 +2036,7 @@ class EnhancedQualiaSheaf {
 
             let projected_u;
             try {
-                projected_u = await runWorkerTask('matVecMul', { matrix: flattenMatrix(P_uv), vector: stalk_u });
+                projected_u = await runWorkerTask('matVecMul', { matrix: flattenMatrix(P_uv), vector: stalk_u }, 5000); // 5s timeout
             } catch (e) {
                 logger.error(`Error projecting stalk_u for edge ${u}-${v} in worker:`, e);
                 projected_u = vecZeros(this.qDim);
@@ -1965,9 +2048,11 @@ class EnhancedQualiaSheaf {
         }
         this.inconsistency = this.graph.edges.length > 0 ? clamp(sum / this.graph.edges.length, 0, 1) : 0;
         if (!Number.isFinite(this.inconsistency)) this.inconsistency = 1.0;
+        // logger.info('EnhancedQualiaSheaf.computeGluingInconsistency() completed.'); // Removed verbose log
     }
 
     computeGestaltUnity() {
+        // logger.info('EnhancedQualiaSheaf.computeGestaltUnity() started.'); // Removed verbose log
         let sum = 0;
         this.graph.edges.forEach(([u, v]) => {
             const stalk_u = this.stalks.get(u);
@@ -1981,27 +2066,31 @@ class EnhancedQualiaSheaf {
         });
         this.gestaltUnity = this.graph.edges.length > 0 ? clamp(sum / this.graph.edges.length, 0.05, 0.99) : 0.05;
         if (!Number.isFinite(this.gestaltUnity)) this.gestaltUnity = 0.05;
+        // logger.info('EnhancedQualiaSheaf.computeGestaltUnity() completed.'); // Removed verbose log
     }
 
     async computeIntegratedInformation() {
+        // logger.info('EnhancedQualiaSheaf.computeIntegratedInformation() started.'); // Removed verbose log
         const validStates = this.windowedStates.filter(isFiniteVector);
-        if (validStates.length < Math.max(4, this.stateDim + this.qDim)) {
-            // Not enough data for meaningful covariance, use a base value influenced by other metrics
-            this.phi = clamp(0.5 + this.gestaltUnity * this.stability, 0.01, 5);
+        if (validStates.length < Math.max(4, this.stateDim + this.qDim)) { // Need enough samples for meaningful covariance
+            logger.warn('Not enough valid states for meaningful covariance calculation. Using base Phi.');
+            this.phi = clamp(0.5 + (this.gestaltUnity || 0.1) * (this.stability || 0.1), 0.01, 5);
             return;
         }
         let cov;
         try {
-            cov = await runWorkerTask('covarianceMatrix', { states: validStates, eps: this.eps });
+            // logger.info('Calling worker for covarianceMatrix...'); // Removed verbose log
+            cov = await runWorkerTask('covarianceMatrix', { states: validStates, eps: this.eps }, 10000); // 10s timeout
+            // logger.info('covarianceMatrix completed.'); // Removed verbose log
         } catch (e) {
-            logger.error('Error computing covariance matrix in worker:', e);
-            this.phi = clamp(0.5 + this.gestaltUnity * this.stability, 0.01, 5);
+            logger.error('Error computing covarianceMatrix in worker:', e);
+            this.phi = clamp(0.5 + (this.gestaltUnity || 0.1) * (this.stability || 0.1), 0.01, 5);
             return;
         }
 
         if (!isFiniteMatrix(cov)) {
             logger.warn("Non-finite covariance matrix. Setting MI to default.");
-            this.phi = clamp(0.5 + this.gestaltUnity * this.stability, 0.01, 5);
+            this.phi = clamp(0.5 + (this.gestaltUnity || 0.1) * (this.stability || 0.1), 0.01, 5);
             return;
         }
 
@@ -2014,6 +2103,7 @@ class EnhancedQualiaSheaf {
 
         this.phi = clamp(Math.log(1 + MI) * safeStability * safeGestaltUnity * Math.exp(-safeInconsistency), 0.01, 5);
         if (!Number.isFinite(this.phi)) this.phi = 0.01;
+        // logger.info('EnhancedQualiaSheaf.computeIntegratedInformation() completed.'); // Removed verbose log
     }
 
     visualizeActivity() {
@@ -2024,10 +2114,14 @@ class EnhancedQualiaSheaf {
             const norm = norm2(stalk);
             const intensity = Number.isFinite(norm) ? clamp(norm / Math.sqrt(this.qDim), 0, 1) : 0;
             el.classList.toggle('active', intensity > 0.5);
-            const hue = 0;
+            const hue = 0; // Fixed hue for general visualization unless active
             const saturation = 100;
-            const lightness = 50 + intensity * 40;
+            const lightness = 50 + intensity * 40; // Makes it brighter with higher intensity
+            
+            // Set default/inactive color
             el.style.background = `radial-gradient(circle, hsl(${hue}, ${saturation}%, ${lightness}%), hsl(${hue}, ${saturation * 0.8}%, ${lightness * 0.6}%))`;
+
+            // If active, use the greenish pulse color
             if (intensity > 0.5) {
                  el.style.background = `radial-gradient(circle, #00ff99, #00cc66)`;
             }
@@ -2040,23 +2134,27 @@ class EnhancedQualiaSheaf {
         const currentGestaltUnity = Number.isFinite(this.gestaltUnity) ? this.gestaltUnity : 0.5;
         const currentH1Dimension = Number.isFinite(this.h1Dimension) ? this.h1Dimension : 1;
 
+        // Tune alpha: More responsive if unstable or inconsistent
         this.alpha = clamp(this.alpha * (1 + 0.02 * (1 - currentStability)) * (1 + 0.01 * currentInconsistency), 0.01, 1);
+        // Tune beta: Increase unity with higher unity, decrease if H1 is high (too complex)
         this.beta = clamp(this.beta * (1 + 0.02 * currentGestaltUnity) * (1 - 0.01 * currentH1Dimension), 0.01, 1);
+        // Tune gamma: Lower if H1 is high (stability), lower if inconsistent
         this.gamma = clamp(this.gamma * (1 - 0.05 * currentH1Dimension) * (1 - 0.02 * currentInconsistency), 0.01, 0.5);
         logger.info(`Tuned parameters: Alpha=${this.alpha.toFixed(3)}, Beta=${this.beta.toFixed(3)}, Gamma=${this.gamma.toFixed(3)}`);
     }
 }
 class OntologicalWorldModel {
     constructor(stateDim = 10, actionDim = 3, qDim = 7, hiddenSizes = [64, 64], isPlayerTwo = false) {
+        // logger.info(`OWM Constructor (${isPlayerTwo ? 'AI' : 'Player'}) started.`); // Removed verbose log
         this.stateDim = stateDim;
         this.actionDim = actionDim;
-        // initialQDim is not directly used here after passing to sheaf, but good for clarity
         this.isPlayerTwo = isPlayerTwo;
         const recurrentStateSize = hiddenSizes[hiddenSizes.length - 1]; // Size of our LSTM-like state
 
         // Graph and Sheaf setup remains the same
         const commonVertices = ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed', 'player_collision', 'ai_collision'];
-        this.graph = { vertices: commonVertices, edges: [['paddle_y', 'ball_y'], ['ball_x', 'ball_dx'], ['ball_y', 'ball_dy'], ['player_collision', 'paddle_y'], ['ai_collision', 'ball_x']] };
+        const initialEdges = [['paddle_y', 'ball_y'], ['ball_x', 'ball_dx'], ['ball_y', 'ball_dy'], ['player_collision', 'paddle_y'], ['ai_collision', 'ball_x']];
+        this.graph = { vertices: commonVertices, edges: initialEdges };
         
         this.qualiaSheaf = new EnhancedQualiaSheaf(this.graph, this.stateDim, qDim, 0.1, 0.1, 0.05);
         this.qDim = this.qualiaSheaf.qDim; // Use the canonical qDim from the sheaf
@@ -2071,10 +2169,12 @@ class OntologicalWorldModel {
         this.cellState = vecZeros(recurrentStateSize);
 
         const combinedInputSize = this.inputDim + recurrentStateSize;
-        this.Wf = randomMatrix(recurrentStateSize, combinedInputSize, Math.sqrt(2.0 / combinedInputSize)); // Forget gate
-        this.Wi = randomMatrix(recurrentStateSize, combinedInputSize, Math.sqrt(2.0 / combinedInputSize)); // Input gate
-        this.Wc = randomMatrix(recurrentStateSize, combinedInputSize, Math.sqrt(2.0 / combinedInputSize)); // Cell state candidate
-        this.Wo = randomMatrix(recurrentStateSize, combinedInputSize, Math.sqrt(2.0 / combinedInputSize)); // Output gate
+        const weightScale = Math.sqrt(2.0 / combinedInputSize); // Glorot/Xavier initialization approximation
+
+        this.Wf = randomMatrix(recurrentStateSize, combinedInputSize, weightScale); // Forget gate
+        this.Wi = randomMatrix(recurrentStateSize, combinedInputSize, weightScale); // Input gate
+        this.Wc = randomMatrix(recurrentStateSize, combinedInputSize, weightScale); // Cell state candidate
+        this.Wo = randomMatrix(recurrentStateSize, combinedInputSize, weightScale); // Output gate
         this.bf = vecZeros(recurrentStateSize);
         this.bi = vecZeros(recurrentStateSize);
         this.bc = vecZeros(recurrentStateSize);
@@ -2088,30 +2188,33 @@ class OntologicalWorldModel {
         this.statePredHead = { W: randomMatrix(this.stateDim, recurrentStateSize, statePredScale), b: vecZeros(this.stateDim) };
 
         this.attentionWeights = randomMatrix(this.qDim, this.inputDim, 0.1); // Attention weights dim: qDim x inputDim
-        this.lastSoftmaxScores = vecZeros(this.qDim); // Size qDim, not inputDim as previously
-
+        this.lastSoftmaxScores = vecZeros(this.qDim); // Size qDim
+        
         this.freeEnergy = 0;
         this.predictionError = 0;
         this.ready = false;
         this.lastActivations = [];
 
-        logger.info(`OWM constructed: inputDim=${this.inputDim}, qualiaSheaf.qDim=${this.qualiaSheaf.qDim}, expectedQualiaInputLength=${this.expectedQualiaInputLength}`);
+        logger.info(`OWM constructed (${isPlayerTwo ? 'AI' : 'Player'}): inputDim=${this.inputDim}, qualiaSheaf.qDim=${this.qualiaSheaf.qDim}, expectedQualiaInputLength=${this.expectedQualiaInputLength}`);
     }
 
     async initialize() {
+        logger.info(`OWM.initialize() (${this.isPlayerTwo ? 'AI' : 'Player'}) called.`);
         try {
+            // logger.info(`OWM.initialize() (${this.isPlayerTwo ? 'AI' : 'Player'}): Calling qualiaSheaf.initialize().`); // Removed verbose log
             await this.qualiaSheaf.initialize();
             this.ready = true;
             logger.info(`Recurrent OWM for ${this.isPlayerTwo ? 'AI' : 'Player'} ready.`);
         } catch (e) {
-            logger.error('Error during Recurrent OWM initialization:', e);
+            logger.error(`Error during Recurrent OWM initialization (${this.isPlayerTwo ? 'AI' : 'Player'}):`, e);
             this.ready = false;
+            throw e; // Re-throw to propagate to MainApp
         }
     }
 
     async forward(input) {
         if (!isFiniteVector(input) || input.length !== this.inputDim) {
-            logger.error('OWM.forward: Invalid input.', {expected: this.inputDim, got: input.length});
+            logger.error('OWM.forward: Invalid input. Returning zeros.', {expected: this.inputDim, got: input.length});
             return { qValues: vecZeros(this.actionDim), nextState: vecZeros(this.stateDim), activations: [] };
         }
         
@@ -2119,23 +2222,58 @@ class OntologicalWorldModel {
         
         // --- NEW: LSTM-like Recurrent Block ---
         const combinedInput = new Float32Array([...input, ...this.hiddenState]);
+        if (!isFiniteVector(combinedInput)) {
+            logger.error('OWM.forward: Combined input for LSTM is non-finite. Resetting hidden/cell states and returning zeros.');
+            this.resetRecurrentState(); // Attempt to recover
+            return { qValues: vecZeros(this.actionDim), nextState: vecZeros(this.stateDim), activations: [] };
+        }
 
-        const ft = sigmoidVec(vecAdd(await runWorkerTask('matVecMul', {matrix: flattenMatrix(this.Wf), vector: combinedInput}), this.bf));
-        const it = sigmoidVec(vecAdd(await runWorkerTask('matVecMul', {matrix: flattenMatrix(this.Wi), vector: combinedInput}), this.bi));
-        const c_tilde = tanhVec(vecAdd(await runWorkerTask('matVecMul', {matrix: flattenMatrix(this.Wc), vector: combinedInput}), this.bc));
+        const Wf_flat = flattenMatrix(this.Wf);
+        const Wi_flat = flattenMatrix(this.Wi);
+        const Wc_flat = flattenMatrix(this.Wc);
+        const Wo_flat = flattenMatrix(this.Wo);
         
-        this.cellState = vecAdd(vecMul(ft, this.cellState), vecMul(it, c_tilde));
-        activations.push(this.cellState.slice());
+        let ft, it, c_tilde, ot;
 
-        const ot = sigmoidVec(vecAdd(await runWorkerTask('matVecMul', {matrix: flattenMatrix(this.Wo), vector: combinedInput}), this.bo));
-        this.hiddenState = vecMul(ot, tanhVec(this.cellState));
-        activations.push(this.hiddenState.slice());
+        try {
+            ft = sigmoidVec(vecAdd(await runWorkerTask('matVecMul', {matrix: Wf_flat, vector: combinedInput}, 2000), this.bf)); // Increased timeout
+            it = sigmoidVec(vecAdd(await runWorkerTask('matVecMul', {matrix: Wi_flat, vector: combinedInput}, 2000), this.bi)); // Increased timeout
+            c_tilde = tanhVec(vecAdd(await runWorkerTask('matVecMul', {matrix: Wc_flat, vector: combinedInput}, 2000), this.bc)); // Increased timeout
+            
+            this.cellState = vecAdd(vecMul(ft, this.cellState), vecMul(it, c_tilde));
+            if (!isFiniteVector(this.cellState)) {
+                logger.error('OWM.forward: Cell state became non-finite. Resetting.');
+                this.cellState.fill(0);
+            }
+            activations.push(this.cellState.slice());
+
+            ot = sigmoidVec(vecAdd(await runWorkerTask('matVecMul', {matrix: Wo_flat, vector: combinedInput}, 2000), this.bo)); // Increased timeout
+            this.hiddenState = vecMul(ot, tanhVec(this.cellState));
+            if (!isFiniteVector(this.hiddenState)) {
+                logger.error('OWM.forward: Hidden state became non-finite. Resetting.');
+                this.hiddenState.fill(0);
+            }
+            activations.push(this.hiddenState.slice());
+        } catch (e) {
+            logger.error('OWM.forward: Error during recurrent step:', e);
+            this.resetRecurrentState(); // Attempt to recover
+            return { qValues: vecZeros(this.actionDim), nextState: vecZeros(this.stateDim), activations: [] };
+        }
         // --- END Recurrent Block ---
 
         // Output heads now take the new hiddenState as input
-        const qValues = vecAdd(await runWorkerTask('matVecMul', { matrix: flattenMatrix(this.qValueHead.W), vector: this.hiddenState }), this.qValueHead.b);
-        const nextState = vecAdd(await runWorkerTask('matVecMul', { matrix: flattenMatrix(this.statePredHead.W), vector: this.hiddenState }), this.statePredHead.b);
+        let qValues, nextState;
+        try {
+            qValues = vecAdd(await runWorkerTask('matVecMul', { matrix: flattenMatrix(this.qValueHead.W), vector: this.hiddenState }, 2000), this.qValueHead.b); // Increased timeout
+            nextState = vecAdd(await runWorkerTask('matVecMul', { matrix: flattenMatrix(this.statePredHead.W), vector: this.hiddenState }, 2000), this.statePredHead.b); // Increased timeout
+        } catch (e) {
+            logger.error('OWM.forward: Error during output head calculation:', e);
+            return { qValues: vecZeros(this.actionDim), nextState: vecZeros(this.stateDim), activations: [] };
+        }
         
+        if (!isFiniteVector(qValues)) { logger.warn('OWM.forward: Q-values are non-finite. Returning zeros.'); qValues = vecZeros(this.actionDim); }
+        if (!isFiniteVector(nextState)) { logger.warn('OWM.forward: Next state prediction is non-finite. Returning zeros.'); nextState = vecZeros(this.stateDim); }
+
         activations.push(qValues.slice()); // Push Q-values as final activation layer for visualization
         
         return { qValues, nextState, activations };
@@ -2143,25 +2281,40 @@ class OntologicalWorldModel {
 
     applyAttention(input) {
         if (!isFiniteVector(input) || input.length !== this.inputDim) {
-            logger.error('OWM.applyAttention: Invalid input.', {expected: this.inputDim, got: input.length});
+            logger.error('OWM.applyAttention: Invalid input. Returning original input.', {expected: this.inputDim, got: input.length});
+            this.lastSoftmaxScores.fill(0); // Reset scores
             return input;
         }
 
         const scores = this.attentionWeights.map(w => dot(w, input));
+        if (!isFiniteVector(scores)) {
+            logger.warn('OWM.applyAttention: Scores became non-finite. Returning original input.');
+            this.lastSoftmaxScores.fill(0);
+            return input;
+        }
+
         const maxScore = scores.length > 0 ? Math.max(...scores) : 0;
-        const expScores = scores.map(s => Math.exp(s - maxScore));
-        const sumExpScores = expScores.reduce((s, x) => s + x, 1e-10);
+        const expScores = scores.map(s => Math.exp(s - maxScore)); // Subtract max for numerical stability
+        const sumExpScores = expScores.reduce((s, x) => s + x, 1e-10); // Add epsilon to prevent division by zero
         const softmaxScores = new Float32Array(expScores.map(s => s / sumExpScores));
+        
+        if (!isFiniteVector(softmaxScores)) {
+            logger.warn('OWM.applyAttention: Softmax scores became non-finite. Returning original input.');
+            this.lastSoftmaxScores.fill(0);
+            return input;
+        }
+
         this.lastSoftmaxScores = softmaxScores;
 
         const att = vecZeros(input.length);
         for (let i = 0; i < softmaxScores.length; i++) {
-            if (!Number.isFinite(softmaxScores[i])) continue;
+            if (!Number.isFinite(softmaxScores[i])) continue; // Skip non-finite scores
             for (let j = 0; j < input.length; j++) {
                 att[j] += softmaxScores[i] * (input[j] || 0);
             }
         }
-        return vecAdd(input, vecScale(att, this.qualiaSheaf.beta));
+        const weightedAttended = vecAdd(input, vecScale(att, this.qualiaSheaf.beta));
+        return isFiniteVector(weightedAttended) ? weightedAttended : input; // Fallback to original if non-finite
     }
 
     async predict(state) {
@@ -2174,97 +2327,120 @@ class OntologicalWorldModel {
             return { qValues: vecZeros(this.actionDim), activations: [], corrupted: true };
         }
 
-                await this.qualiaSheaf.diffuseQualia(state);
+        let corruptedFlag = false;
+
+        // Diffuse qualia - this can modify the sheaf's internal state (stalks, metrics)
+        try {
+            await this.qualiaSheaf.diffuseQualia(state);
+        } catch (e) {
+            logger.error('OWM.predict: Error during qualia diffusion:', e);
+            corruptedFlag = true;
+        }
         
         const qualiaStalksMap = this.qualiaSheaf.stalks;
         let finalQualiaArray = new Float32Array(this.expectedQualiaInputLength); // Initialize with zeros
 
-        if (qualiaStalksMap instanceof Map && qualiaStalksMap.size > 0) { // Check if map is not empty
+        if (qualiaStalksMap instanceof Map && qualiaStalksMap.size > 0) {
             let offset = 0;
-            // Iterate directly through the known vertices to build the final qualia array
             for (const vertexName of this.qualiaSheaf.graph.vertices) {
                 let stalk = qualiaStalksMap.get(vertexName);
                 if (!stalk || !isFiniteVector(stalk) || stalk.length !== this.qDim) {
-                    // If a specific stalk is missing or corrupted, log and use a zero vector for it
                     logger.warn(`OWM.predict: Corrupted or missing stalk for vertex "${vertexName}" in qualiaStalksMap. Replacing with zeros.`);
                     stalk = vecZeros(this.qDim); 
+                    corruptedFlag = true;
                 }
                 
-                // Copy the sanitized stalk into the finalQualiaArray, ensuring each element is finite
                 for (let i = 0; i < this.qDim; i++) {
                     finalQualiaArray[offset + i] = Number.isFinite(stalk[i]) ? clamp(stalk[i], -1, 1) : 0;
                 }
                 offset += this.qDim;
             }
         } else {
-            // If the map itself is empty or not a Map, log and proceed with an all-zero finalQualiaArray
-            logger.warn('qualiaStalksMap is empty or not a Map, using all-zero qualia vector for input.');
-            // finalQualiaArray is already initialized to zeros by new Float32Array(this.expectedQualiaInputLength)
+            logger.warn('qualiaStalksMap is empty or not a Map, using all-zero qualia vector for input. Flagging as corrupted.');
+            corruptedFlag = true;
         }
 
-        // Final sanity check on finalQualiaArray before creating the input
-        if (!isFiniteVector(finalQualiaArray)) {
-             logger.error(`FATAL: finalQualiaArray became non-finite during construction. Resetting to all zeros.`);
-             finalQualiaArray.fill(0);
-        }
-
-        // Check if the finalQualiaArray has the expected number of finite values
-        const finiteCount = Array.from(finalQualiaArray).filter(val => Number.isFinite(val)).length;
-        if (finiteCount !== this.expectedQualiaInputLength) {
-            logger.error(`OWM.predict: Corrupted qualiaStalks detected. Expected ${this.expectedQualiaInputLength} finite values, found ${finiteCount}. Returning neutral prediction.`);
-            return { qValues: vecZeros(this.actionDim), activations: [], corrupted: true };
+        if (!isFiniteVector(finalQualiaArray) || finalQualiaArray.length !== this.expectedQualiaInputLength) {
+             logger.error(`FATAL: finalQualiaArray became non-finite or wrong length after construction. Resetting to all zeros and flagging corrupted.`);
+             finalQualiaArray = vecZeros(this.expectedQualiaInputLength);
+             corruptedFlag = true;
         }
 
         const input = new Float32Array([...state, ...finalQualiaArray]);
         
-        
-        if (input.length !== this.inputDim) {
-             logger.error(`FATAL: Input size mismatch just before attention. Expected ${this.inputDim}, got ${input.length}.`);
+        if (input.length !== this.inputDim || !isFiniteVector(input)) {
+             logger.error(`FATAL: Input size mismatch or non-finite values just before attention. Expected ${this.inputDim}, got ${input.length}. Flagging corrupted.`);
              return { qValues: vecZeros(this.actionDim), activations: [], corrupted: true };
         }
 
         const attended = this.applyAttention(input);
-        const { qValues, nextState, activations } = await this.forward(attended);
-        this.lastActivations = activations;
+        
+        let qValues, nextState, activations;
+        try {
+            const forwardResult = await this.forward(attended);
+            qValues = forwardResult.qValues;
+            nextState = forwardResult.nextState;
+            activations = forwardResult.activations;
+        } catch (e) {
+            logger.error('OWM.predict: Error during forward pass:', e);
+            corruptedFlag = true;
+            qValues = vecZeros(this.actionDim);
+            nextState = vecZeros(this.stateDim);
+            activations = [];
+        }
 
         const error = norm2(vecSub(nextState, state));
         this.predictionError = clamp(error, 0, 10);
+        if (!Number.isFinite(this.predictionError)) { logger.warn('OWM.predict: Prediction error is non-finite. Resetting to 0.'); this.predictionError = 0; corruptedFlag = true; }
 
-        this.freeEnergy = 0.85 * (this.freeEnergy || 0) + 0.15 * (this.predictionError * 0.5 + this.qualiaSheaf.h1Dimension);
+        this.freeEnergy = 0.85 * (this.freeEnergy || 0) + 0.15 * (this.predictionError * 0.5 + (this.qualiaSheaf.h1Dimension || 0));
         this.freeEnergy = clamp(this.freeEnergy, 0, 10);
+        if (!Number.isFinite(this.freeEnergy)) { logger.warn('OWM.predict: Free energy is non-finite. Resetting to 0.'); this.freeEnergy = 0; corruptedFlag = true; }
 
-        return { qValues, activations, corrupted: false };
+        this.lastActivations = activations;
+
+        return { qValues, activations, corrupted: corruptedFlag };
     }
 
     async learn(state, actionIndex, reward, nextState, isDone, learningRate = 0.01, gamma = 0.99) {
-        if (!isFiniteVector(state) || !isFiniteVector(nextState) || !Number.isFinite(reward)) {
-            logger.warn('OWM.learn: Invalid input. Skipping.');
+        if (!isFiniteVector(state) || !isFiniteVector(nextState) || !Number.isFinite(reward) || !Number.isFinite(actionIndex)) {
+            logger.warn('OWM.learn: Invalid input (state, nextState, reward, or actionIndex). Skipping learning step.');
+            return;
+        }
+        if (actionIndex < 0 || actionIndex >= this.actionDim) {
+            logger.warn(`OWM.learn: Invalid actionIndex ${actionIndex}. Skipping learning step.`);
             return;
         }
 
         // Use a version of predict that doesn't flag corruption for learning purposes
-        // to avoid feedback loops. We still get Q-values even from a potentially noisy state.
-        const { qValues: currentQValues } = await this.predict(state);
+        // to avoid feedback loops if the state is temporarily noisy.
+        const { qValues: currentQValues } = await this.predict(state); // Corruption info is ignored here
         const { qValues: nextQValues } = await this.predict(nextState);
         
         const maxNextQ = isDone ? 0 : Math.max(...nextQValues);
 
-        const targetQ = reward + gamma * maxNextQ;
-        const currentQForAction = currentQValues[actionIndex];
+        const targetQ = (Number.isFinite(reward) ? reward : 0) + (Number.isFinite(gamma) ? gamma : 0) * (Number.isFinite(maxNextQ) ? maxNextQ : 0);
+        const currentQForAction = (currentQValues && Number.isFinite(currentQValues[actionIndex])) ? currentQValues[actionIndex] : 0;
         const tdError = targetQ - currentQForAction;
 
         const lastRecurrentState = this.lastActivations[2]; // hiddenState (index 2 in activations array)
         if (lastRecurrentState && isFiniteVector(lastRecurrentState)) {
             for (let j = 0; j < lastRecurrentState.length; j++) {
-                const deltaW = learningRate * tdError * lastRecurrentState[j];
+                const deltaW = (Number.isFinite(learningRate) ? learningRate : 0) * (Number.isFinite(tdError) ? tdError : 0) * (Number.isFinite(lastRecurrentState[j]) ? lastRecurrentState[j] : 0);
                 if (Number.isFinite(deltaW)) {
-                    this.qValueHead.W[actionIndex][j] += deltaW;
+                    this.qValueHead.W[actionIndex][j] = (Number.isFinite(this.qValueHead.W[actionIndex][j]) ? this.qValueHead.W[actionIndex][j] : 0) + deltaW;
+                } else {
+                    // logger.warn('OWM.learn: Non-finite deltaW calculated. Skipping update for this weight.'); // Removed verbose log
                 }
             }
-            const deltaB = learningRate * tdError;
+            const deltaB = (Number.isFinite(learningRate) ? learningRate : 0) * (Number.isFinite(tdError) ? tdError : 0);
             if (Number.isFinite(deltaB)) {
-                this.qValueHead.b[actionIndex] += deltaB;
+                this.qValueHead.b[actionIndex] = (Number.isFinite(this.qValueHead.b[actionIndex]) ? this.qValueHead.b[actionIndex] : 0) + deltaB;
+            } else {
+                // logger.warn('OWM.learn: Non-finite deltaB calculated. Skipping update for this bias.'); // Removed verbose log
             }
+        } else {
+            logger.warn('OWM.learn: lastRecurrentState is invalid or missing. Skipping learning update.');
         }
     }
 
@@ -2288,7 +2464,7 @@ class OntologicalWorldModel {
         this.gameWidth = gameBounds.width;
         this.gameHeight = gameBounds.height;
         this.isPlayerTwo = isPlayerTwo;
-        this.aiResponseTime = aiResponseTime;
+        this.aiResponseTime = Math.max(1, aiResponseTime); // Ensure minimum 1 frame response
         this.actionQueue = [];
 
         // State for Reinforcement Learning
@@ -2311,29 +2487,23 @@ class OntologicalWorldModel {
         const safeGameHeight = Math.max(1, this.gameHeight);
 
         const stateVec = new Float32Array([
-            gameState.ball.x / safeGameWidth,
-            gameState.ball.y / safeGameHeight,
-            gameState.ball.dx / LearningAI.BALL_DX_NORMALIZATION,
-            gameState.ball.dy / LearningAI.BALL_DY_NORMALIZATION,
-            paddle.y / safeGameHeight,
-            opponentPaddle.y / safeGameHeight,
-            paddle.dy / LearningAI.PADDLE_DY_NORMALIZATION,
-            opponentPaddle.dy / LearningAI.PADDLE_DY_NORMALIZATION,
-            gameState.playerCollision ? 1 : 0,
-            gameState.aiCollision ? 1 : 0
+            (gameState.ball.x || 0) / safeGameWidth,
+            (gameState.ball.y || 0) / safeGameHeight,
+            (gameState.ball.dx || 0) / LearningAI.BALL_DX_NORMALIZATION,
+            (gameState.ball.dy || 0) / LearningAI.BALL_DY_NORMALIZATION,
+            (paddle.y || 0) / safeGameHeight,
+            (opponentPaddle.y || 0) / safeGameHeight,
+            (paddle.dy || 0) / LearningAI.PADDLE_DY_NORMALIZATION,
+            (opponentPaddle.dy || 0) / LearningAI.PADDLE_DY_NORMALIZATION,
+            (gameState.playerCollision ? 1 : 0),
+            (gameState.aiCollision ? 1 : 0)
         ]);
 
-        for (let i = 0; i < stateVec.length; i++) {
-            if (!Number.isFinite(stateVec[i])) {
-                logger.error(`createStateVector: Non-finite value at index ${i} before clamping. Resetting to 0.`);
-                stateVec[i] = 0;
-            }
-        }
-        
-        const clampedStateVec = stateVec.map(v => clamp(v, -1, 1));
+        // Ensure all values are finite and clamped
+        const clampedStateVec = new Float32Array(stateVec.map(v => Number.isFinite(v) ? clamp(v, -1, 1) : 0));
 
         if (!isFiniteVector(clampedStateVec) || clampedStateVec.length !== this.worldModel.stateDim) {
-            logger.error(`LearningAI.createStateVector: Generated state vector is invalid. Returning zeros.`);
+            logger.error(`LearningAI.createStateVector: Generated state vector is invalid. Returning zeros.`, {clampedStateVec});
             return vecZeros(this.worldModel.stateDim);
         }
         return clampedStateVec;
@@ -2349,12 +2519,11 @@ class OntologicalWorldModel {
         const stateVec = this.createStateVector(gameState);
         this.lastStateVec = stateVec;
 
-        // FIX: Introduce a 'corrupted' flag from the prediction to handle recovery
         const { qValues, activations, corrupted } = await this.worldModel.predict(stateVec);
         this.lastActivations = activations;
 
         if (corrupted) {
-            // If the model is corrupted, default to a safe action (IDLE) and signal corruption upwards.
+            logger.warn(`LearningAI (${this.isPlayerTwo ? 'AI' : 'Player'}): World model predicted a corrupted state. Defaulting to IDLE and signaling corruption.`);
             this.lastActionIndex = 2; // IDLE
             const decision = { action: actions[2].vec, activations: this.lastActivations, corrupted: true };
             this.actionQueue.push(decision);
@@ -2368,8 +2537,9 @@ class OntologicalWorldModel {
                 actionIndex = qValues.indexOf(Math.max(...qValues));
                 this.avgQValue = qValues.reduce((a, b) => a + b, 0) / qValues.length;
             } else {
-                logger.warn("Received invalid Q-values, defaulting to IDLE.");
+                logger.warn(`LearningAI (${this.isPlayerTwo ? 'AI' : 'Player'}): Received invalid Q-values, defaulting to IDLE.`);
                 actionIndex = 2;
+                this.avgQValue = 0;
             }
         }
         
@@ -2388,7 +2558,7 @@ class OntologicalWorldModel {
             this.epsilon *= this.epsilonDecay;
         }
 
-        const uncertaintyFactor = 1 + clamp(this.worldModel.predictionError, 0, 5);
+        const uncertaintyFactor = 1 + clamp(this.worldModel.predictionError, 0, 5); // Incorporate prediction error
         this.epsilon = clamp(this.epsilon * uncertaintyFactor, this.epsilonMin, 1.0);
     }
 
@@ -2396,6 +2566,7 @@ class OntologicalWorldModel {
         this.worldModel.resetRecurrentState();
         this.epsilon = 1.0;
         this.avgQValue = 0;
+        this.actionQueue = []; // Clear any pending actions
         logger.info(`LearningAI for ${this.isPlayerTwo ? 'AI' : 'Player'} has been reset.`);
     }
 }
@@ -2405,12 +2576,16 @@ class StrategicAI {
         this.learningAI = learningAI;
         this.rewardHistory = [];
         this.HISTORY_SIZE = 200; // Analyze the last 200 steps
+        this.epsilonModulationRate = 0.005; // Rate for epsilon adjustment
+        this.learningRateModulationRate = 0.005; // Rate for learning rate adjustment
     }
 
     observe(reward) {
-        this.rewardHistory.push(reward);
-        if (this.rewardHistory.length > this.HISTORY_SIZE) {
-            this.rewardHistory.shift();
+        if (Number.isFinite(reward)) {
+            this.rewardHistory.push(reward);
+            if (this.rewardHistory.length > this.HISTORY_SIZE) {
+                this.rewardHistory.shift();
+            }
         }
     }
 
@@ -2418,19 +2593,26 @@ class StrategicAI {
         if (this.rewardHistory.length < this.HISTORY_SIZE) return;
 
         const avgReward = this.rewardHistory.reduce((a, b) => a + b, 0) / this.HISTORY_SIZE;
-        const predError = this.learningAI.worldModel.predictionError;
+        const predError = Number.isFinite(this.learningAI.worldModel.predictionError) ? this.learningAI.worldModel.predictionError : 0;
+        const gestaltUnity = Number.isFinite(this.learningAI.worldModel.qualiaSheaf.gestaltUnity) ? this.learningAI.worldModel.qualiaSheaf.gestaltUnity : 0.5;
+        const h1Dimension = Number.isFinite(this.learningAI.worldModel.qualiaSheaf.h1Dimension) ? this.learningAI.worldModel.qualiaSheaf.h1Dimension : 1.0;
 
-        // If performance is poor (low avg reward), increase learning rate
-        if (avgReward < -0.1) {
-            this.learningAI.learningRate = clamp(this.learningAI.learningRate * 1.01, 0.001, 0.05);
-        } else {
-            this.learningAI.learningRate = clamp(this.learningAI.learningRate * 0.99, 0.001, 0.05);
+        // Dynamic adjustment based on performance and internal metrics
+        // If performance is poor (low avg reward), increase learning rate and exploration slightly
+        if (avgReward < -0.2 && predError > 1.0) { // If losing and confused
+            this.learningAI.learningRate = clamp(this.learningAI.learningRate * (1 + this.learningRateModulationRate * 2), 0.001, 0.05); // More aggressive learning
+            this.learningAI.epsilon = clamp(this.learningAI.epsilon * (1 + this.epsilonModulationRate * 1.5), this.learningAI.epsilonMin, 1.0); // More aggressive exploration
+        } else if (avgReward > 0.1 && predError < 0.5) { // If doing well and confident
+            this.learningAI.learningRate = clamp(this.learningAI.learningRate * (1 - this.learningRateModulationRate * 0.5), 0.001, 0.05);
+            this.learningAI.epsilon = clamp(this.learningAI.epsilon * (1 - this.epsilonModulationRate * 0.5), this.learningAI.epsilonMin, 1.0);
         }
 
-        // If the model is "confused" (high prediction error), explore more
-        if (predError > 2.0) {
-            this.learningAI.epsilon = clamp(this.learningAI.epsilon * 1.2, this.learningAI.epsilonMin, 1.0);
-        }
+        // Adjust exploration based on Gestalt Unity (higher unity -> more confidence -> less exploration)
+        // and H1 Dimension (higher complexity/holes -> more uncertainty -> more exploration)
+        const explorationModifier = (1 - gestaltUnity) + (h1Dimension * 0.1); // Simple heuristic
+        this.learningAI.epsilon = clamp(this.learningAI.epsilon * (1 + (explorationModifier - 0.5) * 0.01), this.learningAI.epsilonMin, 1.0);
+
+
         logger.info(`StrategicAI modulated LearningAI. Epsilon: ${this.learningAI.epsilon.toFixed(3)}, LR: ${this.learningAI.learningRate.toFixed(4)}`);
     }
 }
@@ -2453,8 +2635,23 @@ class StrategicAI {
                 this.paddleHeightMultiplier = 1.0;
                 this.MAX_BALL_SPEED_BASE = 8;
                 this.MAX_PADDLE_SPEED_BASE = 7;
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); // Moved here
                 this.reset();
             }
+
+            // NEW: Method to explicitly resume AudioContext
+            async resumeAudioContext() {
+                if (this.audioContext.state === 'suspended') {
+                    return this.audioContext.resume().then(() => {
+                        logger.info("AudioContext resumed by PongGame.");
+                    }).catch(e => {
+                        logger.error("Failed to resume AudioContext in PongGame:", e);
+                        throw e; // Re-throw to propagate if critical
+                    });
+                }
+                return Promise.resolve(); // Already running or not suspended
+            }
+
 
             reset() {
                 // Ensure dimensions are valid, fallback to canvas client dimensions if needed
@@ -2497,22 +2694,24 @@ class StrategicAI {
                 }
 
                 const MAX_BALL_DX = this.MAX_BALL_SPEED_BASE * this.ballSpeedMultiplier;
-                const MAX_BALL_DY = this.MAX_BALL_SPEED_BASE * 1.25 * this.ballSpeedMultiplier; // DY can be slightly faster
+                const MAX_BALL_DY = this.MAX_BALL_SPEED_BASE * 1.25 * this.ballSpeedMultiplier;
 
                 this.ball.x += this.ball.dx;
                 this.ball.y += this.ball.dy;
 
+                // Ceiling and floor collision
                 if (this.ball.y <= this.ball.radius || this.ball.y >= this.height - this.ball.radius) {
                     this.ball.dy *= -1;
-                    this.ball.y = clamp(this.ball.y, this.ball.radius, this.height - this.ball.radius); // Prevent sticking
+                    this.ball.y = clamp(this.ball.y, this.ball.radius, this.height - this.ball.radius);
                 }
 
-                // Default "living" penalty to encourage faster games
-                let aReward = -0.01, pReward = -0.01;
+                let aReward = -0.01; // Default "living" penalty
+                let pReward = -0.01;
                 this.playerCollision = false;
                 this.aiCollision = false;
                 let isDone = false;
 
+                // Wall collision (scoring)
                 if (this.ball.x <= 0) {
                     this.score.ai++;
                     aReward = 1; // AI scores, positive reward
@@ -2525,24 +2724,26 @@ class StrategicAI {
                     this.resetBall();
                 }
 
+                // Update paddle positions, clamped within bounds
                 this.ai.y = clamp(this.ai.y + this.ai.dy, 0, this.height - this.ai.height);
                 this.player.y = clamp(this.player.y + this.player.dy, 0, this.height - this.player.height);
 
                 // Paddle collision (Player)
-                if (this.ball.dx < 0 && // Only check if ball is moving towards player paddle
+                if (this.ball.dx < 0 &&
                     this.ball.x - this.ball.radius <= this.player.x + this.player.width &&
                     this.ball.x + this.ball.radius >= this.player.x &&
                     this.ball.y >= this.player.y &&
                     this.ball.y <= this.player.y + this.player.height) {
-                    this.ball.dx = clamp(Math.abs(this.ball.dx) * 1.1, -MAX_BALL_DX, MAX_BALL_DX);
+                    this.ball.dx = clamp(Math.abs(this.ball.dx) * 1.1, -MAX_BALL_DX, MAX_BALL_DX); // Increase speed, reverse direction
                     this.ball.dy = clamp(this.ball.dy + (this.player.dy * 0.5), -MAX_BALL_DY, MAX_BALL_DY); // Paddle velocity influences ball
                     this.ball.x = this.player.x + this.player.width + this.ball.radius + 1; // Prevent sticking
                     this.playerCollision = true;
                     pReward += 0.5; // Stronger reward for hitting the ball
+                    this.playSound('collision');
                 }
 
                 // Paddle collision (AI)
-                if (this.ball.dx > 0 && // Only check if ball is moving towards AI paddle
+                if (this.ball.dx > 0 &&
                     this.ball.x + this.ball.radius >= this.ai.x &&
                     this.ball.x - this.ball.radius <= this.ai.x + this.ai.width &&
                     this.ball.y >= this.ai.y &&
@@ -2552,20 +2753,24 @@ class StrategicAI {
                     this.ball.x = this.ai.x - this.ball.radius - 1; // Prevent sticking
                     this.aiCollision = true;
                     aReward += 0.5; // Stronger reward for hitting the ball
+                    this.playSound('collision');
                 }
 
+                // Check for game over
                 if (this.score.ai >= this.scoreToWin) {
                     this.gameOver = true;
                     this.winner = 'AI';
                     isDone = true;
                     aReward = 5; // Big bonus for winning
                     pReward = -5;
+                    this.playSound('win');
                 } else if (this.score.player >= this.scoreToWin) {
                     this.gameOver = true;
                     this.winner = 'Player';
                     isDone = true;
                     pReward = 5;
                     aReward = -5;
+                    this.playSound('win');
                 }
 
                 return { aReward, pReward, playerCollision: this.playerCollision, aiCollision: this.aiCollision, isDone };
@@ -2627,6 +2832,45 @@ class StrategicAI {
                     ctx.fillText(`${this.winner} Wins!`, this.width / 2, this.height / 2);
                     ctx.font = '24px "Courier Prime"';
                     ctx.fillText('Press R to Reset', this.width / 2, this.height / 2 + 40);
+                }
+            }
+
+            // Moved playSound and _playActualSound methods here
+            playSound(type = 'collision') {
+                try {
+                    if (this.audioContext.state !== 'running') {
+                        logger.warn('AudioContext is not running. Sound will not play until resumed by user interaction.');
+                        return;
+                    }
+                    this._playActualSound(type);
+                } catch (e) {
+                    logger.warn('Audio playback failed or context error', e.message);
+                }
+            }
+
+            _playActualSound(type) {
+                if (this.audioContext.state !== 'running') return;
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                if (type === 'collision') {
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440 + Math.random() * 100, this.audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.2);
+                } else if (type === 'win') {
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(587.33, this.audioContext.currentTime); // D5
+                    gainNode.gain.setValueAtTime(0.4, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.5);
                 }
             }
         }
@@ -2737,7 +2981,7 @@ class StrategicAI {
                     return;
                 }
 
-                const hues = this.theme === 'opponent' ? { pos: 39, neg: 271 } : { pos: 195, neg: 0 };
+                const hues = this.theme === 'opponent' ? { pos: 39, neg: 271 } : { pos: 195, neg: 0 }; // Yellow/Purple for opponent, Cyan/Red for main
 
                 this.visualLayers.forEach((layerViz, l_idx) => {
                     const layerActivations = activations[l_idx];
@@ -2747,7 +2991,9 @@ class StrategicAI {
                     }
 
                     let maxAbs = 0;
-                    for (const v of layerActivations) if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
+                    for (const v of layerActivations) {
+                        if (Number.isFinite(v) && Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
+                    }
                     const norm = maxAbs + 1e-9; // Add small epsilon to avoid division by zero
 
                     for (let n_idx = 0; n_idx < this.neuronElements[l_idx].length; n_idx++) {
@@ -2771,6 +3017,7 @@ class StrategicAI {
 
         class MainApp {
     constructor() {
+        logger.info('MainApp Constructor started.');
         this.gameCanvas = document.getElementById('gameCanvas');
         this.sheafGraphCanvas = document.getElementById('sheafGraphCanvas');
 
@@ -2798,6 +3045,7 @@ class StrategicAI {
         };
         this.MAX_CHART_POINTS = 100;
 
+        // Setup resize observers for canvases
         this.applyCanvasDPR(this.sheafGraphCanvas, this.sheafGraphCtx);
         const gameCanvasRO = new ResizeObserver(entries => {
             for (let entry of entries) {
@@ -2806,7 +3054,7 @@ class StrategicAI {
                 if (this.pongGame) {
                     this.pongGame.width = width;
                     this.pongGame.height = height;
-                    this.pongGame.render(this.ctx);
+                    this.pongGame.render(this.ctx); // Re-render immediately on resize
                     const newGameBounds = { width, height, scoreToWin: this.pongGame.scoreToWin };
                     if (this.mainAI) { this.mainAI.gameWidth = newGameBounds.width; this.mainAI.gameHeight = newGameBounds.height; }
                     if (this.opponentAI) { this.opponentAI.gameWidth = newGameBounds.width; this.opponentAI.gameHeight = newGameBounds.height; }
@@ -2817,7 +3065,8 @@ class StrategicAI {
 
         this.isRunning = false;
         this.frameCount = 0;
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.pongGame = null; // Will be initialized in setupGameAndAIs
+
         this.boundGameLoop = this.gameLoop.bind(this); // Pre-bind for requestAnimationFrame
         this.setupTooltips();
         this.bindEvents();
@@ -2825,6 +3074,7 @@ class StrategicAI {
         document.getElementById('status').textContent = 'Ready';
 
         this.setupGameAndAIs(); // Call asynchronously below
+        // logger.info('MainApp Constructor completed. Calling setupGameAndAIs.'); // Removed verbose log
     }
 
     applyCanvasDPR(canvas, ctx, baseWidth = canvas.clientWidth, baseHeight = canvas.clientHeight) {
@@ -2833,10 +3083,11 @@ class StrategicAI {
         canvas.height = baseHeight * dpr;
         canvas.style.width = `${baseWidth}px`;
         canvas.style.height = `${baseHeight}px`;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // Apply DPR scaling to context
     }
 
     async setupGameAndAIs() {
+        logger.info('setupGameAndAIs() started.');
         showLoading('game', 'Initializing Pong Environment...');
         showLoading('mainBrain', 'Building Main AI World Model...');
         showLoading('opponentBrain', 'Building Opponent AI World Model...');
@@ -2845,28 +3096,37 @@ class StrategicAI {
         try {
             const { clientWidth: w, clientHeight: h } = this.gameCanvas;
             this.pongGame = new PongGame(this.gameCanvas, w, h);
+            logger.info('PongGame initialized.');
             
             const gameBounds = { width: w, height: h, scoreToWin: 10 };
 
             this.mainAI_worldModel = new OntologicalWorldModel(10, 3, 7, [64, 64], true);
             this.opponent_worldModel = new OntologicalWorldModel(10, 3, 7, [64, 64], false);
+            // logger.info('OntologicalWorldModels instantiated.'); // Removed verbose log
 
-            await Promise.all([this.mainAI_worldModel.initialize(), this.opponent_worldModel.initialize()]);
+            logger.info('Calling Promise.all for OWM initialization...');
+            await Promise.all([
+                this.mainAI_worldModel.initialize(),
+                this.opponent_worldModel.initialize()
+            ]);
+            logger.info('OWM initialization completed.');
 
             this.mainAI = new LearningAI(this.mainAI_worldModel, gameBounds, true);
             this.opponentAI = new LearningAI(this.opponent_worldModel, gameBounds, false);
+            // logger.info('LearningAIs instantiated.'); // Removed verbose log
             
-            // NEW: Setup Strategic Layer
             this.mainStrategicAI = new StrategicAI(this.mainAI);
             this.opponentStrategicAI = new StrategicAI(this.opponentAI);
+            // logger.info('StrategicAIs instantiated.'); // Removed verbose log
 
             this.mainViz = new NeuralNetworkVisualizer('nn-visualization-container', this.mainAI_worldModel, 'main');
             this.opponentViz = new NeuralNetworkVisualizer('nn-visualization-container-opponent', this.opponent_worldModel, 'opponent');
+            // logger.info('NeuralNetworkVisualizers instantiated.'); // Removed verbose log
 
             this.pongGame.render(this.ctx); 
             this.updateVisualization();
-            this.start();
-            logger.info('Game and AIs initialized successfully.');
+            this.start(); // Start simulation automatically after setup
+            logger.info('Game and AIs initialized successfully. Starting simulation.');
 
         } catch (e) {
             logger.error('Failed to set up game and AIs:', e);
@@ -2876,6 +3136,7 @@ class StrategicAI {
             hideLoading('mainBrain');
             hideLoading('opponentBrain');
             hideLoading('metrics');
+            // logger.info('setupGameAndAIs() completed.'); // Removed verbose log
         }
     }
 
@@ -2891,12 +3152,13 @@ class StrategicAI {
 
         ['alphaSlider', 'betaSlider', 'gammaSlider'].forEach(id => {
             const slider = document.getElementById(id);
+            const valueDisplay = document.getElementById(`${id.replace('Slider', '')}-param`);
             slider.addEventListener('input', () => {
                 const paramName = id.replace('Slider', '');
                 const value = parseFloat(slider.value);
                 if (this.mainAI_worldModel?.qualiaSheaf) this.mainAI_worldModel.qualiaSheaf[paramName] = value;
                 if (this.opponent_worldModel?.qualiaSheaf) this.opponent_worldModel.qualiaSheaf[paramName] = value;
-                document.getElementById(`${paramName}-param`).textContent = value.toFixed(3);
+                valueDisplay.textContent = value.toFixed(3);
                 slider.setAttribute('aria-valuetext', value.toFixed(3));
             });
         });
@@ -2909,6 +3171,7 @@ class StrategicAI {
                     if (id === 'ballSpeedSlider') this.pongGame.ballSpeedMultiplier = value;
                     if (id === 'paddleHeightSlider') {
                         this.pongGame.paddleHeightMultiplier = value;
+                        // Recalculate paddle height for consistency
                         this.pongGame.player.height = PongGame.PADDLE_HEIGHT_BASE * value;
                         this.pongGame.ai.height = PongGame.PADDLE_HEIGHT_BASE * value;
                     }
@@ -2976,7 +3239,7 @@ class StrategicAI {
 
     updateQualiaAttentionVisuals() {
         const softmaxScores = this.mainAI_worldModel?.lastSoftmaxScores;
-        if (!softmaxScores) return;
+        if (!softmaxScores || !isFiniteVector(softmaxScores)) return; // Ensure scores are valid
 
         for (let i = 0; i < softmaxScores.length; i++) {
             const bar = document.getElementById(`attention-bar-${i}`);
@@ -2991,27 +3254,28 @@ class StrategicAI {
         if (!this.sheafGraphCtx) return;
         const dpr = window.devicePixelRatio || 1;
         const { clientWidth: w, clientHeight: h } = this.sheafGraphCanvas;
-        this.sheafGraphCtx.clearRect(0, 0, w / dpr, h / dpr);
+        this.sheafGraphCtx.clearRect(0, 0, w / dpr, h / dpr); // Clear using logical pixels
 
         const sheaf = this.mainAI_worldModel?.qualiaSheaf;
-        if (!sheaf || !sheaf.graph || !sheaf.graph.vertices || !sheaf.graph.edges) {
-            logger.warn("Sheaf graph data not available for drawing.");
+        if (!sheaf || !sheaf.graph || !sheaf.graph.vertices || !sheaf.graph.edges || !sheaf.adjacencyMatrix) {
+            logger.warn("Sheaf graph data not available or incomplete for drawing.");
             return;
         }
 
-        const adj = sheaf.adjacencyMatrix; // Use the dynamically updated adjacency matrix
+        const adj = sheaf.adjacencyMatrix;
 
         sheaf.graph.edges.forEach(([u, v]) => {
             const uIdx = sheaf.graph.vertices.indexOf(u);
             const vIdx = sheaf.graph.vertices.indexOf(v);
-            if (!sheafVertexPositions[uIdx] || !sheafVertexPositions[vIdx] || !adj) return;
+            if (!sheafVertexPositions[uIdx] || !sheafVertexPositions[vIdx] || uIdx === -1 || vIdx === -1) return;
 
-            const weight = adj[uIdx][vIdx] || 0.1;
+            const weight = adj[uIdx]?.[vIdx] || 0.1; // Fallback to 0.1
             this.sheafGraphCtx.strokeStyle = `rgba(68, 170, 255, ${clamp(weight, 0.1, 1.0)})`;
             this.sheafGraphCtx.lineWidth = clamp(weight * 2, 0.5, 3.0);
             
             const p1 = sheafVertexPositions[uIdx], p2 = sheafVertexPositions[vIdx];
             this.sheafGraphCtx.beginPath();
+            // Scale positions, accounting for vertex size to keep lines centered on vertices
             const scaledX1 = p1.x * (w / dpr - 36) + 18;
             const scaledY1 = p1.y * (h / dpr - 36) + 18;
             const scaledX2 = p2.x * (w / dpr - 36) + 18;
@@ -3039,7 +3303,8 @@ class StrategicAI {
         
         for (let i = 0; i < data.length; i++) {
             const x = padding + i * (width - 2 * padding) / (data.length - 1);
-            const y_val = clamp(data[i], yMin, yMax);
+            // Ensure y_val is finite and clamped before scaling
+            const y_val = Number.isFinite(data[i]) ? clamp(data[i], yMin, yMax) : (yMin + yMax) / 2; 
             const y = (height - 2 * padding) * (1 - (y_val - yMin) / (yMax - yMin)) + padding;
             d += `L ${x.toFixed(2)},${y.toFixed(2)} `;
         }
@@ -3053,7 +3318,7 @@ class StrategicAI {
     }
 
     updatePerformanceCharts() {
-        if(this.mainAI) {
+        if(this.mainAI && this.pongGame) {
             this.chartData.qValue.push(this.mainAI.avgQValue);
             this.chartData.epsilon.push(this.mainAI.epsilon);
             this.chartData.predError.push(this.mainAI_worldModel.predictionError);
@@ -3086,13 +3351,16 @@ class StrategicAI {
         let count = 0;
         qualia.stalks.forEach((stalk) => {
             if (isFiniteVector(stalk)) {
-                stalk.forEach((v, i) => avgQualia[i] += v);
+                stalk.forEach((v, i) => {
+                    if (Number.isFinite(v)) avgQualia[i] += v;
+                });
                 count++;
             }
         });
         if (count > 0) avgQualia.forEach((_, i) => avgQualia[i] /= count);
 
-        const qualiaValues = avgQualia.map(v => clamp(v, 0, 1)); // Normalize qualia for bar display (0 to 1)
+        // Normalize qualia for bar display (0 to 1) and ensure finiteness
+        const qualiaValues = avgQualia.map(v => Number.isFinite(v) ? clamp(v, 0, 1) : 0);
 
         requestAnimationFrame(() => {
             document.getElementById('being-value').textContent = qualiaValues[0].toFixed(3);
@@ -3111,8 +3379,8 @@ class StrategicAI {
             document.getElementById('qualia-rel-emergence-fill').style.width = `${qualiaValues[6] * 100}%`;
 
             document.getElementById('phi-display').textContent = `Φ: ${clamp(qualia.phi, 0, 5).toFixed(5)}`;
-            document.getElementById('free-energy').textContent = model.freeEnergy.toFixed(5);
-            document.getElementById('prediction-error').textContent = model.predictionError.toFixed(5);
+            document.getElementById('free-energy').textContent = (model.freeEnergy || 0).toFixed(5);
+            document.getElementById('prediction-error').textContent = (model.predictionError || 0).toFixed(5);
             document.getElementById('h1-dimension').textContent = clamp(qualia.h1Dimension, 0, 3).toFixed(2);
             document.getElementById('gestalt-unity').textContent = clamp(qualia.gestaltUnity, 0, 1).toFixed(5);
             document.getElementById('inconsistency').textContent = (qualia.inconsistency || 0).toFixed(5);
@@ -3133,49 +3401,8 @@ class StrategicAI {
 
             qualia.visualizeActivity();
             this.drawSheafGraph();
-            this.updateQualiaAttentionVisuals(); // Update the new panel
+            this.updateQualiaAttentionVisuals();
         });
-    }
-
-    playSound(type = 'collision') {
-        try {
-            // Ensure audio context is running
-            if (this.audioContext.state === 'suspended') {
-                this.audioContext.resume().then(() => {
-                    logger.info("AudioContext resumed.");
-                    this._playActualSound(type);
-                }).catch(e => {
-                    logger.error("Failed to resume AudioContext:", e);
-                });
-                return 0; // Return 0 immediately, sound will play after resume
-            } else {
-                return this._playActualSound(type);
-            }
-        } catch (e) {
-            logger.warn('Audio playback failed or context error', e.message);
-            return 0;
-        }
-    }
-
-    _playActualSound(type) {
-        if (this.audioContext.state !== 'running') return 0;
-
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
-
-        if (type === 'collision') {
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(440 + Math.random() * 100, this.audioContext.currentTime);
-            gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
-            oscillator.start(this.audioContext.currentTime);
-            oscillator.stop(this.audioContext.currentTime + 0.2);
-            return 0.1; // Return a small amplitude value to represent sound activity
-        }
-        return 0;
     }
 
     async gameLoop(timestamp, isManualStep = false) {
@@ -3184,7 +3411,6 @@ class StrategicAI {
         }
         
         if (!this.mainAI_worldModel?.ready || !this.opponent_worldModel?.ready || !this.pongGame) {
-            logger.warn('GameLoop: AIs or PongGame not ready. Waiting...');
             document.getElementById('status').textContent = 'Waiting for AI/Game initialization...';
             if (!isManualStep) requestAnimationFrame(this.boundGameLoop);
             return; 
@@ -3195,35 +3421,43 @@ class StrategicAI {
 
             const preGameState = this.pongGame.getState();
             
+            // logger.info('gameLoop: Making AI decisions...'); // Removed verbose log
             const [mainDecision, opponentDecision] = await Promise.all([
                 this.mainAI.makeDecision(preGameState),
                 this.opponentAI.makeDecision(preGameState)
             ]);
+            // logger.info('gameLoop: AI decisions made.'); // Removed verbose log
 
             // FIX: Check for corruption and reset AI if needed
             if (mainDecision.corrupted) {
-                logger.warn('Main AI state corrupted, resetting its recurrent state.');
+                logger.warn('Main AI state corrupted. Resetting its recurrent state and learning parameters.');
                 this.mainAI.worldModel.resetRecurrentState();
+                this.mainAI.epsilon = 1.0; // Reset epsilon to encourage re-exploration
             }
             if (opponentDecision.corrupted) {
-                logger.warn('Opponent AI state corrupted, resetting its recurrent state.');
+                logger.warn('Opponent AI state corrupted. Resetting its recurrent state and learning parameters.');
                 this.opponentAI.worldModel.resetRecurrentState();
+                this.opponentAI.epsilon = 1.0;
             }
 
             this.pongGame.setAIAction(mainDecision.action);
             this.pongGame.setPlayerAction(opponentDecision.action);
             
+            // logger.info('gameLoop: Updating game state...'); // Removed verbose log
             const gameUpdateResult = this.pongGame.update();
             const postGameState = this.pongGame.getState();
+            // logger.info('gameLoop: Game state updated.'); // Removed verbose log
 
+            // logger.info('gameLoop: AIs learning...'); // Removed verbose log
             await Promise.all([
                 this.mainAI.learn(gameUpdateResult.aReward, postGameState, gameUpdateResult.isDone),
                 this.opponentAI.learn(gameUpdateResult.pReward, postGameState, gameUpdateResult.isDone)
             ]);
+            // logger.info('gameLoop: AIs learning completed.'); // Removed verbose log
             
             this.mainStrategicAI.observe(gameUpdateResult.aReward);
             this.opponentStrategicAI.observe(gameUpdateResult.pReward);
-            if(this.frameCount % 50 === 0) {
+            if(this.frameCount % 50 === 0) { // Modulate every 50 frames
                 this.mainStrategicAI.modulateParameters();
                 this.opponentStrategicAI.modulateParameters();
             }
@@ -3231,12 +3465,12 @@ class StrategicAI {
             document.getElementById('player-score').textContent = this.pongGame.score.player;
             document.getElementById('ai-score').textContent = this.pongGame.score.ai;
 
-            if (this.frameCount % 5 === 0 || isManualStep) {
+            if (this.frameCount % 5 === 0 || isManualStep) { // Update visualizers every 5 frames
                 this.mainViz.update(mainDecision.activations);
                 this.opponentViz.update(opponentDecision.activations);
                 this.updateVisualization();
             }
-            if (this.frameCount % 20 === 0 || isManualStep) {
+            if (this.frameCount % 20 === 0 || isManualStep) { // Update charts every 20 frames
                 this.updatePerformanceCharts();
             }
 
@@ -3248,8 +3482,9 @@ class StrategicAI {
             }
 
         } catch (error) {
-            logger.error("Error in game loop, stopping simulation:", error);
-            console.error("Critical error in gameLoop, stopping:", error);
+            // Enhanced error logging
+            logger.error("Error in game loop, stopping simulation:", error.message || error.toString() || error);
+            console.error("Critical error in gameLoop, stopping:", error); // Keep console.error for full stack trace
             this.stop(); 
         } finally {
             if (this.isRunning && !isManualStep && !this.pongGame.gameOver) {
@@ -3268,8 +3503,15 @@ class StrategicAI {
         btn.textContent = this.isRunning ? '⏸️ Pause Simulation' : '🚀 Toggle Simulation';
         document.getElementById('status').textContent = this.isRunning ? 'Conscious AI Active' : this.pongGame.gameOver ? `${this.pongGame.winner} Wins! (Paused)` : 'Paused';
         if (this.isRunning) {
-            this.audioContext.resume().catch(e => logger.error("Failed to resume AudioContext on toggle:", e));
-            this.gameLoop(null, false); // Explicitly pass null for timestamp, false for manual step
+            // Attempt to resume AudioContext on user interaction
+            if (this.pongGame && this.pongGame.audioContext.state === 'suspended') { // Check pongGame and its audioContext
+                this.pongGame.resumeAudioContext().then(() => {
+                    // logger.info("AudioContext resumed on user interaction."); // Removed verbose log
+                    this.gameLoop(null, false);
+                }).catch(e => logger.error("Failed to resume AudioContext on toggle:", e));
+            } else {
+                this.gameLoop(null, false);
+            }
             logger.info('Simulation started.');
         } else {
             logger.info('Simulation paused.');
@@ -3317,23 +3559,28 @@ class StrategicAI {
             document.getElementById('player-score').textContent = 0;
             document.getElementById('ai-score').textContent = 0;
             
-            // Reset the AIs' internal states
-            if (this.mainAI) {
-                 this.mainAI_worldModel.resetRecurrentState(); // Explicitly reset OWM recurrence
-                 this.mainAI.reset(); // Reset LearningAI params like epsilon
-            }
-            if (this.opponentAI) {
-                 this.opponent_worldModel.resetRecurrentState(); // Explicitly reset OWM recurrence
-                 this.opponentAI.reset(); // Reset LearningAI params like epsilon
-            }
+            // Recreate OWMs and LearningAIs to ensure a clean state
+            this.mainAI_worldModel = new OntologicalWorldModel(10, 3, 7, [64, 64], true);
+            await this.mainAI_worldModel.initialize();
+            this.mainAI = new LearningAI(this.mainAI_worldModel, { width: w, height: h, scoreToWin: 10 }, true);
+            this.mainStrategicAI = new StrategicAI(this.mainAI);
+            
+            this.opponent_worldModel = new OntologicalWorldModel(10, 3, 7, [64, 64], false);
+            await this.opponent_worldModel.initialize();
+            this.opponentAI = new LearningAI(this.opponent_worldModel, { width: w, height: h, scoreToWin: 10 }, false);
+            this.opponentStrategicAI = new StrategicAI(this.opponentAI);
+            
+            // Reinitialize visualizers with new world models
+            this.mainViz = new NeuralNetworkVisualizer('nn-visualization-container', this.mainAI_worldModel, 'main');
+            this.opponentViz = new NeuralNetworkVisualizer('nn-visualization-container-opponent', this.opponent_worldModel, 'opponent');
 
-            // Re-initialize AI and world models (this also calls this.start() implicitly after setup)
-            await this.setupGameAndAIs(); 
             this.frameCount = 0;
             document.getElementById('status').textContent = 'Ready';
             this.updateVisualization();
             this.pongGame.render(this.ctx);
             logger.info('All states reset successfully.');
+            this.start(); // Automatically start after reset
+
         } catch (e) {
             logger.error('Error during reset:', e);
             document.getElementById('status').textContent = `Reset Failed: ${e.message}`;
@@ -3352,6 +3599,18 @@ class StrategicAI {
         }
         this.mainAI_worldModel.qualiaSheaf.tuneParameters();
         this.opponent_worldModel.qualiaSheaf.tuneParameters();
+
+        // Add flash animation to parameter displays
+        const paramIds = ['alpha-param', 'beta-param', 'gamma-param'];
+        paramIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('param-flash-active'); // Reset animation
+                void el.offsetWidth; // Trigger reflow
+                el.classList.add('param-flash-active');
+            }
+        });
+
         this.updateVisualization();
     }
 
@@ -3409,3 +3668,4 @@ class StrategicAI {
     </script>
 </body>
 </html>
+```
