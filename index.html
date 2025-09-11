@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -777,7 +776,9 @@
                     • Cohomology: $H¹(G,ℱ) = ker d¹/im d⁰$<br>
                     • Stability: $exp(-dim H¹)$<br>
                     • Φ: $log(1 + MI) \cdot S \cdot GU$<br>
-                    • Gluing Inconsistency: $∑_{e∈E} ||P_e s_u - s_v||^2$
+                    • Gluing Inconsistency: $∑_{e∈E} ||P_e s_u - s_v||^2$<br>
+                    <br>
+                    <em>Note: For performance, the sheaf Laplacian used in Free Energy calculation is a simplified approximation using node-level Laplacian and block-diagonal qualia matrices.</em>
                 </div>
                 <div class="loading-overlay" id="metricsLoadingOverlay" aria-live="assertive" aria-busy="true" aria-label="Loading metrics and computations">
                     <div class="loading-spinner"></div>
@@ -1189,9 +1190,6 @@ self.onmessage = function(e) {
                 }, timeout);
                 workerCallbacks.set(id, {
                     resolve: (result) => { clearTimeout(timer); resolve(result); },
-                    labels: {
-                        get: (key) => key // Dummy for now
-                    },
                     reject: (error) => { clearTimeout(timer); reject(error); },
                 });
                 worker.postMessage({ type, id, data });
@@ -1211,8 +1209,9 @@ self.onmessage = function(e) {
             workerCallbacks.forEach(cb => cb.reject(new Error('Worker crashed')));
             workerCallbacks.clear();
         };
-// --- OPTIMIZED UTILITY FUNCTIONS (added flattenMatrix/unflattenMatrix for worker communication) ---
-// (The Utility functions block remains the same as previously updated, but re-iterating the importance of flattenMatrix/unflattenMatrix)
+// --- CORE UTILITY FUNCTIONS (used by main thread classes) ---
+// These functions are essential for vector and matrix operations within the main thread.
+// Their logic is consistent with the worker's for numerical robustness.
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 function dot(a, b) {
     if (!a || !b || a.length !== b.length) return 0;
@@ -1227,7 +1226,10 @@ function dot(a, b) {
 function norm2(v) {
     if (!Array.isArray(v) && !(v instanceof Float32Array)) return 0;
     let s = 0;
-    for (let i = 0; i < v.length; ++i) s += v[i]*v[i];
+    for (let i = 0; i < v.length; ++i) {
+        const val = v[i];
+        s += (Number.isFinite(val) ? val : 0) * (Number.isFinite(val) ? val : 0);
+    }
     return Math.sqrt(s + 1e-12);
 }
 function vecAdd(a, b) {
@@ -1296,7 +1298,7 @@ function unflattenMatrix(data) {
 function logDeterminantFromDiagonal(M) {
     if (!Array.isArray(M) || M.length === 0) return Math.log(1e-12);
     let s = 0;
-    for (let i=0;i<M.length;i++) s += Math.log(Math.max(Math.abs(M[i][i]), 1e-12));
+    for (let i=0;i<M.length;i++) s += Math.log(Math.max(Math.abs(M[i][i]), 1e-12)); // Use Math.abs for robustness
     return s;
 }
 
@@ -1309,14 +1311,10 @@ const sheafVertexPositions = {
 
 // --- APPLICATION CLASSES ---
 class EnhancedQualiaSheaf {
-    constructor(graph, stateDim = 10, qDim = 7, alpha = 0.1, beta = 0.1, gamma = 0.05) {
+    constructor(graph, stateDim = 10, initialQDim = 7, alpha = 0.1, beta = 0.1, gamma = 0.05) {
         this.stateDim = stateDim;
-        this.qDim = Math.min(qDim || 7, 7);
         this.entityNames = ['being', 'intent', 'existence', 'emergence', 'gestalt', 'context', 'rel_emergence'];
-        if (this.qDim !== this.entityNames.length) {
-            logger.warn(`qDim (${this.qDim}) does not match entityNames length (${this.entityNames.length}). Adjusting qDim.`);
-            this.qDim = this.entityNames.length;
-        }
+        this.qDim = this.entityNames.length; // qDim strictly derived from entityNames for consistency
 
         const defaultVertices = ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed', 'player_collision', 'ai_collision'];
         const initialGraphVertices = graph?.vertices && Array.isArray(graph.vertices) && graph.vertices.length >= defaultVertices.length ? graph.vertices : defaultVertices;
@@ -1397,13 +1395,14 @@ class EnhancedQualiaSheaf {
         for (let i = 0; i < this.windowSize; i++) {
             this.windowedStates.push(new Float32Array(N_total_stalk_dim).fill(0).map(() => clamp((Math.random() - 0.5) * 0.1, -1, 1)));
         }
-        // logger.info('EnhancedQualiaSheaf initialized.'); // Removed debug log
+        logger.info('EnhancedQualiaSheaf initialized with qDim:', this.qDim);
     }
 
     async initialize() {
         try {
             await this._updateGraphStructureAndMetrics();
             this.ready = true;
+            logger.info('EnhancedQualiaSheaf ready.');
         } catch (e) {
             logger.error('Error during Sheaf initialization:', e);
             this.ready = false;
@@ -1542,11 +1541,12 @@ class EnhancedQualiaSheaf {
 
             const transposePromise = runWorkerTask('transpose', { matrix: flattenMatrix(P_uv_temp) })
                 .then(transposedP => {
-                    if (!isFiniteMatrix(unflattenMatrix(transposedP))) {
+                    const unflattenedTransposed = unflattenMatrix(transposedP);
+                    if (!isFiniteMatrix(unflattenedTransposed)) {
                         logger.error(`Transposed P for ${v}-${u} returned non-finite from worker. Resetting to identity.`);
                         projections.set(`${v}-${u}`, identity(this.qDim));
                     } else {
-                        projections.set(`${v}-${u}`, unflattenMatrix(transposedP));
+                        projections.set(`${v}-${u}`, unflattenedTransposed);
                     }
                 })
                 .catch(err => {
@@ -1587,11 +1587,11 @@ class EnhancedQualiaSheaf {
     }
     async diffuseQualia(state) {
         if (!this.ready) {
-            logger.warn('Sheaf not ready for diffusion.');
+            logger.warn('Sheaf not ready for diffusion. Skipping.');
             return;
         }
         if (!isFiniteVector(state) || state.length !== this.stateDim) {
-            logger.warn('diffuseQualia: Invalid input state received.');
+            logger.warn('diffuseQualia: Invalid input state received. Skipping diffusion.', state);
             return;
         }
 
@@ -1608,7 +1608,8 @@ class EnhancedQualiaSheaf {
 
         const qInput = new Float32Array(state.slice(0, this.graph.vertices.length).map(v => clamp(v, 0, 1)));
         if (!isFiniteVector(qInput) || qInput.length !== this.graph.vertices.length) {
-            logger.warn('diffuseQualia: Invalid qInput generated.');
+            logger.warn('diffuseQualia: Invalid qInput generated. Skipping diffusion.', qInput);
+            this.graph.edges = originalEdges; // Revert edges
             return;
         }
 
@@ -1629,7 +1630,7 @@ class EnhancedQualiaSheaf {
         }
 
         if (!isFiniteVector(s) || s.length !== N) {
-            logger.error('diffuseQualia: Final concatenated stalk vector is still invalid after individual stalk cleanup. This indicates a deeper issue.', s);
+            logger.error('diffuseQualia: Final concatenated stalk vector is still invalid after individual stalk cleanup. This indicates a deeper issue. Skipping diffusion.', s);
             this.graph.edges = originalEdges;
             return;
         }
@@ -1677,9 +1678,9 @@ class EnhancedQualiaSheaf {
                     const val_vu = -nodeWeight_ji * P_vu[qj][qi];
 
                     if (Number.isFinite(val_uv)) Lfull[i * this.qDim + qi][j * this.qDim + qj] += val_uv;
-                    else logger.warn(`Lfull[${i*this.qDim+qi}][${j*this.qDim+j}] (uv) is non-finite: ${val_uv}`);
+                    else logger.warn(`Lfull[${i*this.qDim+qi}][${j*this.qDim+qj}] (uv) is non-finite: ${val_uv}`);
                     if (Number.isFinite(val_vu)) Lfull[j * this.qDim + qj][i * this.qDim + qi] += val_vu;
-                    else logger.warn(`Lfull[${j*this.qDim+j}][${i*this.qDim+qi}] (vu) is non-finite: ${val_vu}`);
+                    else logger.warn(`Lfull[${j*this.qDim+qj}][${i*this.qDim+qi}] (vu) is non-finite: ${val_vu}`);
                 }
             }
         }
@@ -1714,7 +1715,7 @@ class EnhancedQualiaSheaf {
             sSolved = await runWorkerTask('solveLinearSystemCG', { A: flattenMatrix(A), b: rhs, opts: { tol: 1e-6, maxIter: 15 } });
         } catch (e) {
             logger.error('Error solving linear system in worker:', e);
-            sSolved = new Float32Array(s.map(v => clamp(v, -1, 1)));
+            sSolved = new Float32Array(s.map(v => clamp(v, -1, 1))); // Fallback to clamped current state
         }
         
         const sNext = new Float32Array(sSolved.map(v => clamp(v, -1, 1)));
@@ -1722,7 +1723,7 @@ class EnhancedQualiaSheaf {
         this._updateStalksAndWindow(sNext, n);
         await this._updateDerivedMetrics();
 
-        this.graph.edges = originalEdges;
+        this.graph.edges = originalEdges; // Revert temporary edges
     }
 
     _updateStalksAndWindow(sNextVector, n) {
@@ -1743,6 +1744,7 @@ class EnhancedQualiaSheaf {
             await this.computeIntegratedInformation();
         } catch (e) {
             logger.error("Error during derived metrics update:", e);
+            // Fallback values in case of error
             this.phi = 0.01;
             this.h1Dimension = 0.5;
             this.gestaltUnity = 0.05;
@@ -1751,7 +1753,7 @@ class EnhancedQualiaSheaf {
         }
     }
 
-    async computeH1Dimension() { // Ensure this is 'async'
+    async computeH1Dimension() {
         const { boundary1, boundary2 } = this.buildBoundaryMatrices();
         if (!isFiniteMatrix(boundary1) || !isFiniteMatrix(boundary2)) {
             logger.warn("Non-finite boundary matrices detected. Setting H1 to default max/min.");
@@ -1763,13 +1765,13 @@ class EnhancedQualiaSheaf {
         const flatBoundary1 = flattenMatrix(boundary1);
         const flatBoundary2 = flattenMatrix(boundary2);
 
-        if (!flatBoundary1 || !flatBoundary1.flatData || !isFiniteVector(flatBoundary1.flatData)) {
+        if (!flatBoundary1?.flatData || !isFiniteVector(flatBoundary1.flatData)) {
             logger.error("Flat boundary1 is invalid before sending to worker for rank calculation.");
             this.h1Dimension = 1;
             this.stability = clamp(Math.exp(-this.h1Dimension * 0.2), 0.01, 1);
             return;
         }
-        if (!flatBoundary2 || !flatBoundary2.flatData || !isFiniteVector(flatBoundary2.flatData)) {
+        if (!flatBoundary2?.flatData || !isFiniteVector(flatBoundary2.flatData)) {
             logger.error("Flat boundary2 is invalid before sending to worker for rank calculation.");
             this.h1Dimension = 1;
             this.stability = clamp(Math.exp(-this.h1Dimension * 0.2), 0.01, 1);
@@ -1805,7 +1807,7 @@ class EnhancedQualiaSheaf {
         if (!Number.isFinite(this.stability)) this.stability = 0.5;
     }
 
-    async computeGluingInconsistency() { // Ensure this is 'async'
+    async computeGluingInconsistency() {
         let sum = 0;
         for (const [u, v] of this.graph.edges) {
             const stalk_u = this.stalks.get(u);
@@ -1852,6 +1854,7 @@ class EnhancedQualiaSheaf {
     async computeIntegratedInformation() {
         const validStates = this.windowedStates.filter(isFiniteVector);
         if (validStates.length < Math.max(4, this.stateDim + this.qDim)) {
+            // Not enough data for meaningful covariance, use a base value influenced by other metrics
             this.phi = clamp(0.5 + this.gestaltUnity * this.stability, 0.01, 5);
             return;
         }
@@ -1871,7 +1874,7 @@ class EnhancedQualiaSheaf {
         }
 
         const MI_val = logDeterminantFromDiagonal(cov);
-        const MI = Number.isFinite(MI_val) ? Math.abs(MI_val) * 0.1 + 1e-6 : 1e-6;
+        const MI = Number.isFinite(MI_val) ? Math.abs(MI_val) * 0.1 + 1e-6 : 1e-6; // Ensure MI is positive and non-zero
         
         const safeStability = Number.isFinite(this.stability) ? this.stability : 0.1;
         const safeGestaltUnity = Number.isFinite(this.gestaltUnity) ? this.gestaltUnity : 0.1;
@@ -1908,13 +1911,14 @@ class EnhancedQualiaSheaf {
         this.alpha = clamp(this.alpha * (1 + 0.02 * (1 - currentStability)) * (1 + 0.01 * currentInconsistency), 0.01, 1);
         this.beta = clamp(this.beta * (1 + 0.02 * currentGestaltUnity) * (1 - 0.01 * currentH1Dimension), 0.01, 1);
         this.gamma = clamp(this.gamma * (1 - 0.05 * currentH1Dimension) * (1 - 0.02 * currentInconsistency), 0.01, 0.5);
+        logger.info(`Tuned parameters: Alpha=${this.alpha.toFixed(3)}, Beta=${this.beta.toFixed(3)}, Gamma=${this.gamma.toFixed(3)}`);
     }
 }
 class OntologicalWorldModel {
     constructor(stateDim = 10, actionDim = 3, qDim = 7, hiddenSizes = [16, 32, 16], isPlayerTwo = false) {
         this.stateDim = stateDim;
         this.actionDim = actionDim;
-        this.qDim = Math.min(qDim, 7);
+        this.qDim = qDim; // This qDim will be matched by EnhancedQualiaSheaf
         this.isPlayerTwo = isPlayerTwo;
 
         // Graph definition might vary slightly between AI for their 'perspective'
@@ -1926,7 +1930,9 @@ class OntologicalWorldModel {
                 ['player_collision', 'paddle_y'], ['ai_collision', 'ball_x']
             ]
         };
+        // Ensure the sheaf receives the correct qDim based on its internal definition.
         this.qualiaSheaf = new EnhancedQualiaSheaf(this.graph, this.stateDim, this.qDim, 0.1, 0.1, 0.05);
+        this.qDim = this.qualiaSheaf.qDim; // Override with the canonical qDim from the sheaf.
 
         this.inputDim = this.stateDim + this.actionDim + 1 + (this.graph.vertices.length * this.qualiaSheaf.qDim);
         this.hiddenSizes = hiddenSizes;
@@ -1946,12 +1952,14 @@ class OntologicalWorldModel {
         this.predictionError = 0;
         this.memory = [];
         this.ready = false;
+        this.lastActivations = []; // Store activations for visualization/learning
     }
 
     async initialize() {
         try {
             await this.qualiaSheaf.initialize();
             this.ready = true;
+            logger.info(`OntologicalWorldModel for ${this.isPlayerTwo ? 'AI' : 'Player'} ready.`);
         } catch (e) {
             logger.error('Error during OWM initialization:', e);
             this.ready = false;
@@ -1960,7 +1968,7 @@ class OntologicalWorldModel {
 
     async forward(input) {
         if (!isFiniteVector(input) || input.length !== this.inputDim) {
-            logger.error('OWM.forward: Invalid input for forward pass, length mismatch or non-finite values.', input);
+            logger.error('OWM.forward: Invalid input for forward pass, length mismatch or non-finite values. Returning zeros.', input);
             return { output: vecZeros(this.stateDim), activations: [] };
         }
 
@@ -1980,21 +1988,22 @@ class OntologicalWorldModel {
 
     applyAttention(input) {
         if (!isFiniteVector(input) || input.length !== this.inputDim) {
-            logger.error('OWM.applyAttention: Invalid input for attention mechanism, length mismatch or non-finite values.', input);
-            return vecZeros(this.inputDim);
+            logger.error('OWM.applyAttention: Invalid input for attention mechanism, length mismatch or non-finite values. Returning original input.', input);
+            return input; // Return original input as fallback
         }
 
         // Simple dot-product attention for qualia, kept local for now
         const scores = this.attentionWeights.map(w => dot(w, input));
-        const maxScore = Math.max(...scores);
+        const maxScore = scores.length > 0 ? Math.max(...scores) : 0;
         const expScores = scores.map(s => Math.exp(s - maxScore));
         const sumExpScores = expScores.reduce((s, x) => s + x, 1e-10);
         const softmaxScores = new Float32Array(expScores.map(s => s / sumExpScores));
 
         const att = vecZeros(input.length);
         for (let i = 0; i < softmaxScores.length; i++) {
+            if (!Number.isFinite(softmaxScores[i])) continue; // Ensure softmaxScores are finite
             for (let j = 0; j < input.length; j++) {
-                att[j] += softmaxScores[i] * input[j];
+                att[j] += softmaxScores[i] * (input[j] || 0); // Ensure input[j] is defined
             }
         }
         return vecAdd(input, vecScale(att, this.qualiaSheaf.beta)); // Beta influences attention strength
@@ -2002,11 +2011,11 @@ class OntologicalWorldModel {
 
     async predict(state, action, audioAmplitude = 0) {
         if (!this.ready) {
-            logger.warn('OWM not ready for prediction.');
+            logger.warn('OWM not ready for prediction. Returning zero state.');
             return { nextState: vecZeros(this.stateDim), phi: 0, activations: [] };
         }
         if (!isFiniteVector(state) || !isFiniteVector(action)) {
-            logger.error('OWM.predict: Invalid state or action for prediction, non-finite values.', { state, action });
+            logger.error('OWM.predict: Invalid state or action for prediction, non-finite values. Returning zero state.', { state, action });
             return { nextState: vecZeros(this.stateDim), phi: 0, activations: [] };
         }
 
@@ -2053,16 +2062,17 @@ class OntologicalWorldModel {
         // 2. Prepare NN Input
         const input = new Float32Array([...state, ...action, audioAmplitude, ...finalQualiaArray]);
         if (!isFiniteVector(input) || input.length !== this.inputDim) {
-            logger.error(`OWM.predict: Input vector for NN is invalid or incorrect length (${input.length} vs ${this.inputDim}).`);
+            logger.error(`OWM.predict: Input vector for NN is invalid or incorrect length (${input.length} vs ${this.inputDim}). Returning zero state.`);
             return { nextState: vecZeros(this.stateDim), phi: this.qualiaSheaf.phi, activations: [] };
         }
 
         // 3. Apply Attention & Forward Pass (asynchronous)
         const attended = this.applyAttention(input);
         const { output: nextState, activations } = await this.forward(attended);
+        this.lastActivations = activations; // Store for visualization/learning
 
         // 4. Calculate Free Energy and Prediction Error
-        const error = norm2(vecSub(nextState, state.slice(0, nextState.length)));
+        const error = norm2(vecSub(nextState, state.slice(0, Math.min(nextState.length, state.length)))); // Ensure lengths match for comparison
         this.predictionError = clamp(error, 0, 10); // Clamp prediction error
 
         // --- Start of Free Energy FIX ---
@@ -2085,7 +2095,9 @@ class OntologicalWorldModel {
                         for (let qj = 0; qj < qDim; qj++) {
                             const globalRow = i * qDim + qi;
                             const globalCol = j * qDim + qj;
-                            if (qi === qj) { // Only diagonal within each qDim block
+                            // Simplified for performance: assuming identity within qualia space, only node-level Laplacian affects.
+                            // A more complex model might involve a full tensor product.
+                            if (qi === qj) { 
                                 L_approx_global[globalRow][globalCol] = nodeWeight;
                             }
                         }
@@ -2097,7 +2109,18 @@ class OntologicalWorldModel {
             // Fallback: If nodeLaplacian is bad, L_approx_global will remain zero.
         }
 
-        const lapQuad = 0.5 * dot(finalQualiaArray, await runWorkerTask('matVecMul', { matrix: flattenMatrix(L_approx_global), vector: finalQualiaArray }));
+        let lapQuad = 0;
+        try {
+            const matMulResult = await runWorkerTask('matVecMul', { matrix: flattenMatrix(L_approx_global), vector: finalQualiaArray });
+            if(isFiniteVector(matMulResult)) {
+                lapQuad = 0.5 * dot(finalQualiaArray, matMulResult);
+            } else {
+                logger.warn('matVecMul for L_approx_global returned non-finite vector.');
+            }
+        } catch (e) {
+            logger.error('Error during matVecMul for Free Energy calculation:', e);
+        }
+        
         // Ensure lapQuad is finite
         const safeLapQuad = Number.isFinite(lapQuad) ? lapQuad : 0;
         // --- End of Free Energy FIX ---
@@ -2112,7 +2135,7 @@ class OntologicalWorldModel {
     // This is a minimal example and not a full backpropagation implementation.
     async learn(actualNextState, predictedNextState, learningRate = 0.01) {
         if (!isFiniteVector(actualNextState) || !isFiniteVector(predictedNextState)) {
-            logger.warn('OWM.learn: Invalid input for learning, non-finite values.', { actualNextState, predictedNextState });
+            logger.warn('OWM.learn: Invalid input for learning, non-finite values. Skipping learning.', { actualNextState, predictedNextState });
             return;
         }
         const errorVector = vecSub(predictedNextState, actualNextState);
@@ -2124,21 +2147,37 @@ class OntologicalWorldModel {
         // For demonstration purposes, we will slightly adjust the output layer weights.
         const lastHiddenActivation = this.lastActivations[this.lastActivations.length - 1]; // Assuming last activations stored
 
-        if (lastHiddenActivation && isFiniteVector(lastHiddenActivation)) {
+        if (lastHiddenActivation && isFiniteVector(lastHiddenActivation) && lastHiddenActivation.length === this.outputLayer.W[0].length) {
             const gradOutput = vecScale(errorVector, learningRate);
-            const deltaW = zeroMatrix(this.outputLayer.W.length, this.outputLayer.W[0].length);
+            
             for (let i = 0; i < this.outputLayer.W.length; i++) {
+                if (!Number.isFinite(gradOutput[i])) continue;
                 for (let j = 0; j < this.outputLayer.W[0].length; j++) {
-                    deltaW[i][j] = gradOutput[i] * lastHiddenActivation[j];
-                    this.outputLayer.W[i][j] -= deltaW[i][j];
+                    if (!Number.isFinite(lastHiddenActivation[j])) continue;
+                    const deltaW_ij = gradOutput[i] * lastHiddenActivation[j];
+                    if (Number.isFinite(deltaW_ij)) {
+                        this.outputLayer.W[i][j] = clamp(this.outputLayer.W[i][j] - deltaW_ij, -10, 10); // Clamp weights
+                    } else {
+                        logger.warn(`Non-finite deltaW_ij during learning for OutputLayer.W[${i}][${j}]`);
+                    }
                 }
             }
-            this.outputLayer.b = vecSub(this.outputLayer.b, gradOutput);
+            this.outputLayer.b = new Float32Array(vecSub(this.outputLayer.b, gradOutput).map(v => clamp(v, -10, 10)));
+        } else {
+            logger.warn('Skipping OWM learning due to invalid lastHiddenActivation state.');
         }
     }
 }
 
         class LearningAI {
+    // Constants for normalization and game physics
+    static BALL_DX_NORMALIZATION = 10;
+    static BALL_DY_NORMALIZATION = 12;
+    static PADDLE_DY_NORMALIZATION = 7;
+    static PADDLE_HEIGHT_BASE = 80;
+    static PADDLE_WIDTH_BASE = 15;
+    static PADDLE_OFFSET_X = 10; // Player paddle X, AI paddle X offset from width
+
     constructor(worldModel, gameBounds, isPlayerTwo = false, aiResponseTime = 3) {
         this.worldModel = worldModel;
         this.gameWidth = gameBounds.width;
@@ -2157,20 +2196,20 @@ class OntologicalWorldModel {
         const opponentPaddle = this.isPlayerTwo ? gameState.player : gameState.ai;
 
         const stateVec = new Float32Array([
-            gameState.ball.x / this.gameWidth, // 0: Ball X (normalized)
-            gameState.ball.y / this.gameHeight, // 1: Ball Y (normalized)
-            gameState.ball.dx / 10,             // 2: Ball DX (normalized, max abs 10)
-            gameState.ball.dy / 12,            // 3: Ball DY (normalized, max abs 12)
-            paddle.y / this.gameHeight,        // 4: Own Paddle Y (normalized)
-            opponentPaddle.y / this.gameHeight,// 5: Opponent Paddle Y (normalized)
-            paddle.dy / 7,                     // 6: Own Paddle DY (normalized, max abs 7)
-            opponentPaddle.dy / 7,             // 7: Opponent Paddle DY (normalized, max abs 7)
-            gameState.playerCollision ? 1 : 0, // 8: Player Collision
-            gameState.aiCollision ? 1 : 0      // 9: AI Collision
-        ]).map(v => clamp(v, -1, 1));
+            gameState.ball.x / this.gameWidth,                                          // 0: Ball X (normalized)
+            gameState.ball.y / this.gameHeight,                                         // 1: Ball Y (normalized)
+            gameState.ball.dx / LearningAI.BALL_DX_NORMALIZATION,                       // 2: Ball DX (normalized)
+            gameState.ball.dy / LearningAI.BALL_DY_NORMALIZATION,                       // 3: Ball DY (normalized)
+            paddle.y / this.gameHeight,                                                 // 4: Own Paddle Y (normalized)
+            opponentPaddle.y / this.gameHeight,                                         // 5: Opponent Paddle Y (normalized)
+            paddle.dy / LearningAI.PADDLE_DY_NORMALIZATION,                             // 6: Own Paddle DY (normalized)
+            opponentPaddle.dy / LearningAI.PADDLE_DY_NORMALIZATION,                     // 7: Opponent Paddle DY (normalized)
+            gameState.playerCollision ? 1 : 0,                                          // 8: Player Collision
+            gameState.aiCollision ? 1 : 0                                               // 9: AI Collision
+        ]).map(v => clamp(v, -1, 1)); // Clamp values to a reasonable range
 
         if (!isFiniteVector(stateVec) || stateVec.length !== 10) {
-            logger.error('LearningAI.createStateVector: Generated state vector is invalid.', stateVec);
+            logger.error('LearningAI.createStateVector: Generated state vector is invalid. Returning zeros.', stateVec);
             return vecZeros(10);
         }
         return stateVec;
@@ -2178,11 +2217,11 @@ class OntologicalWorldModel {
 
     selectStrategy(phi, gestaltUnity, inconsistency) {
         if (phi > 3 && gestaltUnity > 0.8 && inconsistency < 0.2) {
-            return 'predictive';
+            return 'predictive'; // High consciousness, stable, coherent
         } else if (phi < 1 || inconsistency > 0.5 || gestaltUnity < 0.3) {
-            return 'reactive';
+            return 'reactive'; // Low consciousness, unstable, incoherent
         } else {
-            return 'balanced';
+            return 'balanced'; // Moderate consciousness
         }
     }
 
@@ -2205,7 +2244,7 @@ class OntologicalWorldModel {
         const paddleCenter = paddle.y + paddle.height / 2;
 
         // Simple physics prediction for ball's target Y
-        const targetPaddleX = this.isPlayerTwo ? this.gameWidth - paddle.width : paddle.width;
+        const targetPaddleX = this.isPlayerTwo ? this.gameWidth - paddle.width - LearningAI.PADDLE_OFFSET_X : LearningAI.PADDLE_OFFSET_X + paddle.width; // Correct target X
         let timeToPaddle = Math.abs(targetPaddleX - gameState.ball.x) / Math.max(Math.abs(ballDx), 1e-3);
         let predictedBallY_physics = ballY + ballDy * timeToPaddle;
         predictedBallY_physics = clamp(predictedBallY_physics, 0, this.gameHeight); // Simplified bounce
@@ -2221,6 +2260,7 @@ class OntologicalWorldModel {
         }
 
         if (validPredictions.length === 0) {
+            logger.warn('No valid predictions available. Falling back to simple heuristic.');
             if (predictedBallY_physics < paddleCenter - 15) { bestActionName = 'UP'; }
             else if (predictedBallY_physics > paddleCenter + 15) { bestActionName = 'DOWN'; }
             bestActionVec = actions.find(a => a.name === bestActionName).vec;
@@ -2237,16 +2277,16 @@ class OntologicalWorldModel {
                 let score = 0;
 
                 const distanceToTarget = Math.abs(predictedBallY_model - paddleCenter);
-                score -= 2.0 * (distanceToTarget / this.gameHeight);
+                score -= 2.0 * (distanceToTarget / this.gameHeight); // Penalize distance to ball
 
                 if (strategy === 'predictive') {
-                    score += 0.5 * phi;
-                    score -= 1.0 * this.worldModel.predictionError;
-                    score += 0.2 * currentGestaltUnity;
-                    score -= 0.5 * currentInconsistency;
+                    score += 0.5 * phi; // Reward higher consciousness
+                    score -= 1.0 * this.worldModel.predictionError; // Penalize prediction error
+                    score += 0.2 * currentGestaltUnity; // Reward coherent internal model
+                    score -= 0.5 * currentInconsistency; // Penalize internal contradictions
                 } else if (strategy === 'reactive') {
-                    score -= 1.0 * Math.abs(predictedBallY_physics - paddleCenter) / this.gameHeight;
-                    score += 0.1 * (action.name === 'IDLE' ? -0.1 : 0.1);
+                    score -= 1.0 * Math.abs(predictedBallY_physics - paddleCenter) / this.gameHeight; // Follow physics
+                    score += 0.1 * (action.name === 'IDLE' ? -0.1 : 0.1); // Small penalty for idle if not precise
                 } else { // 'balanced' strategy
                     score += 0.2 * phi;
                     score -= 0.5 * this.worldModel.predictionError;
@@ -2290,11 +2330,19 @@ class OntologicalWorldModel {
     }
 }
         class PongGame {
-            constructor(canvas, initialWidth, initialHeight) { // Added initialWidth, initialHeight
+            // Game constants for clarity and easy tuning
+            static PADDLE_HEIGHT_BASE = 80;
+            static PADDLE_WIDTH_BASE = 15;
+            static BALL_RADIUS = 8;
+            static INITIAL_BALL_SPEED_X = 4;
+            static INITIAL_BALL_SPEED_Y_MAX = 6;
+            static PLAYER_PADDLE_SPEED = 7; // Fixed player speed
+
+            constructor(canvas, initialWidth, initialHeight) {
                 this.canvas = canvas;
                 this.ctx = canvas.getContext('2d');
-                this.width = initialWidth; // Use passed dimensions
-                this.height = initialHeight; // Use passed dimensions
+                this.width = initialWidth;
+                this.height = initialHeight;
                 this.scoreToWin = 10;
                 this.ballSpeedMultiplier = 1.0;
                 this.paddleHeightMultiplier = 1.0;
@@ -2308,14 +2356,22 @@ class OntologicalWorldModel {
                 this.width = this.canvas.clientWidth || this.width;
                 this.height = this.canvas.clientHeight || this.height;
                 if (this.width === 0 || this.height === 0) {
-                    logger.warn("PongGame dimensions are zero during reset. This might cause rendering issues.");
-                    // Provide some default fallback if canvas is still not sized
+                    logger.warn("PongGame dimensions are zero during reset. Falling back to default dimensions.");
                     this.width = 600; this.height = 300;
                 }
                 
-                this.ball = { x: this.width / 2, y: this.height / 2, dx: (Math.random() > 0.5 ? 1 : -1) * 4 * this.ballSpeedMultiplier, dy: (Math.random() - 0.5) * 6 * this.ballSpeedMultiplier, radius: 8 };
-                this.ai = { x: this.width - 25, y: this.height / 2 - (40 * this.paddleHeightMultiplier), width: 15, height: (80 * this.paddleHeightMultiplier), dy: 0 };
-                this.player = { x: 10, y: this.height / 2 - (40 * this.paddleHeightMultiplier), width: 15, height: (80 * this.paddleHeightMultiplier), dy: 0 };
+                const paddleH = PongGame.PADDLE_HEIGHT_BASE * this.paddleHeightMultiplier;
+                const paddleW = PongGame.PADDLE_WIDTH_BASE;
+
+                this.ball = { 
+                    x: this.width / 2, 
+                    y: this.height / 2, 
+                    dx: (Math.random() > 0.5 ? 1 : -1) * PongGame.INITIAL_BALL_SPEED_X * this.ballSpeedMultiplier, 
+                    dy: (Math.random() - 0.5) * PongGame.INITIAL_BALL_SPEED_Y_MAX * this.ballSpeedMultiplier, 
+                    radius: PongGame.BALL_RADIUS 
+                };
+                this.ai = { x: this.width - 25, y: (this.height / 2) - (paddleH / 2), width: paddleW, height: paddleH, dy: 0 };
+                this.player = { x: 10, y: (this.height / 2) - (paddleH / 2), width: paddleW, height: paddleH, dy: 0 };
                 this.score = { ai: 0, player: 0 };
                 this.playerCollision = false;
                 this.aiCollision = false;
@@ -2326,8 +2382,8 @@ class OntologicalWorldModel {
             resetBall() {
                 this.ball.x = this.width / 2;
                 this.ball.y = this.height / 2;
-                this.ball.dx = (Math.random() > 0.5 ? 1 : -1) * 4 * this.ballSpeedMultiplier;
-                this.ball.dy = (Math.random() - 0.5) * 6 * this.ballSpeedMultiplier;
+                this.ball.dx = (Math.random() > 0.5 ? 1 : -1) * PongGame.INITIAL_BALL_SPEED_X * this.ballSpeedMultiplier;
+                this.ball.dy = (Math.random() - 0.5) * PongGame.INITIAL_BALL_SPEED_Y_MAX * this.ballSpeedMultiplier;
             }
 
             update() {
@@ -2353,14 +2409,14 @@ class OntologicalWorldModel {
                 let ballHitGround = false;
                 if (this.ball.x <= 0) {
                     this.score.ai++;
-                    aReward = 1;
-                    pReward = -1;
+                    aReward = 1; // AI scores, positive reward
+                    pReward = -1; // Player fails, negative reward
                     this.resetBall();
                     ballHitGround = true;
                 } else if (this.ball.x >= this.width) {
                     this.score.player++;
-                    aReward = -1;
-                    pReward = 1;
+                    aReward = -1; // AI fails, negative reward
+                    pReward = 1; // Player scores, positive reward
                     this.resetBall();
                     ballHitGround = true;
                 }
@@ -2369,7 +2425,8 @@ class OntologicalWorldModel {
                 this.player.y = clamp(this.player.y + this.player.dy, 0, this.height - this.player.height);
 
                 // Paddle collision (Player)
-                if (this.ball.x - this.ball.radius <= this.player.x + this.player.width &&
+                if (this.ball.dx < 0 && // Only check if ball is moving towards player paddle
+                    this.ball.x - this.ball.radius <= this.player.x + this.player.width &&
                     this.ball.x + this.ball.radius >= this.player.x &&
                     this.ball.y >= this.player.y &&
                     this.ball.y <= this.player.y + this.player.height) {
@@ -2377,10 +2434,13 @@ class OntologicalWorldModel {
                     this.ball.dy = clamp(this.ball.dy + (this.player.dy * 0.5), -MAX_BALL_DY, MAX_BALL_DY); // Paddle velocity influences ball
                     this.ball.x = this.player.x + this.player.width + this.ball.radius + 1; // Prevent sticking
                     this.playerCollision = true;
+                    pReward += 0.1; // Small reward for hitting the ball
+                    aReward -= 0.05; // Small penalty for AI not hitting it
                 }
 
                 // Paddle collision (AI)
-                if (this.ball.x + this.ball.radius >= this.ai.x &&
+                if (this.ball.dx > 0 && // Only check if ball is moving towards AI paddle
+                    this.ball.x + this.ball.radius >= this.ai.x &&
                     this.ball.x - this.ball.radius <= this.ai.x + this.ai.width &&
                     this.ball.y >= this.ai.y &&
                     this.ball.y <= this.ai.y + this.ai.height) {
@@ -2388,6 +2448,8 @@ class OntologicalWorldModel {
                     this.ball.dy = clamp(this.ball.dy + (this.ai.dy * 0.5), -MAX_BALL_DY, MAX_BALL_DY);
                     this.ball.x = this.ai.x - this.ball.radius - 1; // Prevent sticking
                     this.aiCollision = true;
+                    aReward += 0.1; // Small reward for hitting the ball
+                    pReward -= 0.05; // Small penalty for Player not hitting it
                 }
 
                 if (this.score.ai >= this.scoreToWin) {
@@ -2409,7 +2471,7 @@ class OntologicalWorldModel {
             }
 
             setPlayerAction(action) {
-                const speed = 7; // Player paddle speed can be fixed or adjustable
+                const speed = PongGame.PLAYER_PADDLE_SPEED;
                 if (action[0] === 1) this.player.dy = -speed;
                 else if (action[1] === 1) this.player.dy = speed;
                 else this.player.dy = 0;
@@ -2482,7 +2544,9 @@ class OntologicalWorldModel {
 
             _setupVisualLayers() {
                 const model = this.worldModel;
-                this.visualLayers.push({ name: 'input', actualCount: model.inputDim });
+                // Input layer should represent: stateDim + actionDim + audioAmplitude + (graph.vertices.length * qualiaSheaf.qDim)
+                const fullInputDim = model.stateDim + model.actionDim + 1 + (model.qualiaSheaf.graph.vertices.length * model.qualiaSheaf.qDim);
+                this.visualLayers.push({ name: 'input', actualCount: fullInputDim });
                 model.hiddenSizes.forEach((size, index) => this.visualLayers.push({ name: `hidden${index+1}`, actualCount: size }));
                 this.visualLayers.push({ name: 'output', actualCount: model.stateDim });
             }
@@ -2522,7 +2586,17 @@ class OntologicalWorldModel {
 
             _getNeuronPosition(lIndex, nIndex) {
                 const el = this.neuronElements[lIndex]?.[nIndex];
-                if (!el) return { x: 0, y: 0 };
+                if (!el) {
+                    // Fallback to approximate center if element isn't rendered yet
+                    const layerDiv = this.container.children[lIndex + 1]; // +1 because canvas is first child
+                    if (!layerDiv) return { x: 0, y: 0 };
+                    const layerRect = layerDiv.getBoundingClientRect();
+                    const containerRect = this.container.getBoundingClientRect();
+                    return {
+                        x: (layerRect.left - containerRect.left) + layerRect.width / 2,
+                        y: (layerRect.top - containerRect.top) + layerRect.height / 2
+                    };
+                }
 
                 const r = el.getBoundingClientRect();
                 const cr = this.container.getBoundingClientRect();
@@ -2570,17 +2644,33 @@ class OntologicalWorldModel {
             }
 
             update(activations) {
-                if (!activations || activations.length === 0) return;
+                // If activations are not provided or invalid, visualize a neutral state
+                if (!activations || activations.length === 0 || !activations.every(isFiniteVector)) {
+                    this.visualLayers.forEach((layerViz, l_idx) => {
+                        this.neuronElements[l_idx].forEach(el => {
+                            if (el) {
+                                el.style.backgroundColor = '#333';
+                                el.style.borderColor = '#888';
+                                el.style.boxShadow = 'none';
+                            }
+                        });
+                    });
+                    this._drawConnections();
+                    return;
+                }
 
                 const hues = this.theme === 'opponent' ? { pos: 39, neg: 271 } : { pos: 195, neg: 0 };
 
                 this.visualLayers.forEach((layerViz, l_idx) => {
                     const layerActivations = activations[l_idx];
-                    if (!layerActivations || !isFiniteVector(layerActivations)) return;
+                    if (!layerActivations || !isFiniteVector(layerActivations)) {
+                        logger.warn(`NNVisualizer: Layer ${l_idx} activations are invalid.`);
+                        return;
+                    }
 
                     let maxAbs = 0;
                     for (const v of layerActivations) if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
-                    const norm = maxAbs + 1e-9;
+                    const norm = maxAbs + 1e-9; // Add small epsilon to avoid division by zero
 
                     for (let n_idx = 0; n_idx < this.neuronElements[l_idx].length; n_idx++) {
                         const data_idx = Math.floor(n_idx * (layerActivations.length / this.neuronElements[l_idx].length));
@@ -2662,6 +2752,7 @@ class OntologicalWorldModel {
         showLoading('game', 'Initializing Pong Environment...');
         showLoading('mainBrain', 'Building Main AI World Model...');
         showLoading('opponentBrain', 'Building Opponent AI World Model...');
+        showLoading('metrics', 'Initializing OFTCC Sheaf...');
 
         try {
             const { clientWidth: w, clientHeight: h } = this.gameCanvas;
@@ -2686,6 +2777,7 @@ class OntologicalWorldModel {
             this.updateVisualization(); // Initial visualization update
             // Automatically start the game after successful initialization
             this.start();
+            logger.info('Game and AIs initialized successfully.');
 
         } catch (e) {
             logger.error('Failed to set up game and AIs:', e);
@@ -2694,6 +2786,7 @@ class OntologicalWorldModel {
             hideLoading('game');
             hideLoading('mainBrain');
             hideLoading('opponentBrain');
+            hideLoading('metrics');
         }
     }
 
@@ -2713,8 +2806,8 @@ class OntologicalWorldModel {
             slider.addEventListener('input', () => {
                 const paramName = id.replace('Slider', '');
                 const value = parseFloat(slider.value);
-                if (this.mainAI_worldModel) this.mainAI_worldModel.qualiaSheaf[paramName] = value;
-                if (this.opponent_worldModel) this.opponent_worldModel.qualiaSheaf[paramName] = value;
+                if (this.mainAI_worldModel?.qualiaSheaf) this.mainAI_worldModel.qualiaSheaf[paramName] = value;
+                if (this.opponent_worldModel?.qualiaSheaf) this.opponent_worldModel.qualiaSheaf[paramName] = value;
                 document.getElementById(`${paramName}-param`).textContent = value.toFixed(3);
                 slider.setAttribute('aria-valuetext', value.toFixed(3));
             });
@@ -2724,15 +2817,17 @@ class OntologicalWorldModel {
             const input = document.getElementById(id);
             input.addEventListener('change', () => {
                 const value = parseFloat(input.value);
-                if (id === 'ballSpeedSlider') this.pongGame.ballSpeedMultiplier = value;
-                if (id === 'paddleHeightSlider') {
-                    this.pongGame.paddleHeightMultiplier = value;
-                    this.pongGame.player.height = 80 * value; // Update player paddle height
-                    this.pongGame.ai.height = 80 * value;     // Update AI paddle height
-                }
-                if (id === 'aiResponseTimeSlider') {
-                    if (this.mainAI) this.mainAI.aiResponseTime = value;
-                    if (this.opponentAI) this.opponentAI.aiResponseTime = value;
+                if (this.pongGame) {
+                    if (id === 'ballSpeedSlider') this.pongGame.ballSpeedMultiplier = value;
+                    if (id === 'paddleHeightSlider') {
+                        this.pongGame.paddleHeightMultiplier = value;
+                        this.pongGame.player.height = PongGame.PADDLE_HEIGHT_BASE * value; // Update player paddle height
+                        this.pongGame.ai.height = PongGame.PADDLE_HEIGHT_BASE * value;     // Update AI paddle height
+                    }
+                    if (id === 'aiResponseTimeSlider') {
+                        if (this.mainAI) this.mainAI.aiResponseTime = value;
+                        if (this.opponentAI) this.opponentAI.aiResponseTime = value;
+                    }
                 }
             });
         });
@@ -2780,7 +2875,11 @@ class OntologicalWorldModel {
 
         this.sheafGraphCtx.strokeStyle = 'rgba(68, 170, 255, 0.3)';
         this.sheafGraphCtx.lineWidth = 1.5; // Slightly thicker lines
-        const sheaf = this.mainAI_worldModel.qualiaSheaf;
+        const sheaf = this.mainAI_worldModel?.qualiaSheaf;
+        if (!sheaf || !sheaf.graph || !sheaf.graph.vertices || !sheaf.graph.edges) {
+            logger.warn("Sheaf graph data not available for drawing.");
+            return;
+        }
 
         sheaf.graph.edges.forEach(([u, v]) => {
             const uIdx = sheaf.graph.vertices.indexOf(u);
@@ -2789,15 +2888,26 @@ class OntologicalWorldModel {
 
             const p1 = sheafVertexPositions[uIdx], p2 = sheafVertexPositions[vIdx];
             this.sheafGraphCtx.beginPath();
-            this.sheafGraphCtx.moveTo(p1.x * (w / dpr - 36) + 18, p1.y * (h / dpr - 36) + 18); // Adjust for larger vertices
-            this.sheafGraphCtx.lineTo(p2.x * (w / dpr - 36) + 18, p2.y * (h / dpr - 36) + 18);
+            // Scale and offset positions based on current canvas client dimensions
+            const scaledX1 = p1.x * (w / dpr - 36) + 18;
+            const scaledY1 = p1.y * (h / dpr - 36) + 18;
+            const scaledX2 = p2.x * (w / dpr - 36) + 18;
+            const scaledY2 = p2.y * (h / dpr - 36) + 18;
+
+            this.sheafGraphCtx.moveTo(scaledX1, scaledY1);
+            this.sheafGraphCtx.lineTo(scaledX2, scaledY2);
             this.sheafGraphCtx.stroke();
         });
     }
 
     updateVisualization() {
-        const qualia = this.mainAI_worldModel.qualiaSheaf;
+        const qualia = this.mainAI_worldModel?.qualiaSheaf;
         const model = this.mainAI_worldModel;
+
+        if (!qualia || !model) {
+            logger.warn('Main AI World Model or Qualia Sheaf not initialized for visualization.');
+            return;
+        }
 
         const avgQualia = new Float32Array(qualia.qDim).fill(0);
         let count = 0;
@@ -2855,29 +2965,41 @@ class OntologicalWorldModel {
 
     playSound(type = 'collision') {
         try {
+            // Ensure audio context is running
             if (this.audioContext.state === 'suspended') {
-                this.audioContext.resume();
-            }
-            if (this.audioContext.state !== 'running') return 0;
-
-            const oscillator = this.audioContext.createOscillator();
-            const gainNode = this.audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(this.audioContext.destination);
-
-            if (type === 'collision') {
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(440 + Math.random() * 100, this.audioContext.currentTime);
-                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
-                oscillator.start(this.audioContext.currentTime);
-                oscillator.stop(this.audioContext.currentTime + 0.2);
-                return 0.1;
+                this.audioContext.resume().then(() => {
+                    logger.info("AudioContext resumed.");
+                    this._playActualSound(type);
+                }).catch(e => {
+                    logger.error("Failed to resume AudioContext:", e);
+                });
+                return 0; // Return 0 immediately, sound will play after resume
+            } else {
+                return this._playActualSound(type);
             }
         } catch (e) {
-            logger.warn('Audio playback failed', e.message);
+            logger.warn('Audio playback failed or context error', e.message);
             return 0;
+        }
+    }
+
+    _playActualSound(type) {
+        if (this.audioContext.state !== 'running') return 0;
+
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        if (type === 'collision') {
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440 + Math.random() * 100, this.audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + 0.2);
+            return 0.1; // Return a small amplitude value to represent sound activity
         }
         return 0;
     }
@@ -2887,6 +3009,14 @@ class OntologicalWorldModel {
         // Use isManualStep for checks, ignore timestamp if it's not a manual step
         if (!this.isRunning && !isManualStep) {
             return;
+        }
+        
+        if (!this.mainAI_worldModel?.ready || !this.opponent_worldModel?.ready || !this.pongGame) {
+            logger.warn('GameLoop: AIs or PongGame not ready. Waiting...');
+            document.getElementById('status').textContent = 'Waiting for AI/Game initialization...';
+            // Schedule another check if not a manual step, to retry after things are ready
+            if (!isManualStep) requestAnimationFrame(this.boundGameLoop);
+            return; 
         }
 
         try {
@@ -2919,7 +3049,7 @@ class OntologicalWorldModel {
             document.getElementById('player-score').textContent = this.pongGame.score.player;
             document.getElementById('ai-score').textContent = this.pongGame.score.ai;
 
-            if (this.frameCount % 5 === 0 || isManualStep) { // Use isManualStep here
+            if (this.frameCount % 5 === 0 || isManualStep) { // Update visualization less frequently or on step
                 this.mainViz.update(mainDecision.activations);
                 this.opponentViz.update(opponentDecision.activations);
                 this.updateVisualization();
@@ -2929,6 +3059,7 @@ class OntologicalWorldModel {
 
             if (this.pongGame.gameOver) {
                 this.stop();
+                logger.info(`${this.pongGame.winner} wins the game!`);
             }
 
         } catch (error) {
@@ -2949,7 +3080,7 @@ class OntologicalWorldModel {
     toggleGame() {
         if (!this.mainAI_worldModel?.ready || !this.opponent_worldModel?.ready) {
             logger.warn('AIs are not fully initialized yet. Please wait.');
-            document.getElementById('status').textContent = 'AIs Not Ready - Please Wait...'; // Added specific status for clarity
+            document.getElementById('status').textContent = 'AIs Not Ready - Please Wait...';
             return;
         }
         this.isRunning = !this.isRunning;
@@ -2957,14 +3088,19 @@ class OntologicalWorldModel {
         btn.textContent = this.isRunning ? '⏸️ Pause Simulation' : '🚀 Toggle Simulation';
         document.getElementById('status').textContent = this.isRunning ? 'Conscious AI Active' : this.pongGame.gameOver ? `${this.pongGame.winner} Wins! (Paused)` : 'Paused';
         if (this.isRunning) {
+            this.audioContext.resume().catch(e => logger.error("Failed to resume AudioContext on toggle:", e));
             this.gameLoop(null, false); // Explicitly pass null for timestamp, false for manual step
+            logger.info('Simulation started.');
+        } else {
+            logger.info('Simulation paused.');
         }
     }
 
     stop() {
         this.isRunning = false;
         document.getElementById('toggleSimButton').textContent = '🚀 Toggle Simulation';
-        document.getElementById('status').textContent = this.pongGame.gameOver ? `${this.pongGame.winner} Wins! (Paused)` : 'Paused';
+        document.getElementById('status').textContent = this.pongGame?.gameOver ? `${this.pongGame.winner} Wins! (Paused)` : 'Paused';
+        logger.info('Simulation stopped.');
     }
 
     start() {
@@ -2973,7 +3109,7 @@ class OntologicalWorldModel {
             logger.error('Cannot start: Missing canvas context.');
             return;
         }
-        if (this.pongGame.gameOver) {
+        if (this.pongGame?.gameOver) {
             this.resetAI();
         }
         if (!this.isRunning) {
@@ -2983,6 +3119,7 @@ class OntologicalWorldModel {
 
     async resetAI() {
         this.stop();
+        logger.info('Resetting all game and AI states...');
         showLoading('game', 'Resetting Game...');
         showLoading('mainBrain', 'Resetting Main AI...');
         showLoading('opponentBrain', 'Resetting Opponent AI...');
@@ -2999,8 +3136,10 @@ class OntologicalWorldModel {
             document.getElementById('status').textContent = 'Ready';
             this.updateVisualization();
             this.pongGame.render(this.ctx);
+            logger.info('All states reset successfully.');
         } catch (e) {
             logger.error('Error during reset:', e);
+            document.getElementById('status').textContent = `Reset Failed: ${e.message}`;
         } finally {
             hideLoading('game');
             hideLoading('mainBrain');
@@ -3024,17 +3163,17 @@ class OntologicalWorldModel {
             case ' ': e.preventDefault(); this.toggleGame(); break;
             case 'r': case 'R': e.preventDefault(); this.resetAI(); break;
             case 't': case 'T': e.preventDefault(); this.tuneParameters(); break;
-            case 'ArrowUp': e.preventDefault(); this.pongGame.setPlayerAction([1, 0, 0]); break;
-            case 'ArrowDown': e.preventDefault(); this.pongGame.setPlayerAction([0, 1, 0]); break;
+            case 'ArrowUp': e.preventDefault(); this.pongGame?.setPlayerAction([1, 0, 0]); break;
+            case 'ArrowDown': e.preventDefault(); this.pongGame?.setPlayerAction([0, 1, 0]); break;
             case 'p': case 'P': e.preventDefault(); this.stop(); break;
-            case 's': case 'S': e.preventDefault(); this.gameLoop(null, true); break; // Updated call
+            case 's': case 'S': e.preventDefault(); if (!this.isRunning) this.gameLoop(null, true); break; // Only step if paused
         }
     }
 
     handleKeyUp(e) {
         switch (e.key) {
             case 'ArrowUp':
-            case 'ArrowDown': this.pongGame.setPlayerAction([0, 0, 1]); break; // Player idle when key released
+            case 'ArrowDown': this.pongGame?.setPlayerAction([0, 0, 1]); break; // Player idle when key released
         }
     }
 }
@@ -3045,13 +3184,16 @@ class OntologicalWorldModel {
                 if (!graph) return;
                 const rect = graph.getBoundingClientRect();
                 const dpr = window.devicePixelRatio || 1;
-                for (let i=0;i<10;i++){
-                    const v = document.getElementById('vertex-'+i);
+                const innerWidth = rect.width / dpr;
+                const innerHeight = rect.height / dpr;
+
+                for (let i = 0; i < 10; i++) {
+                    const v = document.getElementById('vertex-' + i);
                     if (!v) continue;
-                    const p = sheafVertexPositions[i] || {x:0.5,y:0.5};
-                    // Adjust position for vertex size (36px)
-                    v.style.left = Math.round(p.x * (rect.width - 36)) + 'px';
-                    v.style.top = Math.round(p.y * (rect.height - 36)) + 'px';
+                    const p = sheafVertexPositions[i] || { x: 0.5, y: 0.5 };
+                    // Adjust position for vertex size (36px) and ensure it's within bounds
+                    v.style.left = Math.round(p.x * (innerWidth - 36)) + 'px';
+                    v.style.top = Math.round(p.y * (innerHeight - 36)) + 'px';
                 }
             }
 
@@ -3059,7 +3201,7 @@ class OntologicalWorldModel {
 
             try {
                 const app = new MainApp();
-                positionVertices();
+                positionVertices(); // Initial positioning
                 logger.info('UI initialized — ready.');
                 // App will start automatically after AIs are initialized in setupGameAndAIs
             } catch (e) {
