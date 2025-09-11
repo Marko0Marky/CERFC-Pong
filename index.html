@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conscious Pong AI — Enhanced & Optimized</title>
+    <title>Conscious Pong AI — Enhanced & Optimized v3.0</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
@@ -84,7 +84,6 @@
             flex-wrap: wrap; /* Allow wrapping on smaller screens */
             justify-content: center;
             align-items: stretch; /* Ensure children stretch to full height */
-            min-height: 80vh; /* Minimum height for better visual balance */
         }
         /* --- Metrics Panel (Left, Full Height and Width) --- */
         .metrics-panel {
@@ -617,6 +616,76 @@
             color: var(--text-medium);
         }
 
+        /* --- NEW Performance Chart Styles --- */
+        .performance-charts-container {
+            background: var(--secondary-dark);
+            border-radius: 12px;
+            border: 1px solid var(--border-dark);
+            padding: 15px;
+            margin-top: 20px; /* Add margin to separate from the main content */
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .chart-container {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .chart-container h4 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            text-align: center;
+            color: var(--primary-blue);
+        }
+        .chart-svg {
+            width: 100%;
+            height: 120px;
+        }
+
+        /* --- NEW Qualia Attention Styles --- */
+        .qualia-attention-panel {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
+        }
+        .qualia-attention-panel h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+            text-align: center;
+            color: var(--primary-blue);
+        }
+        .attention-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+        .attention-label {
+            width: 110px; /* Fixed width for alignment */
+            color: var(--text-medium);
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .attention-bar-wrapper {
+            flex-grow: 1;
+            height: 14px;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 3px;
+        }
+        .attention-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border-radius: 2px;
+            transition: width 0.3s ease-out;
+        }
+
         /* --- Responsive Design --- */
         @media (max-width: 1200px) {
             .content-section {
@@ -645,7 +714,7 @@
             .header p {
                 font-size: 0.9em;
             }
-            .metrics-panel, .game-container, .panel, .log-container {
+            .metrics-panel, .game-container, .panel, .log-container, .performance-charts-container {
                 padding: 10px;
             }
             .metrics-panel h3, .panel h3 {
@@ -666,20 +735,23 @@
             .player-score .metric-value, .ai-score .metric-value {
                 font-size: 1.2em;
             }
+            .charts-grid {
+                grid-template-columns: 1fr; /* Stack charts on small screens */
+            }
         }
     </style>
 </head>
 <body role="document">
     <div class="main-container" role="main">
         <div class="header" role="banner">
-            <h1>🧠 Conscious Pong AI — Enhanced & Optimized</h1>
-            <p>A dual-AI Pong game using Ontological World Models with optimized heavy computation.</p>
+            <h1>🧠 Conscious Pong AI — Enhanced & Optimized v3.0</h1>
+            <p>A dual-AI Pong game with a Hierarchical, Recurrent, Reinforcement Learning Architecture.</p>
         </div>
         <div class="content-section">
             <div class="metrics-panel" role="complementary" aria-labelledby="oftcc-metrics-heading">
                 <h3 id="oftcc-metrics-heading">OFTCC Metrics</h3>
                 <div class="framework-badge">
-                     OFTCC ⊕ HTOF ⊕ CERFC+ ⊕ PUCF ⊕ UACF 2.5 ⊕ Simplicial
+                     RL ⊕ Recurrent OWM ⊕ Meta-Learning
                 </div>
                 <div class="status" id="status" aria-live="polite" aria-atomic="true">
                     Initializing...
@@ -738,9 +810,11 @@
                     <div class="metric"><span class="metric-label">dim H¹:</span><span class="metric-value" id="h1-dimension">0.00</span></div>
                     <div class="metric"><span class="metric-label">Gluing Inconsistency:</span><span class="metric-value" id="inconsistency">0.000</span></div>
                 </div>
+                <div class="qualia-attention-panel" id="qualiaAttentionPanel" role="region" aria-labelledby="qualia-attention-heading">
+                    <h4 id="qualia-attention-heading">Qualia Attention (Main AI)</h4>
+                    </div>
                 <div class="sheaf-graph" id="sheafGraph" role="img" aria-label="Sheaf graph visualizing information flow between concepts">
                     <canvas id="sheafGraphCanvas" class="sheaf-vertex-canvas"></canvas>
-                    <!-- Vertex elements are programmatically positioned but defined here for static content -->
                     <div class="vertex" id="vertex-0" aria-label="Player Paddle Y">P-Y</div>
                     <div class="vertex" id="vertex-1" aria-label="Ball X">B-X</div>
                     <div class="vertex" id="vertex-2" aria-label="Ball Y">B-Y</div>
@@ -769,16 +843,6 @@
                         <label class="slider-label" for="gammaSlider">γ Parameter: <span class="metric-value" id="gamma-param">0.100</span></label>
                         <input type="range" id="gammaSlider" min="0.01" max="0.5" step="0.01" value="0.1" aria-labelledby="gammaSlider-label" aria-valuetext="0.100">
                     </div>
-                </div>
-                <div class="theoretical-info" role="note">
-                    <strong>Theoretical Foundation:</strong><br>
-                    • Sheaf Laplacian: $ℒ_{\text{OFTCC}} = \bigoplus_{X \in \{B,I,E,M,G,C,R\}} ℒ_X$<br>
-                    • Cohomology: $H¹(G,ℱ) = ker d¹/im d⁰$<br>
-                    • Stability: $exp(-dim H¹)$<br>
-                    • Φ: $log(1 + MI) \cdot S \cdot GU$<br>
-                    • Gluing Inconsistency: $∑_{e∈E} ||P_e s_u - s_v||^2$<br>
-                    <br>
-                    <em>Note: For performance, the sheaf Laplacian used in Free Energy calculation is a simplified approximation using node-level Laplacian and block-diagonal qualia matrices.</em>
                 </div>
                 <div class="loading-overlay" id="metricsLoadingOverlay" aria-live="assertive" aria-busy="true" aria-label="Loading metrics and computations">
                     <div class="loading-spinner"></div>
@@ -831,6 +895,27 @@
                 </div>
             </div>
         </div>
+        <div class="performance-charts-container" role="region" aria-labelledby="performance-heading">
+            <h3 id="performance-heading" style="text-align:center; margin-bottom: 20px;">AI Learning & Performance Metrics</h3>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h4>Avg. Q-Value (Confidence)</h4>
+                    <svg id="qValueChart" class="chart-svg"></svg>
+                </div>
+                <div class="chart-container">
+                    <h4>Prediction Error (Uncertainty)</h4>
+                    <svg id="predErrorChart" class="chart-svg"></svg>
+                </div>
+                <div class="chart-container">
+                    <h4>Epsilon (Exploration Rate)</h4>
+                    <svg id="epsilonChart" class="chart-svg"></svg>
+                </div>
+                <div class="chart-container">
+                    <h4>Score Difference (AI - Player)</h4>
+                    <svg id="scoreChart" class="chart-svg"></svg>
+                </div>
+            </div>
+        </div>
         <div class="controls-section" role="group" aria-label="Simulation Controls">
              <button id="stepButton" aria-label="Advance simulation by one step">⏭️ Step</button>
              <button id="pauseButton" aria-label="Pause the simulation">⏸️ Pause</button>
@@ -843,11 +928,10 @@
     <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="https://unpkg.com/tippy.js@6"></script>
 
-        <script>
+       <script>
         // --- On-page Logger ---
         const logElement = document.getElementById('log');
         const MAX_LOG_ENTRIES = 200;
-
         function appendLog(message, type = 'info') {
             if (!logElement) {
                 console.warn('Log element not found, logging to console:', message);
@@ -947,8 +1031,10 @@ function matVecMul(m, v) {
         let s = 0.0;
         const row = m[i];
         for (let j = 0; j < c; ++j) {
-            const val = (row[j] || 0) * (v[j] || 0);
-            s += Number.isFinite(val) ? val : 0;
+            const val_m = row[j];
+            const val_v = v[j];
+            const product = (Number.isFinite(val_m) ? val_m : 0) * (Number.isFinite(val_v) ? val_v : 0);
+            s += Number.isFinite(product) ? product : 0;
         }
         out[i] = Number.isFinite(s) ? s : 0;
     }
@@ -1013,42 +1099,41 @@ function solveLinearSystemCG(A_flat_data, b, opts={tol:1e-6, maxIter:200}) {
     const n = b.length;
 
     if (!isFiniteMatrix(A) || A.length !== n || (A.length > 0 && A[0].length !== n) || !isFiniteVector(b)) {
-        return new Float32Array(b.map(x => clamp(Number.isFinite(x) ? x : 0, -1, 1)));
+        return new Float32Array(b.map(x => Number.isFinite(x) ? clamp(x, -1, 1) : 0)); // Sanitize fallback
     }
 
     let x = new Float32Array(n).fill(0);
-    let r = new Float32Array(b.map(v => Number.isFinite(v) ? v : 0));
+    let r = new Float32Array(b.map(v => Number.isFinite(v) ? v : 0)); // Sanitize r here
     let p = new Float32Array(r);
     let rsold = dot(r, r);
 
-    if (!Number.isFinite(rsold) || rsold < 1e-20) return x;
+    if (!Number.isFinite(rsold) || rsold < 1e-20) return new Float32Array(x.map(v => Number.isFinite(v) ? clamp(v, -1, 1) : 0)); // Sanitize exit
 
     const Ap = new Float32Array(n);
     const maxIter = Math.min(opts.maxIter || 200, n * 5);
 
     for (let it = 0; it < maxIter; ++it) {
-        for (let i = 0; i < n; i++) {
-            let s = 0;
-            const row = A[i];
-            for (let j = 0; j < n; j++) s += (row[j] || 0) * (p[j] || 0);
-            Ap[i] = s;
-        }
+        Ap.set(matVecMul(A, p)); // Use robust matVecMul
 
         const denom = dot(p, Ap);
         if (!Number.isFinite(denom) || denom <= 1e-20) break;
 
         const alpha = rsold / denom;
-        for (let i = 0; i < n; i++) x[i] += (Number.isFinite(alpha) ? alpha : 0) * (p[i] || 0);
-        for (let i = 0; i < n; i++) r[i] -= (Number.isFinite(alpha) ? alpha : 0) * (Ap[i] || 0);
+        if (!Number.isFinite(alpha)) break; // Break if alpha is NaN/Infinity
+
+        for (let i = 0; i < n; i++) x[i] += (Number.isFinite(alpha) ? alpha : 0) * (Number.isFinite(p[i]) ? p[i] : 0);
+        for (let i = 0; i < n; i++) r[i] -= (Number.isFinite(alpha) ? alpha : 0) * (Number.isFinite(Ap[i]) ? Ap[i] : 0);
 
         const rsnew = dot(r, r);
-        if (Math.sqrt(rsnew) < (opts.tol || 1e-6)) break;
+        if (!Number.isFinite(rsnew) || Math.sqrt(rsnew) < (opts.tol || 1e-6)) break; // Check rsnew for finiteness
 
         const beta = rsnew / (rsold + 1e-20);
-        for (let i = 0; i < n; i++) p[i] = (r[i] || 0) + (Number.isFinite(beta) ? beta : 0) * (p[i] || 0);
+        if (!Number.isFinite(beta)) break; // Break if beta is NaN/Infinity
+
+        for (let i = 0; i < n; i++) p[i] = (Number.isFinite(r[i]) ? r[i] : 0) + (Number.isFinite(beta) ? beta : 0) * (Number.isFinite(p[i]) ? p[i] : 0);
         rsold = rsnew;
     }
-    return new Float32Array(x.map(v => clamp(Number.isFinite(v) ? v : 0, -1, 1)));
+    return new Float32Array(x.map(v => Number.isFinite(v) ? clamp(v, -1, 1) : 0)); // Final sanitization of x
 }
 
 function covarianceMatrix(states_array, eps = 1e-3) {
@@ -1060,16 +1145,22 @@ function covarianceMatrix(states_array, eps = 1e-3) {
     if (d === 0) return [[eps]];
 
     const mean = new Float32Array(d).fill(0);
-    for (let i = 0; i < n; i++) for (let j = 0; j < d; j++) mean[j] += (states[i][j] || 0);
+    for (let i = 0; i < n; i++) {
+        for (let j = 0; j < d; j++) {
+            const val = states[i][j];
+            mean[j] += Number.isFinite(val) ? val : 0;
+        }
+    }
     for (let j = 0; j < d; j++) mean[j] /= n;
 
     const cov = Array(d).fill(0).map(() => new Float32Array(d).fill(0));
     for (let k = 0; k < n; k++) {
         for (let i = 0; i < d; i++) {
-            const di = (states[k][i] || 0) - (mean[i] || 0);
+            const di = (Number.isFinite(states[k][i]) ? states[k][i] : 0) - (Number.isFinite(mean[i]) ? mean[i] : 0);
             for (let j = i; j < d; j++) {
-                const dj = (states[k][j] || 0) - (mean[j] || 0);
-                cov[i][j] += (di * dj) / Math.max(1, n - 1);
+                const dj = (Number.isFinite(states[k][j]) ? states[k][j] : 0) - (Number.isFinite(mean[j]) ? mean[j] : 0);
+                const product = di * dj;
+                cov[i][j] += (Number.isFinite(product) ? product : 0) / Math.max(1, n - 1);
             }
         }
     }
@@ -1078,6 +1169,15 @@ function covarianceMatrix(states_array, eps = 1e-3) {
     }
     for (let i = 0; i < d; i++) cov[i][i] = (Number.isFinite(cov[i][i]) ? cov[i][i] : 0) + eps;
     
+    // Final check for the output covariance matrix to ensure it's finite
+    for (let i = 0; i < d; i++) {
+        for (let j = 0; j < d; j++) {
+            if (!Number.isFinite(cov[i][j])) {
+                cov[i][j] = 0; // Replace non-finite with 0
+            }
+        }
+    }
+
     return cov;
 }
 
@@ -1254,6 +1354,18 @@ function tanhVec(v) {
     if (!isFiniteVector(v)) return vecZeros(v?.length || 0);
     return new Float32Array(v.map(x => Math.tanh(x)));
 }
+// NEW: Sigmoid function for LSTM-like gates
+function sigmoidVec(v) {
+    if (!isFiniteVector(v)) return vecZeros(v?.length || 0);
+    return new Float32Array(v.map(x => 1 / (1 + Math.exp(-x))));
+}
+// NEW: Element-wise vector multiplication
+function vecMul(a, b) {
+    const n = Math.max(a?.length||0, b?.length||0);
+    const out = new Float32Array(n);
+    for (let i = 0; i < n; ++i) out[i] = (a[i] || 0) * (b[i] || 0);
+    return out;
+}
 function randomMatrix(r, c, scale) {
     return Array(r).fill().map(() => new Float32Array(c).fill().map(() => (Math.random() - 0.5) * scale));
 }
@@ -1314,7 +1426,7 @@ class EnhancedQualiaSheaf {
     constructor(graph, stateDim = 10, initialQDim = 7, alpha = 0.1, beta = 0.1, gamma = 0.05) {
         this.stateDim = stateDim;
         this.entityNames = ['being', 'intent', 'existence', 'emergence', 'gestalt', 'context', 'rel_emergence'];
-        this.qDim = this.entityNames.length; // qDim strictly derived from entityNames for consistency
+        this.qDim = this.entityNames.length; // This should always be 7
 
         const defaultVertices = ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed', 'player_collision', 'ai_collision'];
         const initialGraphVertices = graph?.vertices && Array.isArray(graph.vertices) && graph.vertices.length >= defaultVertices.length ? graph.vertices : defaultVertices;
@@ -1377,6 +1489,11 @@ class EnhancedQualiaSheaf {
             [v, new Float32Array(this.qDim).fill(0).map(() => clamp((Math.random() - 0.5) * 0.5, -1, 1))]
         ));
 
+        // NEW: For adaptive topology
+        this.correlationMatrix = zeroMatrix(this.graph.vertices.length, this.graph.vertices.length);
+        this.stalkHistory = [];
+        this.stalkHistorySize = 100;
+
         this.adjacencyMatrix = null;
         this.laplacian = null;
         this.maxEigApprox = 1;
@@ -1395,7 +1512,7 @@ class EnhancedQualiaSheaf {
         for (let i = 0; i < this.windowSize; i++) {
             this.windowedStates.push(new Float32Array(N_total_stalk_dim).fill(0).map(() => clamp((Math.random() - 0.5) * 0.1, -1, 1)));
         }
-        logger.info('EnhancedQualiaSheaf initialized with qDim:', this.qDim);
+        logger.info(`EnhancedQualiaSheaf initialized: qDim=${this.qDim}, vertices=${this.graph.vertices.length}`);
     }
 
     async initialize() {
@@ -1406,6 +1523,42 @@ class EnhancedQualiaSheaf {
         } catch (e) {
             logger.error('Error during Sheaf initialization:', e);
             this.ready = false;
+        }
+    }
+
+    // NEW METHOD: Update functional connectivity based on stalk activity correlation
+    adaptSheafTopology() {
+        if (this.stalkHistory.length < this.stalkHistorySize) return;
+
+        const numVertices = this.graph.vertices.length;
+        const means = new Float32Array(numVertices).fill(0);
+
+        // Calculate means for each vertex's stalk norm over history
+        for (let i = 0; i < numVertices; i++) {
+            for (let t = 0; t < this.stalkHistorySize; t++) {
+                means[i] += this.stalkHistory[t][i];
+            }
+            means[i] /= this.stalkHistorySize;
+        }
+
+        // Calculate Pearson correlation
+        for (let i = 0; i < numVertices; i++) {
+            for (let j = i; j < numVertices; j++) {
+                let numerator = 0;
+                let denom_i = 0;
+                let denom_j = 0;
+                for (let t = 0; t < this.stalkHistorySize; t++) {
+                    const diff_i = this.stalkHistory[t][i] - means[i];
+                    const diff_j = this.stalkHistory[t][j] - means[j];
+                    numerator += diff_i * diff_j;
+                    denom_i += diff_i * diff_i;
+                    denom_j += diff_j * diff_j;
+                }
+                const correlation = (Math.sqrt(denom_i) * Math.sqrt(denom_j)) < 1e-9 ? 0 : numerator / (Math.sqrt(denom_i) * Math.sqrt(denom_j));
+                const finalCorr = clamp(correlation, -1, 1);
+                this.correlationMatrix[i][j] = finalCorr;
+                this.correlationMatrix[j][i] = finalCorr;
+            }
         }
     }
 
@@ -1442,15 +1595,24 @@ class EnhancedQualiaSheaf {
         const n = this.graph.vertices.length;
         const mapIdx = new Map(this.graph.vertices.map((v, i) => [v, i]));
         const adj = zeroMatrix(n, n);
-        const clustering = this.computeClustering();
-        const curvature = clustering.map(c => 1 - c);
-
+        
         for (const [u, v] of this.graph.edges) {
             const i = mapIdx.get(u), j = mapIdx.get(v);
             if (i === undefined || j === undefined) continue;
-            const w = clamp(1.0 - 0.5 * (curvature[i] + curvature[j]), 0.1, 1.0);
-            adj[i][j] = w;
-            adj[j][i] = w;
+
+            // Start with a base weight of 1 for existing structural edges
+            let baseWeight = 1.0; 
+
+            // Modulate by correlation (if available). Positive correlation strengthens, negative weakens.
+            const correlation = this.correlationMatrix[i][j] || 0;
+            // The mapping (1 + correlation) / 2 scales [-1, 1] to [0, 1]
+            const correlationFactor = (1 + correlation) / 2;
+
+            // Combine base structure with learned functional correlation
+            const finalWeight = baseWeight * correlationFactor;
+            
+            adj[i][j] = clamp(finalWeight, 0.1, 1.0); // Ensure a minimum connectivity
+            adj[j][i] = clamp(finalWeight, 0.1, 1.0);
         }
         return adj;
     }
@@ -1505,62 +1667,21 @@ class EnhancedQualiaSheaf {
 
     async computeProjectionMatrices() {
         const projections = new Map();
-        const transposePromises = [];
+        const identityMatrix = identity(this.qDim); // The stable identity matrix
 
         for (const [u, v] of this.graph.edges) {
-            const weight = this.computeContextualWeight(u, v);
-            const omega = 1 / (1 + Math.exp(-weight));
+            // FIX: Always use a stable identity matrix for projections.
+            // This removes the chaotic randomness that was causing the solver to fail.
+            const P_uv = identityMatrix;
+            const P_vu = identityMatrix; // The transpose of an identity matrix is itself.
 
-            const barRho = randomMatrix(this.qDim, this.qDim, 0.5);
-            const P_context = identity(this.qDim);
-
-            let P_uv_temp = barRho.map((row, ri) => vecAdd(vecScale(row, 1 - omega), vecScale(P_context[ri], omega)));
-            if (!isFiniteMatrix(P_uv_temp)) {
-                 logger.error(`Non-finite P_uv_temp detected during initial blend for edge ${u}-${v}. Resetting to identity.`);
-                 P_uv_temp = identity(this.qDim);
-            }
-
-            for (let k = 0; k < this.qDim; k++) {
-                const rowNorm = norm2(P_uv_temp[k]);
-                if (!Number.isFinite(rowNorm) || rowNorm < 1e-10) {
-                    P_uv_temp[k] = vecZeros(this.qDim);
-                } else {
-                    let scaleFactor = clamp(rowNorm, 0.5, 1.5) / rowNorm;
-                    scaleFactor = clamp(scaleFactor, 0.01, 100); 
-                    P_uv_temp[k] = vecScale(P_uv_temp[k], scaleFactor);
-                    P_uv_temp[k] = new Float32Array(P_uv_temp[k].map(val => clamp(val, -5, 5)));
-                }
-            }
-
-            if (!isFiniteMatrix(P_uv_temp)) {
-                logger.error(`Non-finite P_uv_temp detected after normalization for edge ${u}-${v}. Resetting to identity.`);
-                P_uv_temp = identity(this.qDim);
-            }
-            
-            projections.set(`${u}-${v}`, P_uv_temp);
-
-            const transposePromise = runWorkerTask('transpose', { matrix: flattenMatrix(P_uv_temp) })
-                .then(transposedP => {
-                    const unflattenedTransposed = unflattenMatrix(transposedP);
-                    if (!isFiniteMatrix(unflattenedTransposed)) {
-                        logger.error(`Transposed P for ${v}-${u} returned non-finite from worker. Resetting to identity.`);
-                        projections.set(`${v}-${u}`, identity(this.qDim));
-                    } else {
-                        projections.set(`${v}-${u}`, unflattenedTransposed);
-                    }
-                })
-                .catch(err => {
-                    logger.error(`Error transposing P for ${v}-${u}:`, err);
-                    projections.set(`${v}-${u}`, identity(this.qDim));
-                });
-            
-            transposePromises.push(transposePromise);
+            projections.set(`${u}-${v}`, P_uv);
+            projections.set(`${v}-${u}`, P_vu);
         }
-
-        await Promise.all(transposePromises);
+        
+        // No need for worker tasks anymore, this is instantaneous.
         return projections;
     }
-
     computeContextualWeight(u, v) {
         const stalk_u = this.stalks.get(u) || vecZeros(this.qDim);
         const stalk_v = this.stalks.get(v) || vecZeros(this.qDim);
@@ -1572,8 +1693,8 @@ class EnhancedQualiaSheaf {
     }
 
     async _updateGraphStructureAndMetrics() {
-        // Removed showLoading('metrics', 'Updating Sheaf Topology...');
         try {
+            this.adaptSheafTopology(); // Adapt topology before rebuilding matrices
             this.adjacencyMatrix = this.buildAdjacencyMatrix();
             this.laplacian = this.buildLaplacian();
             this.maxEigApprox = await runWorkerTask('matrixSpectralNormApprox', { matrix: flattenMatrix(this.laplacian) }) || 1;
@@ -1581,8 +1702,6 @@ class EnhancedQualiaSheaf {
         } catch (e) {
             logger.error("Failed to update graph structure and metrics", e);
             throw e;
-        } finally {
-            // Removed hideLoading('metrics');
         }
     }
     async diffuseQualia(state) {
@@ -1621,77 +1740,66 @@ class EnhancedQualiaSheaf {
         for (const vertexName of this.graph.vertices) {
             let stalkValue = this.stalks.get(vertexName);
             if (!stalkValue || !isFiniteVector(stalkValue) || stalkValue.length !== this.qDim) {
-                logger.warn(`Found invalid or missing stalk for vertex ${vertexName} in map. Resetting to zeros.`);
+                logger.warn(`Found invalid or missing stalk for vertex ${vertexName}. Resetting to zeros.`);
                 stalkValue = vecZeros(this.qDim);
-                this.stalks.set(vertexName, stalkValue);
+                this.stalks.set(vertexName, stalkValue); // Update the map with a clean vector
             }
             s.set(stalkValue, currentOffset);
             currentOffset += this.qDim;
         }
 
-        if (!isFiniteVector(s) || s.length !== N) {
-            logger.error('diffuseQualia: Final concatenated stalk vector is still invalid after individual stalk cleanup. This indicates a deeper issue. Skipping diffusion.', s);
-            this.graph.edges = originalEdges;
-            return;
+        // After assembling 's', make sure it's fully finite before proceeding
+        if (!isFiniteVector(s)) {
+            logger.error('diffuseQualia: Initial concatenated stalk vector "s" contains non-finite values. Resetting to zeros for current diffusion step.', s);
+            s.fill(0); // Reset 's' to zeros to avoid feeding NaNs to the solver
         }
 
         const Lnode = this.laplacian;
+        // --- FIX: Correctly construct the Sheaf Laplacian (Lfull) ---
         const Lfull = zeroMatrix(N, N);
         const idx = new Map(this.graph.vertices.map((v, i) => [v, i]));
 
+        // 1. Build the off-diagonal blocks
         for (const [u, v] of this.graph.edges) {
             const i = idx.get(u), j = idx.get(v);
             if (i === undefined || j === undefined) continue;
 
-            let P_uv = this.projectionMatrices.get(`${u}-${v}`);
-            let P_vu = this.projectionMatrices.get(`${v}-${u}`);
+            const weight = this.adjacencyMatrix[i][j];
+            if (!Number.isFinite(weight) || weight <= 0) continue;
 
-            if (!P_uv || !isFiniteMatrix(P_uv)) {
-                logger.warn(`P_uv for ${u}-${v} is non-finite or missing right before Lfull construction. Resetting to identity.`);
-                P_uv = identity(this.qDim);
-                this.projectionMatrices.set(`${u}-${v}`, P_uv);
-            } else {
-                P_uv = P_uv.map(row => new Float32Array(row.map(val => clamp(val, -5, 5))));
-            }
+            const P_uv = this.projectionMatrices.get(`${u}-${v}`);
+            const P_vu = this.projectionMatrices.get(`${v}-${u}`);
 
-            if (!P_vu || !isFiniteMatrix(P_vu)) {
-                logger.warn(`P_vu for ${v}-${u} is non-finite or missing right before Lfull construction. Resetting to identity.`);
-                P_vu = identity(this.qDim);
-                this.projectionMatrices.set(`${v}-${u}`, P_vu);
-            } else {
-                P_vu = P_vu.map(row => new Float32Array(row.map(val => clamp(val, -5, 5))));
-            }
+            if (!isFiniteMatrix(P_uv) || !isFiniteMatrix(P_vu)) continue;
 
+            // Off-diagonal block (i, j) is -W_ij * P_uv
             for (let qi = 0; qi < this.qDim; qi++) {
                 for (let qj = 0; qj < this.qDim; qj++) {
-                    const nodeWeight_ij = Lnode[i]?.[j];
-                    const nodeWeight_ji = Lnode[j]?.[i];
-
-                    if (!Number.isFinite(nodeWeight_ij) || !Number.isFinite(P_uv[qi]?.[qj])) {
-                        continue;
+                    const val_uv = -weight * (P_uv[qi]?.[qj] || 0);
+                    if (Number.isFinite(val_uv)) {
+                        Lfull[i * this.qDim + qi][j * this.qDim + qj] = val_uv;
                     }
-                    if (!Number.isFinite(nodeWeight_ji) || !Number.isFinite(P_vu[qj]?.[qi])) {
-                        continue;
-                    }
-
-                    const val_uv = -nodeWeight_ij * P_uv[qi][qj];
-                    const val_vu = -nodeWeight_ji * P_vu[qj][qi];
-
-                    if (Number.isFinite(val_uv)) Lfull[i * this.qDim + qi][j * this.qDim + qj] += val_uv;
-                    else logger.warn(`Lfull[${i*this.qDim+qi}][${j*this.qDim+qj}] (uv) is non-finite: ${val_uv}`);
-                    if (Number.isFinite(val_vu)) Lfull[j * this.qDim + qj][i * this.qDim + qi] += val_vu;
-                    else logger.warn(`Lfull[${j*this.qDim+qj}][${i*this.qDim+qi}] (vu) is non-finite: ${val_vu}`);
+                }
+            }
+            // Off-diagonal block (j, i) is -W_ji * P_vu
+            for (let qi = 0; qi < this.qDim; qi++) {
+                for (let qj = 0; qj < this.qDim; qj++) {
+                     const val_vu = -weight * (P_vu[qi]?.[qj] || 0); // weight is symmetric
+                     if (Number.isFinite(val_vu)) {
+                        Lfull[j * this.qDim + qi][i * this.qDim + qj] = val_vu;
+                     }
                 }
             }
         }
 
+        // 2. Build the diagonal blocks
         for (let i = 0; i < n; i++) {
-            let deg_block = this.adjacencyMatrix[i].reduce((sum, w) => sum + w, 0);
+            let degree = this.adjacencyMatrix[i].reduce((sum, w) => sum + (Number.isFinite(w) ? w : 0), 0);
             for (let qi = 0; qi < this.qDim; qi++) {
-                Lfull[i * this.qDim + qi][i * this.qDim + qi] = (Lfull[i * this.qDim + qi][i * this.qDim + qi] || 0) + deg_block + this.eps;
+                // Diagonal block (i, i) is Sum(W_ik) * Identity
+                Lfull[i * this.qDim + qi][i * this.qDim + qi] = degree + this.eps;
             }
         }
-
         const f_s = new Float32Array(N).fill(0);
         for (let i = 0; i < n; i++) {
             const inputVal = qInput[i % qInput.length];
@@ -1702,10 +1810,14 @@ class EnhancedQualiaSheaf {
 
         const eta = this.gamma / Math.max(1, this.maxEigApprox);
         const A = identity(N).map((row, i) => new Float32Array(row.map((v, j) => v + eta * (Lfull[i]?.[j] || 0))));
-        const rhs = vecAdd(s, vecScale(f_s, eta)).map(v => clamp(v, -10, 10));
+        const rhs = vecAdd(s, vecScale(f_s, eta)).map(v => Number.isFinite(v) ? clamp(v, -10, 10) : 0); // Explicitly sanitize rhs
 
         if (!isFiniteMatrix(A) || !isFiniteVector(rhs)) {
-            logger.error('diffuseQualia: Matrix A or RHS vector contains non-finite values before CG solve. Skipping diffusion.');
+            logger.error('diffuseQualia: Matrix A or RHS vector contains non-finite values before CG solve. Skipping diffusion or using fallback.');
+            // Fallback for A or rhs corruption: revert to a clean zero state
+            const sNext = new Float32Array(N).fill(0); 
+            this._updateStalksAndWindow(sNext, n);
+            await this._updateDerivedMetrics();
             this.graph.edges = originalEdges;
             return;
         }
@@ -1714,11 +1826,20 @@ class EnhancedQualiaSheaf {
         try {
             sSolved = await runWorkerTask('solveLinearSystemCG', { A: flattenMatrix(A), b: rhs, opts: { tol: 1e-6, maxIter: 15 } });
         } catch (e) {
-            logger.error('Error solving linear system in worker:', e);
-            sSolved = new Float32Array(s.map(v => clamp(v, -1, 1))); // Fallback to clamped current state
+            logger.error('Error solving linear system in worker. Falling back to zero vector:', e);
+            sSolved = new Float32Array(N).fill(0); // Fallback to a clean zero vector on worker error
+        }
+
+        // --- Stronger Circuit Breaker ---
+        // If sSolved from the worker or a fallback still contains non-finite values,
+        // it indicates a severe issue. Explicitly sanitize to a zero vector.
+        if (!isFiniteVector(sSolved)) {
+            logger.error('CRITICAL: Solver output or fallback contained non-finite values. Resetting sSolved to zero vector.', { sSolved });
+            sSolved = new Float32Array(N).fill(0); 
         }
         
-        const sNext = new Float32Array(sSolved.map(v => clamp(v, -1, 1)));
+        // Ensure sNext is fully sanitized, even after the circuit breaker
+        const sNext = new Float32Array(sSolved.map(v => Number.isFinite(v) ? clamp(v, -1, 1) : 0));
 
         this._updateStalksAndWindow(sNext, n);
         await this._updateDerivedMetrics();
@@ -1727,11 +1848,22 @@ class EnhancedQualiaSheaf {
     }
 
     _updateStalksAndWindow(sNextVector, n) {
+        // Update stalk history for correlation analysis
+        const currentStalkNorms = new Float32Array(n);
         for (let i = 0; i < n; i++) {
-            const stalk = new Float32Array(sNextVector.slice(i * this.qDim, (i + 1) * this.qDim).map(v => Number.isFinite(v) ? clamp(v, -1, 1) : 0));
-            this.stalks.set(this.graph.vertices[i], stalk);
+            // Ensure each stalk is fully finite before setting
+            const rawStalkSlice = sNextVector.slice(i * this.qDim, (i + 1) * this.qDim);
+            const sanitizedStalk = new Float32Array(rawStalkSlice.map(v => Number.isFinite(v) ? clamp(v, -1, 1) : 0));
+            this.stalks.set(this.graph.vertices[i], sanitizedStalk);
+            currentStalkNorms[i] = norm2(sanitizedStalk); // Use sanitized stalk for norm
         }
+        this.stalkHistory.push(currentStalkNorms);
+        if (this.stalkHistory.length > this.stalkHistorySize) {
+            this.stalkHistory.shift();
+        }
+
         const sanitizedNextVector = new Float32Array(sNextVector.map(v => Number.isFinite(v) ? clamp(v, -1, 1) : 0));
+        // Also ensure the windowedStates are always finite
         this.windowedStates.push(sanitizedNextVector);
         if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
     }
@@ -1915,276 +2047,233 @@ class EnhancedQualiaSheaf {
     }
 }
 class OntologicalWorldModel {
-    constructor(stateDim = 10, actionDim = 3, qDim = 7, hiddenSizes = [16, 32, 16], isPlayerTwo = false) {
+    constructor(stateDim = 10, actionDim = 3, qDim = 7, hiddenSizes = [64, 64], isPlayerTwo = false) {
         this.stateDim = stateDim;
         this.actionDim = actionDim;
-        this.qDim = qDim; // This qDim will be matched by EnhancedQualiaSheaf
+        // initialQDim is not directly used here after passing to sheaf, but good for clarity
         this.isPlayerTwo = isPlayerTwo;
+        const recurrentStateSize = hiddenSizes[hiddenSizes.length - 1]; // Size of our LSTM-like state
 
-        // Graph definition might vary slightly between AI for their 'perspective'
+        // Graph and Sheaf setup remains the same
         const commonVertices = ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed', 'player_collision', 'ai_collision'];
-        this.graph = {
-            vertices: commonVertices,
-            edges: [
-                ['paddle_y', 'ball_y'], ['ball_x', 'ball_dx'], ['ball_y', 'ball_dy'],
-                ['player_collision', 'paddle_y'], ['ai_collision', 'ball_x']
-            ]
-        };
-        // Ensure the sheaf receives the correct qDim based on its internal definition.
-        this.qualiaSheaf = new EnhancedQualiaSheaf(this.graph, this.stateDim, this.qDim, 0.1, 0.1, 0.05);
-        this.qDim = this.qualiaSheaf.qDim; // Override with the canonical qDim from the sheaf.
+        this.graph = { vertices: commonVertices, edges: [['paddle_y', 'ball_y'], ['ball_x', 'ball_dx'], ['ball_y', 'ball_dy'], ['player_collision', 'paddle_y'], ['ai_collision', 'ball_x']] };
+        
+        this.qualiaSheaf = new EnhancedQualiaSheaf(this.graph, this.stateDim, qDim, 0.1, 0.1, 0.05);
+        this.qDim = this.qualiaSheaf.qDim; // Use the canonical qDim from the sheaf
 
-        this.inputDim = this.stateDim + this.actionDim + 1 + (this.graph.vertices.length * this.qualiaSheaf.qDim);
-        this.hiddenSizes = hiddenSizes;
+        // Define the expected length of the qualia part of the input
+        this.expectedQualiaInputLength = this.graph.vertices.length * this.qDim; // 10 vertices * 7 qDim = 70
 
-        this.layers = [];
-        for (let i = 0; i < this.hiddenSizes.length; i++) {
-            const currentInputDim = i === 0 ? this.inputDim : this.hiddenSizes[i - 1];
-            const scale = Math.sqrt(2.0 / (currentInputDim + this.hiddenSizes[i]));
-            this.layers.push({ W: randomMatrix(this.hiddenSizes[i], currentInputDim, scale), b: vecZeros(this.hiddenSizes[i]), activation: 'tanh' });
-        }
-        const outputScale = Math.sqrt(2.0 / (this.hiddenSizes[this.hiddenSizes.length - 1] + this.stateDim));
-        this.outputLayer = { W: randomMatrix(this.stateDim, this.hiddenSizes[this.hiddenSizes.length - 1], outputScale), b: vecZeros(this.stateDim) };
+        // Define the total input dimension expected by the NN for current state + qualia
+        this.inputDim = this.stateDim + this.expectedQualiaInputLength; // 10 state + 70 qualia = 80
 
-        this.attentionWeights = randomMatrix(this.qualiaSheaf.qDim, this.inputDim, 0.1);
+        this.hiddenState = vecZeros(recurrentStateSize);
+        this.cellState = vecZeros(recurrentStateSize);
+
+        const combinedInputSize = this.inputDim + recurrentStateSize;
+        this.Wf = randomMatrix(recurrentStateSize, combinedInputSize, Math.sqrt(2.0 / combinedInputSize)); // Forget gate
+        this.Wi = randomMatrix(recurrentStateSize, combinedInputSize, Math.sqrt(2.0 / combinedInputSize)); // Input gate
+        this.Wc = randomMatrix(recurrentStateSize, combinedInputSize, Math.sqrt(2.0 / combinedInputSize)); // Cell state candidate
+        this.Wo = randomMatrix(recurrentStateSize, combinedInputSize, Math.sqrt(2.0 / combinedInputSize)); // Output gate
+        this.bf = vecZeros(recurrentStateSize);
+        this.bi = vecZeros(recurrentStateSize);
+        this.bc = vecZeros(recurrentStateSize);
+        this.bo = vecZeros(recurrentStateSize);
+        
+        // Output heads are now fed from the recurrent hidden state
+        const qValueScale = Math.sqrt(2.0 / (recurrentStateSize + this.actionDim));
+        this.qValueHead = { W: randomMatrix(this.actionDim, recurrentStateSize, qValueScale), b: vecZeros(this.actionDim) };
+        
+        const statePredScale = Math.sqrt(2.0 / (recurrentStateSize + this.stateDim));
+        this.statePredHead = { W: randomMatrix(this.stateDim, recurrentStateSize, statePredScale), b: vecZeros(this.stateDim) };
+
+        this.attentionWeights = randomMatrix(this.qDim, this.inputDim, 0.1); // Attention weights dim: qDim x inputDim
+        this.lastSoftmaxScores = vecZeros(this.qDim); // Size qDim, not inputDim as previously
 
         this.freeEnergy = 0;
         this.predictionError = 0;
-        this.memory = [];
         this.ready = false;
-        this.lastActivations = []; // Store activations for visualization/learning
+        this.lastActivations = [];
+
+        logger.info(`OWM constructed: inputDim=${this.inputDim}, qualiaSheaf.qDim=${this.qualiaSheaf.qDim}, expectedQualiaInputLength=${this.expectedQualiaInputLength}`);
     }
 
     async initialize() {
         try {
             await this.qualiaSheaf.initialize();
             this.ready = true;
-            logger.info(`OntologicalWorldModel for ${this.isPlayerTwo ? 'AI' : 'Player'} ready.`);
+            logger.info(`Recurrent OWM for ${this.isPlayerTwo ? 'AI' : 'Player'} ready.`);
         } catch (e) {
-            logger.error('Error during OWM initialization:', e);
+            logger.error('Error during Recurrent OWM initialization:', e);
             this.ready = false;
         }
     }
 
-     async forward(input) {
+    async forward(input) {
         if (!isFiniteVector(input) || input.length !== this.inputDim) {
-            logger.error('OWM.forward: Invalid input for forward pass, length mismatch or non-finite values. Returning zeros.', input);
-            return { output: vecZeros(this.stateDim), activations: [] };
+            logger.error('OWM.forward: Invalid input.', {expected: this.inputDim, got: input.length});
+            return { qValues: vecZeros(this.actionDim), nextState: vecZeros(this.stateDim), activations: [] };
         }
-
-        let x = new Float32Array(input);
-        const activations = [x.slice()]; // activations[0] -> input
-
-        for (const layer of this.layers) {
-            // Offload matVecMul to worker
-            x = await runWorkerTask('matVecMul', { matrix: flattenMatrix(layer.W), vector: x });
-            x = vecAdd(x, layer.b);
-            if (layer.activation === 'tanh') x = tanhVec(x);
-            activations.push(x.slice()); // activations for hidden layers (lIndex 1, 2, 3)
-        }
-        const out = vecAdd(await runWorkerTask('matVecMul', { matrix: flattenMatrix(this.outputLayer.W), vector: x }), this.outputLayer.b);
         
-        // --- FIX START ---
-        activations.push(out.slice()); // ADD THIS LINE: Push the final output layer activations (lIndex 4)
-        // --- FIX END ---
+        const activations = [input.slice()];
+        
+        // --- NEW: LSTM-like Recurrent Block ---
+        const combinedInput = new Float32Array([...input, ...this.hiddenState]);
 
-        return { output: out, activations };
+        const ft = sigmoidVec(vecAdd(await runWorkerTask('matVecMul', {matrix: flattenMatrix(this.Wf), vector: combinedInput}), this.bf));
+        const it = sigmoidVec(vecAdd(await runWorkerTask('matVecMul', {matrix: flattenMatrix(this.Wi), vector: combinedInput}), this.bi));
+        const c_tilde = tanhVec(vecAdd(await runWorkerTask('matVecMul', {matrix: flattenMatrix(this.Wc), vector: combinedInput}), this.bc));
+        
+        this.cellState = vecAdd(vecMul(ft, this.cellState), vecMul(it, c_tilde));
+        activations.push(this.cellState.slice());
+
+        const ot = sigmoidVec(vecAdd(await runWorkerTask('matVecMul', {matrix: flattenMatrix(this.Wo), vector: combinedInput}), this.bo));
+        this.hiddenState = vecMul(ot, tanhVec(this.cellState));
+        activations.push(this.hiddenState.slice());
+        // --- END Recurrent Block ---
+
+        // Output heads now take the new hiddenState as input
+        const qValues = vecAdd(await runWorkerTask('matVecMul', { matrix: flattenMatrix(this.qValueHead.W), vector: this.hiddenState }), this.qValueHead.b);
+        const nextState = vecAdd(await runWorkerTask('matVecMul', { matrix: flattenMatrix(this.statePredHead.W), vector: this.hiddenState }), this.statePredHead.b);
+        
+        activations.push(qValues.slice()); // Push Q-values as final activation layer for visualization
+        
+        return { qValues, nextState, activations };
     }
 
     applyAttention(input) {
         if (!isFiniteVector(input) || input.length !== this.inputDim) {
-            logger.error('OWM.applyAttention: Invalid input for attention mechanism, length mismatch or non-finite values. Returning original input.', input);
-            return input; // Return original input as fallback
+            logger.error('OWM.applyAttention: Invalid input.', {expected: this.inputDim, got: input.length});
+            return input;
         }
 
-        // Simple dot-product attention for qualia, kept local for now
         const scores = this.attentionWeights.map(w => dot(w, input));
         const maxScore = scores.length > 0 ? Math.max(...scores) : 0;
         const expScores = scores.map(s => Math.exp(s - maxScore));
         const sumExpScores = expScores.reduce((s, x) => s + x, 1e-10);
         const softmaxScores = new Float32Array(expScores.map(s => s / sumExpScores));
+        this.lastSoftmaxScores = softmaxScores;
 
         const att = vecZeros(input.length);
         for (let i = 0; i < softmaxScores.length; i++) {
-            if (!Number.isFinite(softmaxScores[i])) continue; // Ensure softmaxScores are finite
+            if (!Number.isFinite(softmaxScores[i])) continue;
             for (let j = 0; j < input.length; j++) {
-                att[j] += softmaxScores[i] * (input[j] || 0); // Ensure input[j] is defined
+                att[j] += softmaxScores[i] * (input[j] || 0);
             }
         }
-        return vecAdd(input, vecScale(att, this.qualiaSheaf.beta)); // Beta influences attention strength
+        return vecAdd(input, vecScale(att, this.qualiaSheaf.beta));
     }
 
-    async predict(state, action, audioAmplitude = 0) {
+    async predict(state) {
         if (!this.ready) {
-            logger.warn('OWM not ready for prediction. Returning zero state.');
-            return { nextState: vecZeros(this.stateDim), phi: 0, activations: [] };
+            logger.warn('OWM not ready for prediction.');
+            return { qValues: vecZeros(this.actionDim), activations: [], corrupted: true };
         }
-        if (!isFiniteVector(state) || !isFiniteVector(action)) {
-            logger.error('OWM.predict: Invalid state or action for prediction, non-finite values. Returning zero state.', { state, action });
-            return { nextState: vecZeros(this.stateDim), phi: 0, activations: [] };
+        if (!isFiniteVector(state) || state.length !== this.stateDim) {
+            logger.error(`OWM.predict: Invalid state vector received. Expected length ${this.stateDim}, got ${state.length}.`, { state });
+            return { qValues: vecZeros(this.actionDim), activations: [], corrupted: true };
         }
 
-        // 1. Qualia Diffusion (asynchronous)
-        await this.qualiaSheaf.diffuseQualia(state);
+                await this.qualiaSheaf.diffuseQualia(state);
         
         const qualiaStalksMap = this.qualiaSheaf.stalks;
-        let finalQualiaArray;
-        const expectedQualiaLength = this.graph.vertices.length * this.qualiaSheaf.qDim;
+        let finalQualiaArray = new Float32Array(this.expectedQualiaInputLength); // Initialize with zeros
 
-        if (!qualiaStalksMap || !(qualiaStalksMap instanceof Map)) {
-            logger.error("OWM.predict: qualiaSheaf.stalks is not a valid Map. Returning zero qualia array.");
-            finalQualiaArray = vecZeros(expectedQualiaLength);
-        } else {
-            const qualiaStalkValues = [];
+        if (qualiaStalksMap instanceof Map && qualiaStalksMap.size > 0) { // Check if map is not empty
+            let offset = 0;
+            // Iterate directly through the known vertices to build the final qualia array
             for (const vertexName of this.qualiaSheaf.graph.vertices) {
                 let stalk = qualiaStalksMap.get(vertexName);
-                // Reinforced sanitization for each stalk
-                if (!stalk || !isFiniteVector(stalk) || stalk.length !== this.qualiaSheaf.qDim) {
-                    logger.error(`OWM.predict: Found non-finite or malformed stalk for vertex ${vertexName}. Resetting to zeros and correcting map.`);
-                    stalk = vecZeros(this.qualiaSheaf.qDim);
-                    qualiaStalksMap.set(vertexName, stalk); // Correct the map
+                if (!stalk || !isFiniteVector(stalk) || stalk.length !== this.qDim) {
+                    // If a specific stalk is missing or corrupted, log and use a zero vector for it
+                    logger.warn(`OWM.predict: Corrupted or missing stalk for vertex "${vertexName}" in qualiaStalksMap. Replacing with zeros.`);
+                    stalk = vecZeros(this.qDim); 
                 }
-                // Use Array.from for safety, then push all elements
-                qualiaStalkValues.push(...Array.from(stalk));
-            }
-
-            if (qualiaStalkValues.length < expectedQualiaLength) {
-                const zerosToPad = Array.from(vecZeros(expectedQualiaLength - qualiaStalkValues.length));
-                finalQualiaArray = new Float32Array([...qualiaStalkValues, ...zerosToPad]);
-            } else if (qualiaStalkValues.length > expectedQualiaLength) {
-                finalQualiaArray = new Float32Array(qualiaStalkValues.slice(0, expectedQualiaLength));
-            } else {
-                finalQualiaArray = new Float32Array(qualiaStalkValues);
-            }
-        }
-
-
-        if (!isFiniteVector(finalQualiaArray)) {
-             logger.error('OWM.predict: Final qualia array contains non-finite values. Detected value:', finalQualiaArray.find(v => !Number.isFinite(v)));
-             return { nextState: vecZeros(this.stateDim), phi: this.qualiaSheaf.phi, activations: [] };
-        }
-
-        // 2. Prepare NN Input
-        const input = new Float32Array([...state, ...action, audioAmplitude, ...finalQualiaArray]);
-        if (!isFiniteVector(input) || input.length !== this.inputDim) {
-            logger.error(`OWM.predict: Input vector for NN is invalid or incorrect length (${input.length} vs ${this.inputDim}). Returning zero state.`);
-            return { nextState: vecZeros(this.stateDim), phi: this.qualiaSheaf.phi, activations: [] };
-        }
-
-        // 3. Apply Attention & Forward Pass (asynchronous)
-        const attended = this.applyAttention(input);
-        const { output: nextState, activations } = await this.forward(attended);
-        this.lastActivations = activations; // Store for visualization/learning
-
-        // 4. Calculate Free Energy and Prediction Error
-        const error = norm2(vecSub(nextState, state.slice(0, Math.min(nextState.length, state.length)))); // Ensure lengths match for comparison
-        this.predictionError = clamp(error, 0, 10); // Clamp prediction error
-
-        // --- Start of Free Energy FIX ---
-        // Replace L_proxy with a more meaningful approximation
-        const globalStalkDim = finalQualiaArray.length;
-        const numNodes = this.qualiaSheaf.graph.vertices.length;
-        const qDim = this.qualiaSheaf.qDim;
-
-        let L_approx_global = zeroMatrix(globalStalkDim, globalStalkDim);
-        const nodeLaplacian = this.qualiaSheaf.laplacian; // This is the nxn matrix for nodes
-
-        if (nodeLaplacian && isFiniteMatrix(nodeLaplacian) && nodeLaplacian.length === numNodes) {
-            for (let i = 0; i < numNodes; i++) {
-                for (let j = 0; j < numNodes; j++) {
-                    const nodeWeight = nodeLaplacian[i][j];
-                    if (!Number.isFinite(nodeWeight)) continue;
-
-                    // Create block diagonal elements
-                    for (let qi = 0; qi < qDim; qi++) {
-                        for (let qj = 0; qj < qDim; qj++) {
-                            const globalRow = i * qDim + qi;
-                            const globalCol = j * qDim + qj;
-                            // Simplified for performance: assuming identity within qualia space, only node-level Laplacian affects.
-                            // A more complex model might involve a full tensor product.
-                            if (qi === qj) { 
-                                L_approx_global[globalRow][globalCol] = nodeWeight;
-                            }
-                        }
-                    }
+                
+                // Copy the sanitized stalk into the finalQualiaArray, ensuring each element is finite
+                for (let i = 0; i < this.qDim; i++) {
+                    finalQualiaArray[offset + i] = Number.isFinite(stalk[i]) ? clamp(stalk[i], -1, 1) : 0;
                 }
+                offset += this.qDim;
             }
         } else {
-            logger.warn('OWM.predict: nodeLaplacian is invalid or missing, Free Energy calculation will be affected.');
-            // Fallback: If nodeLaplacian is bad, L_approx_global will remain zero.
+            // If the map itself is empty or not a Map, log and proceed with an all-zero finalQualiaArray
+            logger.warn('qualiaStalksMap is empty or not a Map, using all-zero qualia vector for input.');
+            // finalQualiaArray is already initialized to zeros by new Float32Array(this.expectedQualiaInputLength)
         }
 
-        let lapQuad = 0;
-        try {
-            const matMulResult = await runWorkerTask('matVecMul', { matrix: flattenMatrix(L_approx_global), vector: finalQualiaArray });
-            if(isFiniteVector(matMulResult)) {
-                lapQuad = 0.5 * dot(finalQualiaArray, matMulResult);
-            } else {
-                logger.warn('matVecMul for L_approx_global returned non-finite vector.');
-            }
-        } catch (e) {
-            logger.error('Error during matVecMul for Free Energy calculation:', e);
+        // Final sanity check on finalQualiaArray before creating the input
+        if (!isFiniteVector(finalQualiaArray)) {
+             logger.error(`FATAL: finalQualiaArray became non-finite during construction. Resetting to all zeros.`);
+             finalQualiaArray.fill(0);
         }
+
+        // Check if the finalQualiaArray has the expected number of finite values
+        const finiteCount = Array.from(finalQualiaArray).filter(val => Number.isFinite(val)).length;
+        if (finiteCount !== this.expectedQualiaInputLength) {
+            logger.error(`OWM.predict: Corrupted qualiaStalks detected. Expected ${this.expectedQualiaInputLength} finite values, found ${finiteCount}. Returning neutral prediction.`);
+            return { qValues: vecZeros(this.actionDim), activations: [], corrupted: true };
+        }
+
+        const input = new Float32Array([...state, ...finalQualiaArray]);
         
-        // Ensure lapQuad is finite
-        const safeLapQuad = Number.isFinite(lapQuad) ? lapQuad : 0;
-        // --- End of Free Energy FIX ---
+        
+        if (input.length !== this.inputDim) {
+             logger.error(`FATAL: Input size mismatch just before attention. Expected ${this.inputDim}, got ${input.length}.`);
+             return { qValues: vecZeros(this.actionDim), activations: [], corrupted: true };
+        }
 
-        this.freeEnergy = 0.85 * (this.freeEnergy || 0) + 0.15 * (safeLapQuad + this.qualiaSheaf.h1Dimension);
-        this.freeEnergy = clamp(this.freeEnergy, 0, 10); // Clamp free energy
+        const attended = this.applyAttention(input);
+        const { qValues, nextState, activations } = await this.forward(attended);
+        this.lastActivations = activations;
 
-        return { nextState: new Float32Array(nextState.map(v => clamp(v, -5, 5))), phi: this.qualiaSheaf.phi, activations };
+        const error = norm2(vecSub(nextState, state));
+        this.predictionError = clamp(error, 0, 10);
+
+        this.freeEnergy = 0.85 * (this.freeEnergy || 0) + 0.15 * (this.predictionError * 0.5 + this.qualiaSheaf.h1Dimension);
+        this.freeEnergy = clamp(this.freeEnergy, 0, 10);
+
+        return { qValues, activations, corrupted: false };
     }
 
-    // A very simple learning rule (Gradient Descent for prediction error)
-    // This is a minimal example and not a full backpropagation implementation.
-    async learn(actualNextState, predictedNextState, learningRate = 0.01) {
-        if (!isFiniteVector(actualNextState) || !isFiniteVector(predictedNextState)) {
-            logger.warn('OWM.learn: Invalid input for learning, non-finite values. Skipping learning.', { actualNextState, predictedNextState });
-            return;
-        }
-        const errorVector = vecSub(predictedNextState, actualNextState);
-        if (norm2(errorVector) < 1e-3) return; // No significant error to learn from
-
-        // --- FIX START ---
-        // Ensure there are enough activations recorded to get the last hidden layer.
-        // We need at least the input layer, one hidden layer, and the output layer.
-        // If hiddenSizes is empty, we'd only have input and output, so index would be -1.
-        // With hidden layers, the last hidden is at activations.length - 2.
-        if (this.lastActivations.length < 2) {
-            logger.warn('Skipping OWM learning: Not enough activations captured to identify last hidden layer. Array length:', this.lastActivations.length);
+    async learn(state, actionIndex, reward, nextState, isDone, learningRate = 0.01, gamma = 0.99) {
+        if (!isFiniteVector(state) || !isFiniteVector(nextState) || !Number.isFinite(reward)) {
+            logger.warn('OWM.learn: Invalid input. Skipping.');
             return;
         }
 
-        // Get the activations of the *last hidden layer*.
-        const lastHiddenActivation = this.lastActivations[this.lastActivations.length - 2]; 
-        // --- FIX END ---
+        // Use a version of predict that doesn't flag corruption for learning purposes
+        // to avoid feedback loops. We still get Q-values even from a potentially noisy state.
+        const { qValues: currentQValues } = await this.predict(state);
+        const { qValues: nextQValues } = await this.predict(nextState);
+        
+        const maxNextQ = isDone ? 0 : Math.max(...nextQValues);
 
-        // The condition `lastHiddenActivation.length === this.outputLayer.W[0].length`
-        // is correct, as the input dimension of the output layer's weights (W[0].length)
-        // should match the output dimension of the last hidden layer (lastHiddenActivation.length).
-        if (lastHiddenActivation && isFiniteVector(lastHiddenActivation) && lastHiddenActivation.length === this.outputLayer.W[0].length) {
-            const gradOutput = vecScale(errorVector, learningRate);
-            
-            for (let i = 0; i < this.outputLayer.W.length; i++) {
-                if (!Number.isFinite(gradOutput[i])) continue;
-                for (let j = 0; j < this.outputLayer.W[0].length; j++) {
-                    if (!Number.isFinite(lastHiddenActivation[j])) continue;
-                    const deltaW_ij = gradOutput[i] * lastHiddenActivation[j];
-                    if (Number.isFinite(deltaW_ij)) {
-                        this.outputLayer.W[i][j] = clamp(this.outputLayer.W[i][j] - deltaW_ij, -10, 10); // Clamp weights
-                    } else {
-                        logger.warn(`Non-finite deltaW_ij during learning for OutputLayer.W[${i}][${j}]`);
-                    }
+        const targetQ = reward + gamma * maxNextQ;
+        const currentQForAction = currentQValues[actionIndex];
+        const tdError = targetQ - currentQForAction;
+
+        const lastRecurrentState = this.lastActivations[2]; // hiddenState (index 2 in activations array)
+        if (lastRecurrentState && isFiniteVector(lastRecurrentState)) {
+            for (let j = 0; j < lastRecurrentState.length; j++) {
+                const deltaW = learningRate * tdError * lastRecurrentState[j];
+                if (Number.isFinite(deltaW)) {
+                    this.qValueHead.W[actionIndex][j] += deltaW;
                 }
             }
-            this.outputLayer.b = new Float32Array(vecSub(this.outputLayer.b, gradOutput).map(v => clamp(v, -10, 10)));
-        } else {
-            logger.warn('Skipping OWM learning due to invalid lastHiddenActivation state.');
+            const deltaB = learningRate * tdError;
+            if (Number.isFinite(deltaB)) {
+                this.qValueHead.b[actionIndex] += deltaB;
+            }
         }
+    }
+
+    resetRecurrentState() {
+        this.hiddenState.fill(0);
+        this.cellState.fill(0);
+        logger.info(`OWM recurrent state for ${this.isPlayerTwo ? 'AI' : 'Player'} has been reset.`);
     }
 }
-
         class LearningAI {
     // Constants for normalization and game physics
     static BALL_DX_NORMALIZATION = 10;
@@ -2198,151 +2287,151 @@ class OntologicalWorldModel {
         this.worldModel = worldModel;
         this.gameWidth = gameBounds.width;
         this.gameHeight = gameBounds.height;
-        this.scoreToWin = gameBounds.scoreToWin || 10;
         this.isPlayerTwo = isPlayerTwo;
-        this.lastStateVec = vecZeros(10);
-        this.lastActionVec = [0, 0, 1]; // IDLE
-        this.lastPrediction = { nextState: vecZeros(10), phi: 0, activations: [] };
-        this.aiResponseTime = aiResponseTime; // New: AI response time (frames delay)
-        this.actionQueue = []; // Queue actions for delayed response
+        this.aiResponseTime = aiResponseTime;
+        this.actionQueue = [];
+
+        // State for Reinforcement Learning
+        this.epsilon = 1.0; // Initial exploration rate
+        this.epsilonMin = 0.05;
+        this.epsilonDecay = 0.9995;
+        this.learningRate = 0.01;
+        
+        this.lastStateVec = vecZeros(this.worldModel.stateDim);
+        this.lastActionIndex = 2; // Corresponds to 'IDLE'
+        this.lastActivations = [];
+        this.avgQValue = 0; // For tracking/visualization
     }
 
     createStateVector(gameState) {
         const paddle = this.isPlayerTwo ? gameState.ai : gameState.player;
         const opponentPaddle = this.isPlayerTwo ? gameState.player : gameState.ai;
 
+        const safeGameWidth = Math.max(1, this.gameWidth);
+        const safeGameHeight = Math.max(1, this.gameHeight);
+
         const stateVec = new Float32Array([
-            gameState.ball.x / this.gameWidth,                                          // 0: Ball X (normalized)
-            gameState.ball.y / this.gameHeight,                                         // 1: Ball Y (normalized)
-            gameState.ball.dx / LearningAI.BALL_DX_NORMALIZATION,                       // 2: Ball DX (normalized)
-            gameState.ball.dy / LearningAI.BALL_DY_NORMALIZATION,                       // 3: Ball DY (normalized)
-            paddle.y / this.gameHeight,                                                 // 4: Own Paddle Y (normalized)
-            opponentPaddle.y / this.gameHeight,                                         // 5: Opponent Paddle Y (normalized)
-            paddle.dy / LearningAI.PADDLE_DY_NORMALIZATION,                             // 6: Own Paddle DY (normalized)
-            opponentPaddle.dy / LearningAI.PADDLE_DY_NORMALIZATION,                     // 7: Opponent Paddle DY (normalized)
-            gameState.playerCollision ? 1 : 0,                                          // 8: Player Collision
-            gameState.aiCollision ? 1 : 0                                               // 9: AI Collision
-        ]).map(v => clamp(v, -1, 1)); // Clamp values to a reasonable range
+            gameState.ball.x / safeGameWidth,
+            gameState.ball.y / safeGameHeight,
+            gameState.ball.dx / LearningAI.BALL_DX_NORMALIZATION,
+            gameState.ball.dy / LearningAI.BALL_DY_NORMALIZATION,
+            paddle.y / safeGameHeight,
+            opponentPaddle.y / safeGameHeight,
+            paddle.dy / LearningAI.PADDLE_DY_NORMALIZATION,
+            opponentPaddle.dy / LearningAI.PADDLE_DY_NORMALIZATION,
+            gameState.playerCollision ? 1 : 0,
+            gameState.aiCollision ? 1 : 0
+        ]);
 
-        if (!isFiniteVector(stateVec) || stateVec.length !== 10) {
-            logger.error('LearningAI.createStateVector: Generated state vector is invalid. Returning zeros.', stateVec);
-            return vecZeros(10);
+        for (let i = 0; i < stateVec.length; i++) {
+            if (!Number.isFinite(stateVec[i])) {
+                logger.error(`createStateVector: Non-finite value at index ${i} before clamping. Resetting to 0.`);
+                stateVec[i] = 0;
+            }
         }
-        return stateVec;
-    }
+        
+        const clampedStateVec = stateVec.map(v => clamp(v, -1, 1));
 
-    selectStrategy(phi, gestaltUnity, inconsistency) {
-        if (phi > 3 && gestaltUnity > 0.8 && inconsistency < 0.2) {
-            return 'predictive'; // High consciousness, stable, coherent
-        } else if (phi < 1 || inconsistency > 0.5 || gestaltUnity < 0.3) {
-            return 'reactive'; // Low consciousness, unstable, incoherent
-        } else {
-            return 'balanced'; // Moderate consciousness
+        if (!isFiniteVector(clampedStateVec) || clampedStateVec.length !== this.worldModel.stateDim) {
+            logger.error(`LearningAI.createStateVector: Generated state vector is invalid. Returning zeros.`);
+            return vecZeros(this.worldModel.stateDim);
         }
+        return clampedStateVec;
     }
-
-    async makeDecision(gameState, audioAmplitude = 0) {
-        // Apply response delay
+    async makeDecision(gameState) {
         if (this.actionQueue.length >= this.aiResponseTime) {
-            return this.actionQueue.shift(); // Return oldest queued action
+            return this.actionQueue.shift();
         }
 
         const actions = [{ name: 'UP', vec: [1, 0, 0] }, { name: 'DOWN', vec: [0, 1, 0] }, { name: 'IDLE', vec: [0, 0, 1] }];
-        let bestActionName = 'IDLE', bestActionVec = actions[2].vec, bestScore = -Infinity, bestActivations = [];
+        let actionIndex = 2; // Default to IDLE
 
         const stateVec = this.createStateVector(gameState);
-        this.worldModel.lastActivations = []; // Reset activations for current decision
+        this.lastStateVec = stateVec;
 
-        const ballY = gameState.ball.y;
-        const ballDx = gameState.ball.dx;
-        const ballDy = gameState.ball.dy;
-        const paddle = this.isPlayerTwo ? gameState.ai : gameState.player;
-        const paddleCenter = paddle.y + paddle.height / 2;
+        // FIX: Introduce a 'corrupted' flag from the prediction to handle recovery
+        const { qValues, activations, corrupted } = await this.worldModel.predict(stateVec);
+        this.lastActivations = activations;
 
-        // Simple physics prediction for ball's target Y
-        const targetPaddleX = this.isPlayerTwo ? this.gameWidth - paddle.width - LearningAI.PADDLE_OFFSET_X : LearningAI.PADDLE_OFFSET_X + paddle.width; // Correct target X
-        let timeToPaddle = Math.abs(targetPaddleX - gameState.ball.x) / Math.max(Math.abs(ballDx), 1e-3);
-        let predictedBallY_physics = ballY + ballDy * timeToPaddle;
-        predictedBallY_physics = clamp(predictedBallY_physics, 0, this.gameHeight); // Simplified bounce
+        if (corrupted) {
+            // If the model is corrupted, default to a safe action (IDLE) and signal corruption upwards.
+            this.lastActionIndex = 2; // IDLE
+            const decision = { action: actions[2].vec, activations: this.lastActivations, corrupted: true };
+            this.actionQueue.push(decision);
+            return this.actionQueue.shift() || decision;
+        }
 
-        let validPredictions = [];
-        for (const action of actions) {
-            const { nextState, phi, activations } = await this.worldModel.predict(stateVec, action.vec, audioAmplitude);
-            if (isFiniteVector(nextState) && nextState.length === this.worldModel.stateDim && Number.isFinite(phi)) {
-                validPredictions.push({ action, nextState, phi, activations });
+        if (Math.random() < this.epsilon) {
+            actionIndex = Math.floor(Math.random() * actions.length);
+        } else {
+            if (qValues && isFiniteVector(qValues)) {
+                actionIndex = qValues.indexOf(Math.max(...qValues));
+                this.avgQValue = qValues.reduce((a, b) => a + b, 0) / qValues.length;
             } else {
-                logger.warn(`Invalid prediction for action ${action.name}. Skipping.`, {nextState, phi});
+                logger.warn("Received invalid Q-values, defaulting to IDLE.");
+                actionIndex = 2;
             }
         }
+        
+        this.lastActionIndex = actionIndex;
+        const decision = { action: actions[actionIndex].vec, activations: this.lastActivations, corrupted: false };
+        this.actionQueue.push(decision);
 
-        if (validPredictions.length === 0) {
-            logger.warn('No valid predictions available. Falling back to simple heuristic.');
-            if (predictedBallY_physics < paddleCenter - 15) { bestActionName = 'UP'; }
-            else if (predictedBallY_physics > paddleCenter + 15) { bestActionName = 'DOWN'; }
-            bestActionVec = actions.find(a => a.name === bestActionName).vec;
-            this.lastPrediction = { nextState: stateVec, phi: 0, activations: [] };
-            this.actionQueue.push({ action: bestActionVec, activations: [] });
-        } else {
-            const currentPhi = this.worldModel.qualiaSheaf.phi;
-            const currentGestaltUnity = this.worldModel.qualiaSheaf.gestaltUnity;
-            const currentInconsistency = this.worldModel.qualiaSheaf.inconsistency;
-            const strategy = this.selectStrategy(currentPhi, currentGestaltUnity, currentInconsistency);
-
-            validPredictions.forEach(({ action, nextState, phi, activations }) => {
-                const predictedBallY_model = nextState[1] * this.gameHeight;
-                let score = 0;
-
-                const distanceToTarget = Math.abs(predictedBallY_model - paddleCenter);
-                score -= 2.0 * (distanceToTarget / this.gameHeight); // Penalize distance to ball
-
-                if (strategy === 'predictive') {
-                    score += 0.5 * phi; // Reward higher consciousness
-                    score -= 1.0 * this.worldModel.predictionError; // Penalize prediction error
-                    score += 0.2 * currentGestaltUnity; // Reward coherent internal model
-                    score -= 0.5 * currentInconsistency; // Penalize internal contradictions
-                } else if (strategy === 'reactive') {
-                    score -= 1.0 * Math.abs(predictedBallY_physics - paddleCenter) / this.gameHeight; // Follow physics
-                    score += 0.1 * (action.name === 'IDLE' ? -0.1 : 0.1); // Small penalty for idle if not precise
-                } else { // 'balanced' strategy
-                    score += 0.2 * phi;
-                    score -= 0.5 * this.worldModel.predictionError;
-                    score -= 0.5 * Math.abs(predictedBallY_physics - paddleCenter) / this.gameHeight;
-                }
-
-                const ballApproachingSpeed = this.isPlayerTwo ? -ballDx : ballDx;
-                if (ballApproachingSpeed > 0.5 && action.name !== 'IDLE') {
-                    score += 0.1 * (action.name === 'UP' && paddleCenter > predictedBallY_model ? 1 : 0);
-                    score += 0.1 * (action.name === 'DOWN' && paddleCenter < predictedBallY_model ? 1 : 0);
-                }
-
-                if (!Number.isFinite(score)) { logger.warn('Decision score is non-finite, skipping action.'); return; }
-
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestActionName = action.name;
-                    bestActionVec = action.vec;
-                    bestActivations = activations;
-                    this.lastPrediction = { nextState, phi, activations };
-                    this.worldModel.lastActivations = activations; // Store for learning
-                }
-            });
-            this.actionQueue.push({ action: bestActionVec, activations: bestActivations });
-        }
-        this.lastStateVec = stateVec;
-        this.lastActionVec = bestActionVec;
-
-        // Return the oldest action in queue if enough actions are queued, otherwise the new best action
-        return this.actionQueue.shift() || { action: bestActionVec, activations: bestActivations };
+        return this.actionQueue.shift() || decision;
     }
 
-    async learn(reward, newGameState, audioAmplitude = 0) {
+    async learn(reward, newGameState, isDone) {
         const nextStateVec = this.createStateVector(newGameState);
-        this.worldModel.memory.push({ state: [...this.lastStateVec], action: [...this.lastActionVec], nextState: [...nextStateVec], reward, phi: this.worldModel.qualiaSheaf.phi });
-        if (this.worldModel.memory.length > 1000) {
-            this.worldModel.memory.shift();
+        await this.worldModel.learn(this.lastStateVec, this.lastActionIndex, reward, nextStateVec, isDone, this.learningRate);
+        
+        if (this.epsilon > this.epsilonMin) {
+            this.epsilon *= this.epsilonDecay;
         }
-        // Call the simple learning rule
-        await this.worldModel.learn(nextStateVec, this.lastPrediction.nextState);
+
+        const uncertaintyFactor = 1 + clamp(this.worldModel.predictionError, 0, 5);
+        this.epsilon = clamp(this.epsilon * uncertaintyFactor, this.epsilonMin, 1.0);
+    }
+
+    reset() {
+        this.worldModel.resetRecurrentState();
+        this.epsilon = 1.0;
+        this.avgQValue = 0;
+        logger.info(`LearningAI for ${this.isPlayerTwo ? 'AI' : 'Player'} has been reset.`);
+    }
+}
+// NEW: StrategicAI for Meta-Learning
+class StrategicAI {
+    constructor(learningAI) {
+        this.learningAI = learningAI;
+        this.rewardHistory = [];
+        this.HISTORY_SIZE = 200; // Analyze the last 200 steps
+    }
+
+    observe(reward) {
+        this.rewardHistory.push(reward);
+        if (this.rewardHistory.length > this.HISTORY_SIZE) {
+            this.rewardHistory.shift();
+        }
+    }
+
+    modulateParameters() {
+        if (this.rewardHistory.length < this.HISTORY_SIZE) return;
+
+        const avgReward = this.rewardHistory.reduce((a, b) => a + b, 0) / this.HISTORY_SIZE;
+        const predError = this.learningAI.worldModel.predictionError;
+
+        // If performance is poor (low avg reward), increase learning rate
+        if (avgReward < -0.1) {
+            this.learningAI.learningRate = clamp(this.learningAI.learningRate * 1.01, 0.001, 0.05);
+        } else {
+            this.learningAI.learningRate = clamp(this.learningAI.learningRate * 0.99, 0.001, 0.05);
+        }
+
+        // If the model is "confused" (high prediction error), explore more
+        if (predError > 2.0) {
+            this.learningAI.epsilon = clamp(this.learningAI.epsilon * 1.2, this.learningAI.epsilonMin, 1.0);
+        }
+        logger.info(`StrategicAI modulated LearningAI. Epsilon: ${this.learningAI.epsilon.toFixed(3)}, LR: ${this.learningAI.learningRate.toFixed(4)}`);
     }
 }
         class PongGame {
@@ -2404,7 +2493,7 @@ class OntologicalWorldModel {
 
             update() {
                 if (this.gameOver) {
-                    return { aReward: 0, pReward: 0, playerCollision: false, aiCollision: false, ballHitGround: false };
+                    return { aReward: 0, pReward: 0, playerCollision: false, aiCollision: false, isDone: true };
                 }
 
                 const MAX_BALL_DX = this.MAX_BALL_SPEED_BASE * this.ballSpeedMultiplier;
@@ -2418,23 +2507,22 @@ class OntologicalWorldModel {
                     this.ball.y = clamp(this.ball.y, this.ball.radius, this.height - this.ball.radius); // Prevent sticking
                 }
 
-                let aReward = 0, pReward = 0;
+                // Default "living" penalty to encourage faster games
+                let aReward = -0.01, pReward = -0.01;
                 this.playerCollision = false;
                 this.aiCollision = false;
+                let isDone = false;
 
-                let ballHitGround = false;
                 if (this.ball.x <= 0) {
                     this.score.ai++;
                     aReward = 1; // AI scores, positive reward
                     pReward = -1; // Player fails, negative reward
                     this.resetBall();
-                    ballHitGround = true;
                 } else if (this.ball.x >= this.width) {
                     this.score.player++;
                     aReward = -1; // AI fails, negative reward
                     pReward = 1; // Player scores, positive reward
                     this.resetBall();
-                    ballHitGround = true;
                 }
 
                 this.ai.y = clamp(this.ai.y + this.ai.dy, 0, this.height - this.ai.height);
@@ -2450,8 +2538,7 @@ class OntologicalWorldModel {
                     this.ball.dy = clamp(this.ball.dy + (this.player.dy * 0.5), -MAX_BALL_DY, MAX_BALL_DY); // Paddle velocity influences ball
                     this.ball.x = this.player.x + this.player.width + this.ball.radius + 1; // Prevent sticking
                     this.playerCollision = true;
-                    pReward += 0.1; // Small reward for hitting the ball
-                    aReward -= 0.05; // Small penalty for AI not hitting it
+                    pReward += 0.5; // Stronger reward for hitting the ball
                 }
 
                 // Paddle collision (AI)
@@ -2464,19 +2551,24 @@ class OntologicalWorldModel {
                     this.ball.dy = clamp(this.ball.dy + (this.ai.dy * 0.5), -MAX_BALL_DY, MAX_BALL_DY);
                     this.ball.x = this.ai.x - this.ball.radius - 1; // Prevent sticking
                     this.aiCollision = true;
-                    aReward += 0.1; // Small reward for hitting the ball
-                    pReward -= 0.05; // Small penalty for Player not hitting it
+                    aReward += 0.5; // Stronger reward for hitting the ball
                 }
 
                 if (this.score.ai >= this.scoreToWin) {
                     this.gameOver = true;
                     this.winner = 'AI';
+                    isDone = true;
+                    aReward = 5; // Big bonus for winning
+                    pReward = -5;
                 } else if (this.score.player >= this.scoreToWin) {
                     this.gameOver = true;
                     this.winner = 'Player';
+                    isDone = true;
+                    pReward = 5;
+                    aReward = -5;
                 }
 
-                return { aReward, pReward, playerCollision: this.playerCollision, aiCollision: this.aiCollision, ballHitGround };
+                return { aReward, pReward, playerCollision: this.playerCollision, aiCollision: this.aiCollision, isDone };
             }
 
             setAIAction(action) {
@@ -2560,11 +2652,11 @@ class OntologicalWorldModel {
 
             _setupVisualLayers() {
                 const model = this.worldModel;
-                // Input layer should represent: stateDim + actionDim + audioAmplitude + (graph.vertices.length * qualiaSheaf.qDim)
-                const fullInputDim = model.stateDim + model.actionDim + 1 + (model.qualiaSheaf.graph.vertices.length * model.qualiaSheaf.qDim);
-                this.visualLayers.push({ name: 'input', actualCount: fullInputDim });
-                model.hiddenSizes.forEach((size, index) => this.visualLayers.push({ name: `hidden${index+1}`, actualCount: size }));
-                this.visualLayers.push({ name: 'output', actualCount: model.stateDim });
+                this.visualLayers.push({ name: 'input', actualCount: model.inputDim });
+                // NEW: The hidden layers are now the recurrent cell states
+                this.visualLayers.push({ name: 'cellState', actualCount: model.cellState.length });
+                this.visualLayers.push({ name: 'hiddenState', actualCount: model.hiddenState.length });
+                this.visualLayers.push({ name: 'qValues', actualCount: model.actionDim }); // Output is now Q-values
             }
 
             _setupDOM() {
@@ -2595,15 +2687,14 @@ class OntologicalWorldModel {
                     this.canvas.width = this.container.clientWidth * dpr;
                     this.canvas.height = this.container.clientHeight * dpr;
                     this.ctx.scale(dpr, dpr);
-                    this._drawConnections();
+                    // Connections are too complex to meaningfully draw for LSTM, so we skip it.
                 });
                 ro.observe(this.container);
             }
-
+            
             _getNeuronPosition(lIndex, nIndex) {
                 const el = this.neuronElements[lIndex]?.[nIndex];
                 if (!el) {
-                    // Fallback to approximate center if element isn't rendered yet
                     const layerDiv = this.container.children[lIndex + 1]; // +1 because canvas is first child
                     if (!layerDiv) return { x: 0, y: 0 };
                     const layerRect = layerDiv.getBoundingClientRect();
@@ -2624,46 +2715,17 @@ class OntologicalWorldModel {
             }
 
             _drawConnections() {
-                if (!this.ctx || !this.neuronElements || this.visualLayers.length <= 1) return;
-
-                this.ctx.clearRect(0, 0, this.canvas.width / (window.devicePixelRatio || 1), this.canvas.height / (window.devicePixelRatio || 1));
-
-                const matrices = this.worldModel.layers.map(layer => layer.W).concat([this.worldModel.outputLayer.W]);
-                const colors = this.theme === 'opponent' ? { pos: 'rgba(255,165,0,', neg: 'rgba(138,43,226,' } : { pos: 'rgba(68,170,255,', neg: 'rgba(255,85,85,' };
-
-                for (let l = 0; l < this.visualLayers.length - 1; l++) {
-                    const matrix = matrices[l];
-                    if (!matrix || matrix.length === 0) continue;
-
-                    for (let i = 0; i < this.neuronElements[l].length; i++) {
-                        for (let j = 0; j < this.neuronElements[l + 1].length; j++) {
-                            const start = this._getNeuronPosition(l, i);
-                            const end = this._getNeuronPosition(l + 1, j);
-
-                            const srcMatrixIdx = Math.floor(i * (this.visualLayers[l].actualCount / this.neuronElements[l].length));
-                            const tgtMatrixIdx = Math.floor(j * (this.visualLayers[l + 1].actualCount / this.neuronElements[l+1].length));
-
-                            const w = matrix[tgtMatrixIdx]?.[srcMatrixIdx] || 0;
-                            const alpha = clamp(Math.abs(w) * 3, 0.05, 0.6); // Increased max alpha
-
-                            if (alpha < 0.05) continue;
-
-                            this.ctx.strokeStyle = w > 0 ? colors.pos + `${alpha})` : colors.neg + `${alpha})`;
-                            this.ctx.lineWidth = clamp(alpha * 2, 0.5, 2);
-                            this.ctx.beginPath();
-                            this.ctx.moveTo(start.x, start.y);
-                            this.ctx.lineTo(end.x, end.y);
-                            this.ctx.stroke();
-                        }
-                    }
-                }
+                // Connections are too complex to visualize for a recurrent net, so we disable this.
+                if (!this.ctx) return;
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             }
+
 
             update(activations) {
                 // If activations are not provided or invalid, visualize a neutral state
                 if (!activations || activations.length === 0 || !activations.every(isFiniteVector)) {
                     this.visualLayers.forEach((layerViz, l_idx) => {
-                        this.neuronElements[l_idx].forEach(el => {
+                        (this.neuronElements[l_idx] || []).forEach(el => {
                             if (el) {
                                 el.style.backgroundColor = '#333';
                                 el.style.borderColor = '#888';
@@ -2727,6 +2789,15 @@ class OntologicalWorldModel {
             throw new Error('Failed to get 2D context');
         }
 
+        // NEW: Performance Chart data stores
+        this.chartData = {
+            qValue: [],
+            predError: [],
+            epsilon: [],
+            score: []
+        };
+        this.MAX_CHART_POINTS = 100;
+
         this.applyCanvasDPR(this.sheafGraphCanvas, this.sheafGraphCtx);
         const gameCanvasRO = new ResizeObserver(entries => {
             for (let entry of entries) {
@@ -2750,6 +2821,7 @@ class OntologicalWorldModel {
         this.boundGameLoop = this.gameLoop.bind(this); // Pre-bind for requestAnimationFrame
         this.setupTooltips();
         this.bindEvents();
+        this.setupQualiaAttentionPanel(); // Initialize the new panel
         document.getElementById('status').textContent = 'Ready';
 
         this.setupGameAndAIs(); // Call asynchronously below
@@ -2772,26 +2844,27 @@ class OntologicalWorldModel {
 
         try {
             const { clientWidth: w, clientHeight: h } = this.gameCanvas;
-            // Ensure PongGame is initialized with correct dimensions
             this.pongGame = new PongGame(this.gameCanvas, w, h);
             
             const gameBounds = { width: w, height: h, scoreToWin: 10 };
 
-            this.mainAI_worldModel = new OntologicalWorldModel(10, 3, 7, [16, 32, 16], true);
-            this.opponent_worldModel = new OntologicalWorldModel(10, 3, 7, [16, 32, 16], false);
+            this.mainAI_worldModel = new OntologicalWorldModel(10, 3, 7, [64, 64], true);
+            this.opponent_worldModel = new OntologicalWorldModel(10, 3, 7, [64, 64], false);
 
             await Promise.all([this.mainAI_worldModel.initialize(), this.opponent_worldModel.initialize()]);
 
             this.mainAI = new LearningAI(this.mainAI_worldModel, gameBounds, true);
             this.opponentAI = new LearningAI(this.opponent_worldModel, gameBounds, false);
+            
+            // NEW: Setup Strategic Layer
+            this.mainStrategicAI = new StrategicAI(this.mainAI);
+            this.opponentStrategicAI = new StrategicAI(this.opponentAI);
 
             this.mainViz = new NeuralNetworkVisualizer('nn-visualization-container', this.mainAI_worldModel, 'main');
             this.opponentViz = new NeuralNetworkVisualizer('nn-visualization-container-opponent', this.opponent_worldModel, 'opponent');
 
-            // Crucially, render the game AFTER everything is set up and dimensions are confirmed
             this.pongGame.render(this.ctx); 
-            this.updateVisualization(); // Initial visualization update
-            // Automatically start the game after successful initialization
+            this.updateVisualization();
             this.start();
             logger.info('Game and AIs initialized successfully.');
 
@@ -2811,7 +2884,6 @@ class OntologicalWorldModel {
         document.getElementById('resetSimButton').onclick = () => this.resetAI();
         document.getElementById('tuneButton').onclick = () => this.tuneParameters();
         document.getElementById('pauseButton').onclick = () => this.stop();
-        // Updated call to gameLoop for stepButton
         document.getElementById('stepButton').onclick = () => this.gameLoop(null, true);
 
         window.addEventListener('keydown', (e) => this.handleKeyDown(e));
@@ -2837,8 +2909,8 @@ class OntologicalWorldModel {
                     if (id === 'ballSpeedSlider') this.pongGame.ballSpeedMultiplier = value;
                     if (id === 'paddleHeightSlider') {
                         this.pongGame.paddleHeightMultiplier = value;
-                        this.pongGame.player.height = PongGame.PADDLE_HEIGHT_BASE * value; // Update player paddle height
-                        this.pongGame.ai.height = PongGame.PADDLE_HEIGHT_BASE * value;     // Update AI paddle height
+                        this.pongGame.player.height = PongGame.PADDLE_HEIGHT_BASE * value;
+                        this.pongGame.ai.height = PongGame.PADDLE_HEIGHT_BASE * value;
                     }
                     if (id === 'aiResponseTimeSlider') {
                         if (this.mainAI) this.mainAI.aiResponseTime = value;
@@ -2861,7 +2933,7 @@ class OntologicalWorldModel {
         tippy('#qualia-existence-fill', { content: 'Existence: Models state persistence and resilience to change, representing its current state and environmental robustness.' });
         tippy('#qualia-emergence-fill', { content: 'Emergence: Represents non-linear state synthesis and novel property formation, indicating its capacity for novelty.' });
         tippy('#qualia-gestalt-fill', { content: 'Gestalt: Quantifies holistic coherence and pattern recognition, indicating its ability to form meaningful wholes from parts.' });
-        tippy('#qualia-context-fill', { content: 'Context: Incorporates environmental modulation and background information, reflecting its understanding of the surrounding world.' });
+        tippy('#context-fill', { content: 'Context: Incorporates environmental modulation and background information, reflecting its understanding of the surrounding world.' });
         tippy('#qualia-rel-emergence-fill', { content: 'Relational Emergence: Captures dynamic entity coupling and interaction effects, indicating its comprehension of relationships.' });
         tippy('#alphaSlider', { content: 'α (Alpha) controls the influence of external sensory input on qualia diffusion; higher values mean more responsiveness to environment.' });
         tippy('#betaSlider', { content: 'β (Beta) adjusts the overall diffusion strength and speed across the sheaf; higher values lead to faster qualia propagation and integration.' });
@@ -2882,6 +2954,38 @@ class OntologicalWorldModel {
         tippy('#vertex-8', 'P-Col: Player (Left) collision state. Indicates if the ball has just collided with the player\'s paddle.');
         tippy('#vertex-9', 'AI-Col: AI (Right) collision state. Indicates if the ball has just collided with the main AI\'s paddle.');
     }
+    
+    setupQualiaAttentionPanel() {
+        const panel = document.getElementById('qualiaAttentionPanel');
+        if (!panel) return;
+        
+        const qualiaNames = ['Being', 'Intent', 'Existence', 'Emergence', 'Gestalt', 'Context', 'Rel. Emergence'];
+        let html = `<h4 id="qualia-attention-heading">Qualia Attention (Main AI)</h4>`;
+        qualiaNames.forEach((name, i) => {
+            html += `
+                <div class="attention-bar-container">
+                    <span class="attention-label">${name}</span>
+                    <div class="attention-bar-wrapper">
+                        <div class="attention-bar" id="attention-bar-${i}"></div>
+                    </div>
+                </div>
+            `;
+        });
+        panel.innerHTML = html;
+    }
+
+    updateQualiaAttentionVisuals() {
+        const softmaxScores = this.mainAI_worldModel?.lastSoftmaxScores;
+        if (!softmaxScores) return;
+
+        for (let i = 0; i < softmaxScores.length; i++) {
+            const bar = document.getElementById(`attention-bar-${i}`);
+            if (bar) {
+                const normalizedWidth = (softmaxScores[i] || 0) * 100;
+                bar.style.width = `${clamp(normalizedWidth, 0, 100)}%`;
+            }
+        }
+    }
 
     drawSheafGraph() {
         if (!this.sheafGraphCtx) return;
@@ -2889,22 +2993,25 @@ class OntologicalWorldModel {
         const { clientWidth: w, clientHeight: h } = this.sheafGraphCanvas;
         this.sheafGraphCtx.clearRect(0, 0, w / dpr, h / dpr);
 
-        this.sheafGraphCtx.strokeStyle = 'rgba(68, 170, 255, 0.3)';
-        this.sheafGraphCtx.lineWidth = 1.5; // Slightly thicker lines
         const sheaf = this.mainAI_worldModel?.qualiaSheaf;
         if (!sheaf || !sheaf.graph || !sheaf.graph.vertices || !sheaf.graph.edges) {
             logger.warn("Sheaf graph data not available for drawing.");
             return;
         }
 
+        const adj = sheaf.adjacencyMatrix; // Use the dynamically updated adjacency matrix
+
         sheaf.graph.edges.forEach(([u, v]) => {
             const uIdx = sheaf.graph.vertices.indexOf(u);
             const vIdx = sheaf.graph.vertices.indexOf(v);
-            if (!sheafVertexPositions[uIdx] || !sheafVertexPositions[vIdx]) return;
+            if (!sheafVertexPositions[uIdx] || !sheafVertexPositions[vIdx] || !adj) return;
 
+            const weight = adj[uIdx][vIdx] || 0.1;
+            this.sheafGraphCtx.strokeStyle = `rgba(68, 170, 255, ${clamp(weight, 0.1, 1.0)})`;
+            this.sheafGraphCtx.lineWidth = clamp(weight * 2, 0.5, 3.0);
+            
             const p1 = sheafVertexPositions[uIdx], p2 = sheafVertexPositions[vIdx];
             this.sheafGraphCtx.beginPath();
-            // Scale and offset positions based on current canvas client dimensions
             const scaledX1 = p1.x * (w / dpr - 36) + 18;
             const scaledY1 = p1.y * (h / dpr - 36) + 18;
             const scaledX2 = p2.x * (w / dpr - 36) + 18;
@@ -2915,6 +3022,56 @@ class OntologicalWorldModel {
             this.sheafGraphCtx.stroke();
         });
     }
+
+    drawChart(svgId, data, color, yMin, yMax) {
+        const svg = document.getElementById(svgId);
+        if (!svg) return;
+        svg.innerHTML = ''; // Clear previous chart
+
+        const width = svg.clientWidth;
+        const height = svg.clientHeight;
+        const padding = 10;
+
+        if (data.length < 2) return;
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        let d = `M ${padding},${height - padding} `;
+        
+        for (let i = 0; i < data.length; i++) {
+            const x = padding + i * (width - 2 * padding) / (data.length - 1);
+            const y_val = clamp(data[i], yMin, yMax);
+            const y = (height - 2 * padding) * (1 - (y_val - yMin) / (yMax - yMin)) + padding;
+            d += `L ${x.toFixed(2)},${y.toFixed(2)} `;
+        }
+
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', color);
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke-linejoin', 'round');
+        svg.appendChild(path);
+    }
+
+    updatePerformanceCharts() {
+        if(this.mainAI) {
+            this.chartData.qValue.push(this.mainAI.avgQValue);
+            this.chartData.epsilon.push(this.mainAI.epsilon);
+            this.chartData.predError.push(this.mainAI_worldModel.predictionError);
+            this.chartData.score.push(this.pongGame.score.ai - this.pongGame.score.player);
+        }
+
+        for(const key in this.chartData) {
+            if (this.chartData[key].length > this.MAX_CHART_POINTS) {
+                this.chartData[key].shift();
+            }
+        }
+        
+        this.drawChart('qValueChart', this.chartData.qValue, 'var(--primary-blue)', -2, 2);
+        this.drawChart('predErrorChart', this.chartData.predError, 'var(--warn-orange)', 0, 5);
+        this.drawChart('epsilonChart', this.chartData.epsilon, 'var(--info-green)', 0, 1);
+        this.drawChart('scoreChart', this.chartData.score, 'var(--error-red)', -10, 10);
+    }
+
 
     updateVisualization() {
         const qualia = this.mainAI_worldModel?.qualiaSheaf;
@@ -2976,6 +3133,7 @@ class OntologicalWorldModel {
 
             qualia.visualizeActivity();
             this.drawSheafGraph();
+            this.updateQualiaAttentionVisuals(); // Update the new panel
         });
     }
 
@@ -3020,9 +3178,7 @@ class OntologicalWorldModel {
         return 0;
     }
 
-    // Modified gameLoop signature to properly handle requestAnimationFrame's timestamp
     async gameLoop(timestamp, isManualStep = false) {
-        // Use isManualStep for checks, ignore timestamp if it's not a manual step
         if (!this.isRunning && !isManualStep) {
             return;
         }
@@ -3030,7 +3186,6 @@ class OntologicalWorldModel {
         if (!this.mainAI_worldModel?.ready || !this.opponent_worldModel?.ready || !this.pongGame) {
             logger.warn('GameLoop: AIs or PongGame not ready. Waiting...');
             document.getElementById('status').textContent = 'Waiting for AI/Game initialization...';
-            // Schedule another check if not a manual step, to retry after things are ready
             if (!isManualStep) requestAnimationFrame(this.boundGameLoop);
             return; 
         }
@@ -3039,36 +3194,50 @@ class OntologicalWorldModel {
             this.frameCount++;
 
             const preGameState = this.pongGame.getState();
-            const gameUpdateResult = this.pongGame.update();
-            let audioAmplitude = 0;
-
-            if (gameUpdateResult.playerCollision || gameUpdateResult.aiCollision) {
-                audioAmplitude = this.playSound('collision');
-            }
-
-            // AI decisions are now awaited
+            
             const [mainDecision, opponentDecision] = await Promise.all([
-                this.mainAI.makeDecision(preGameState, audioAmplitude),
-                this.opponentAI.makeDecision(preGameState, audioAmplitude)
+                this.mainAI.makeDecision(preGameState),
+                this.opponentAI.makeDecision(preGameState)
             ]);
+
+            // FIX: Check for corruption and reset AI if needed
+            if (mainDecision.corrupted) {
+                logger.warn('Main AI state corrupted, resetting its recurrent state.');
+                this.mainAI.worldModel.resetRecurrentState();
+            }
+            if (opponentDecision.corrupted) {
+                logger.warn('Opponent AI state corrupted, resetting its recurrent state.');
+                this.opponentAI.worldModel.resetRecurrentState();
+            }
 
             this.pongGame.setAIAction(mainDecision.action);
             this.pongGame.setPlayerAction(opponentDecision.action);
-
+            
+            const gameUpdateResult = this.pongGame.update();
             const postGameState = this.pongGame.getState();
 
             await Promise.all([
-                this.mainAI.learn(gameUpdateResult.aReward, postGameState, audioAmplitude),
-                this.opponentAI.learn(gameUpdateResult.pReward, postGameState, audioAmplitude)
+                this.mainAI.learn(gameUpdateResult.aReward, postGameState, gameUpdateResult.isDone),
+                this.opponentAI.learn(gameUpdateResult.pReward, postGameState, gameUpdateResult.isDone)
             ]);
+            
+            this.mainStrategicAI.observe(gameUpdateResult.aReward);
+            this.opponentStrategicAI.observe(gameUpdateResult.pReward);
+            if(this.frameCount % 50 === 0) {
+                this.mainStrategicAI.modulateParameters();
+                this.opponentStrategicAI.modulateParameters();
+            }
 
             document.getElementById('player-score').textContent = this.pongGame.score.player;
             document.getElementById('ai-score').textContent = this.pongGame.score.ai;
 
-            if (this.frameCount % 5 === 0 || isManualStep) { // Update visualization less frequently or on step
+            if (this.frameCount % 5 === 0 || isManualStep) {
                 this.mainViz.update(mainDecision.activations);
                 this.opponentViz.update(opponentDecision.activations);
                 this.updateVisualization();
+            }
+            if (this.frameCount % 20 === 0 || isManualStep) {
+                this.updatePerformanceCharts();
             }
 
             this.pongGame.render(this.ctx);
@@ -3079,15 +3248,10 @@ class OntologicalWorldModel {
             }
 
         } catch (error) {
-            // Log the full error object for better debugging
             logger.error("Error in game loop, stopping simulation:", error);
-            // Also print to console directly in case logger has issues
             console.error("Critical error in gameLoop, stopping:", error);
             this.stop(); 
         } finally {
-            // The critical change: use isManualStep here.
-            // When requestAnimationFrame calls, isManualStep will be false (its default).
-            // When the step button calls, isManualStep will be true.
             if (this.isRunning && !isManualStep && !this.pongGame.gameOver) {
                 requestAnimationFrame(this.boundGameLoop);
             }
@@ -3141,13 +3305,30 @@ class OntologicalWorldModel {
         showLoading('opponentBrain', 'Resetting Opponent AI...');
         showLoading('metrics', 'Resetting Metrics...');
 
+        // Clear chart data
+        for (const key in this.chartData) {
+            this.chartData[key] = [];
+        }
+
         try {
             // Get current client dimensions for accurate reset
             const { clientWidth: w, clientHeight: h } = this.gameCanvas;
             this.pongGame = new PongGame(this.gameCanvas, w, h); // Re-initialize PongGame with current dimensions
             document.getElementById('player-score').textContent = 0;
             document.getElementById('ai-score').textContent = 0;
-            await this.setupGameAndAIs(); // Re-initialize AI and world models, which will call this.start()
+            
+            // Reset the AIs' internal states
+            if (this.mainAI) {
+                 this.mainAI_worldModel.resetRecurrentState(); // Explicitly reset OWM recurrence
+                 this.mainAI.reset(); // Reset LearningAI params like epsilon
+            }
+            if (this.opponentAI) {
+                 this.opponent_worldModel.resetRecurrentState(); // Explicitly reset OWM recurrence
+                 this.opponentAI.reset(); // Reset LearningAI params like epsilon
+            }
+
+            // Re-initialize AI and world models (this also calls this.start() implicitly after setup)
+            await this.setupGameAndAIs(); 
             this.frameCount = 0;
             document.getElementById('status').textContent = 'Ready';
             this.updateVisualization();
