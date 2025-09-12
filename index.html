@@ -1,5 +1,5 @@
 
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -24,6 +24,9 @@
             --error-red: #ff6b6b;
             --warn-orange: #ffa726;
             --info-green: #4CAF50;
+            --connection-positive: rgba(0, 255, 153, 0.7); /* Greenish for positive weights */
+            --connection-negative: rgba(255, 100, 100, 0.7); /* Reddish for negative weights */
+            --connection-neutral: rgba(100, 100, 100, 0.4); /* Gray for small weights */
         }
 
         body {
@@ -182,6 +185,7 @@
             font-weight: bold;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
             pointer-events: none;
+            z-index: 2; /* Ensure label/value are above the bar and its pseudo-element */
         }
         .qualia-label { left: 8px; }
         .qualia-value { right: 8px; }
@@ -474,6 +478,14 @@
             flex-shrink: 0;
             box-shadow: 0 0 3px rgba(0,0,0,0.5);
             will-change: background-color, border-color, box-shadow;
+        }
+        .nn-neuron.active-action {
+            animation: pulse-action 0.8s infinite alternate;
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.9), 0 0 12px rgba(0, 255, 255, 0.5);
+        }
+        @keyframes pulse-action {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(1.2); opacity: 0.8; }
         }
         .nn-connections-canvas {
             position: absolute;
@@ -822,10 +834,12 @@
                     <div class="metric"><span class="metric-label">Gestalt Unity:</span><span class="metric-value" id="gestalt-unity" aria-live="polite" aria-atomic="true">0.000</span></div>
                     <div class="metric"><span class="metric-label">dim H¹:</span><span class="metric-value" id="h1-dimension" aria-live="polite" aria-atomic="true">0.00</span></div>
                     <div class="metric"><span class="metric-label">Gluing Inconsistency:</span><span class="metric-value" id="inconsistency" aria-live="polite" aria-atomic="true">0.000</span></div>
+                    <div class="metric"><span class="metric-label">Learning Rate:</span><span class="metric-value" id="learning-rate" aria-live="polite" aria-atomic="true">0.0000</span></div>
+                    <div class="metric"><span class="metric-label">Epsilon (Exploration):</span><span class="metric-value" id="epsilon-value" aria-live="polite" aria-atomic="true">0.000</span></div>
                 </div>
                 <div class="qualia-attention-panel" id="qualiaAttentionPanel" role="region" aria-labelledby="qualia-attention-heading">
                     <h4 id="qualia-attention-heading">Qualia Attention (Main AI)</h4>
-                    </div>
+                </div>
                 <div class="sheaf-graph" id="sheafGraph" role="img" aria-label="Sheaf graph visualizing information flow between concepts">
                     <canvas id="sheafGraphCanvas" class="sheaf-vertex-canvas" aria-hidden="true"></canvas>
                     <div class="vertex" id="vertex-0" aria-label="Player Paddle Y">P-Y</div>
@@ -942,9 +956,17 @@
     <script src="https://unpkg.com/tippy.js@6"></script>
 
        <script>
+        // This entire block of JavaScript could ideally be split into multiple modules for better maintainability (e.g., utils.js, worker.js, game.js, ai.js, ui.js, main.js).
+        // For this example, it remains a single script to facilitate direct modification.
+
         // --- On-page Logger ---
         const logElement = document.getElementById('log');
         const MAX_LOG_ENTRIES = 200;
+        /**
+         * Appends a message to the on-page log.
+         * @param {string} message - The message to log.
+         * @param {'info'|'warn'|'error'} type - The type of log entry.
+         */
         function appendLog(message, type = 'info') {
             if (!logElement) {
                 console.warn('Log element not found, logging to console:', message);
@@ -977,6 +999,11 @@
             opponentBrain: document.getElementById('opponentBrainLoadingText'),
         };
 
+        /**
+         * Shows a loading overlay on a specific panel.
+         * @param {'metrics'|'game'|'mainBrain'|'opponentBrain'} panel - The panel to show the overlay on.
+         * @param {string} message - The loading message to display.
+         */
         function showLoading(panel, message = 'Processing...') {
             if (loadingOverlays[panel]) {
                 loadingOverlays[panel].classList.add('active');
@@ -984,6 +1011,10 @@
             }
         }
 
+        /**
+         * Hides a loading overlay from a specific panel.
+         * @param {'metrics'|'game'|'mainBrain'|'opponentBrain'} panel - The panel to hide the overlay from.
+         */
         function hideLoading(panel) {
             if (loadingOverlays[panel]) {
                 loadingOverlays[panel].classList.remove('active');
@@ -991,6 +1022,7 @@
         }
 
         // --- Web Worker for Heavy Computations ---
+        // The worker is defined as a Blob URL to keep it self-contained within the HTML.
         const worker = new Worker(URL.createObjectURL(new Blob([`
             // Worker scope utility functions (must be self-contained or passed)
 // --- Worker-specific Utility Functions (self-contained and numerically robust) ---
@@ -1322,6 +1354,13 @@ self.onmessage = function(e) {
         const workerCallbacks = new Map();
         let nextWorkerTaskId = 0;
 
+        /**
+         * Runs a task in the web worker and returns a Promise.
+         * @param {string} type - The type of task for the worker.
+         * @param {Object} data - The data to send to the worker.
+         * @param {number} timeout - Maximum time in ms to wait for the worker task.
+         * @returns {Promise<any>} A promise that resolves with the worker's result or rejects on error/timeout.
+         */
         function runWorkerTask(type, data, timeout = 10000) { // Default timeout increased to 10 seconds for initial heavy ops
             return new Promise((resolve, reject) => {
                 const id = nextWorkerTaskId++;
@@ -1421,10 +1460,20 @@ function identity(n) {
     for (let i = 0; i < n; i++) M[i][i] = 1;
     return M;
 }
+/**
+ * Checks if all elements in a vector are finite numbers.
+ * @param {Float32Array | number[]} v - The vector to check.
+ * @returns {boolean} True if all elements are finite, false otherwise.
+ */
 function isFiniteVector(v) {
     if (!Array.isArray(v) && !(v instanceof Float32Array)) return false;
     return v.every(x => typeof x === 'number' && Number.isFinite(x));
 }
+/**
+ * Checks if all elements in a matrix are finite numbers.
+ * @param {Float32Array[] | number[][]} m - The matrix to check.
+ * @returns {boolean} True if all elements are finite, false otherwise.
+ */
 function isFiniteMatrix(m) {
     if (!Array.isArray(m) || m.length === 0) return true;
     const firstRowLength = m[0]?.length ?? 0;
@@ -1471,9 +1520,21 @@ const sheafVertexPositions = {
 };
 
 // --- APPLICATION CLASSES ---
+
+/**
+ * Represents an Enhanced Qualia Sheaf, a mathematical structure used to model the AI's "consciousness".
+ * It handles qualia diffusion, topological adaptation, and metric computations like Phi, H1 dimension, etc.
+ */
 class EnhancedQualiaSheaf {
+    /**
+     * @param {Object} graph - Initial graph structure with vertices and edges.
+     * @param {number} stateDim - Dimension of the input state vector.
+     * @param {number} initialQDim - Initial dimension for qualia vectors (should be 7).
+     * @param {number} alpha - Parameter controlling sensory input influence.
+     * @param {number} beta - Parameter controlling diffusion strength.
+     * @param {number} gamma - Parameter controlling qualia update inertia/learning rate.
+     */
     constructor(graph, stateDim = 10, initialQDim = 7, alpha = 0.1, beta = 0.1, gamma = 0.05) {
-        // logger.info('EnhancedQualiaSheaf: Constructor started.'); // Removed verbose log
         this.stateDim = stateDim;
         this.entityNames = ['being', 'intent', 'existence', 'emergence', 'gestalt', 'context', 'rel_emergence'];
         this.qDim = this.entityNames.length; // This should always be 7
@@ -1565,6 +1626,10 @@ class EnhancedQualiaSheaf {
         logger.info(`EnhancedQualiaSheaf initialized: qDim=${this.qDim}, vertices=${this.graph.vertices.length}`);
     }
 
+    /**
+     * Initializes the sheaf by updating its graph structure and derived metrics.
+     * @returns {Promise<void>}
+     */
     async initialize() {
         logger.info('EnhancedQualiaSheaf.initialize() called.');
         try {
@@ -1579,7 +1644,9 @@ class EnhancedQualiaSheaf {
         }
     }
 
-    // NEW METHOD: Update functional connectivity based on stalk activity correlation
+    /**
+     * Adapts the sheaf topology by calculating functional connectivity based on stalk activity correlation.
+     */
     adaptSheafTopology() {
         if (this.stalkHistory.length < this.stalkHistorySize) return;
 
@@ -1617,6 +1684,10 @@ class EnhancedQualiaSheaf {
         }
     }
 
+    /**
+     * Builds the boundary matrices (d1 and d2) for homological computations.
+     * @returns {{boundary1: Float32Array[][], boundary2: Float32Array[][]}}
+     */
     buildBoundaryMatrices() {
         const vIdx = new Map(this.graph.vertices.map((v, i) => [v, i]));
         const edgeKeys = this.graph.edges.map(e => e.slice().sort().join(','));
@@ -1646,6 +1717,10 @@ class EnhancedQualiaSheaf {
         return { boundary1, boundary2 };
     }
 
+    /**
+     * Builds the adjacency matrix, incorporating both structural and functional (correlation-based) weights.
+     * @returns {Float32Array[][]} The adjacency matrix.
+     */
     buildAdjacencyMatrix() {
         const n = this.graph.vertices.length;
         const mapIdx = new Map(this.graph.vertices.map((v, i) => [v, i]));
@@ -1673,6 +1748,11 @@ class EnhancedQualiaSheaf {
         return adj;
     }
 
+    /**
+     * Computes the local clustering coefficients for each vertex in the graph.
+     * (Currently not directly used for system metrics, but useful for graph analysis).
+     * @returns {Float32Array} Array of clustering coefficients.
+     */
     computeClustering() {
         const n = this.graph.vertices.length;
         const adjBinary = zeroMatrix(n, n);
@@ -1703,6 +1783,10 @@ class EnhancedQualiaSheaf {
         return clustering;
     }
 
+    /**
+     * Builds the graph Laplacian matrix based on the current adjacency matrix.
+     * @returns {Float32Array[][]} The Laplacian matrix.
+     */
     buildLaplacian() {
         const n = this.graph.vertices.length;
         const adj = this.adjacencyMatrix || this.buildAdjacencyMatrix();
@@ -1721,6 +1805,11 @@ class EnhancedQualiaSheaf {
         return L;
     }
 
+    /**
+     * Computes projection matrices for each edge in the graph.
+     * Currently, these are identity matrices, implying direct projection (no transformation) of qualia.
+     * @returns {Promise<Map<string, Float32Array[][]>>} A map of projection matrices.
+     */
     async computeProjectionMatrices() {
         const projections = new Map();
         const identityMatrix = identity(this.qDim); // The stable identity matrix (no worker needed for this)
@@ -1735,26 +1824,35 @@ class EnhancedQualiaSheaf {
         return projections;
     }
 
+    /**
+     * Updates the graph structure, adjacency matrix, Laplacian, and spectral norm.
+     * This is a critical step before qualia diffusion.
+     * @private
+     * @returns {Promise<void>}
+     */
     async _updateGraphStructureAndMetrics() {
-        // logger.info('EnhancedQualiaSheaf._updateGraphStructureAndMetrics() started.'); // Removed verbose log
         try {
             this.adaptSheafTopology(); // Adapt topology before rebuilding matrices
             this.adjacencyMatrix = this.buildAdjacencyMatrix();
             this.laplacian = this.buildLaplacian();
-            // logger.info('Calling worker for matrixSpectralNormApprox (initialization)...'); // Removed verbose log
             this.maxEigApprox = await runWorkerTask('matrixSpectralNormApprox', { matrix: flattenMatrix(this.laplacian) }, 10000) || 1; // 10s timeout
-            // logger.info('matrixSpectralNormApprox completed.'); // Removed verbose log
             this.projectionMatrices = await this.computeProjectionMatrices();
             if (!Number.isFinite(this.maxEigApprox) || this.maxEigApprox <= 0) {
                 logger.warn(`maxEigApprox was invalid (${this.maxEigApprox}). Resetting to 1.`);
                 this.maxEigApprox = 1; // Fallback
             }
-            // logger.info('EnhancedQualiaSheaf._updateGraphStructureAndMetrics() completed.'); // Removed verbose log
         } catch (e) {
             logger.error("Failed to update graph structure and metrics", e);
             throw e; // Propagate error for loading overlay to catch
         }
     }
+
+    /**
+     * Diffuses qualia across the sheaf based on the current state input.
+     * This involves solving a linear system.
+     * @param {Float32Array} state - The current input state vector.
+     * @returns {Promise<void>}
+     */
     async diffuseQualia(state) {
         if (!this.ready) {
             logger.warn('Sheaf not ready for diffusion. Skipping.');
@@ -1917,6 +2015,12 @@ class EnhancedQualiaSheaf {
         this.graph.edges = originalEdges; // Revert temporary edges
     }
 
+    /**
+     * Updates the internal stalk values and maintains a history window for correlation analysis.
+     * @param {Float32Array} sNextVector - The newly diffused qualia vector.
+     * @param {number} n - Number of vertices.
+     * @private
+     */
     _updateStalksAndWindow(sNextVector, n) {
         // Update stalk history for correlation analysis
         const currentStalkNorms = new Float32Array(n);
@@ -1938,18 +2042,17 @@ class EnhancedQualiaSheaf {
         if (this.windowedStates.length > this.windowSize) this.windowedStates.shift();
     }
 
+    /**
+     * Updates all derived consciousness metrics (H1, inconsistency, Gestalt unity, Phi).
+     * @private
+     * @returns {Promise<void>}
+     */
     async _updateDerivedMetrics() {
-        // logger.info('EnhancedQualiaSheaf._updateDerivedMetrics() started.'); // Removed verbose log
         try {
-            // logger.info('EnhancedQualiaSheaf._updateDerivedMetrics(): Calling computeH1Dimension().'); // Removed verbose log
             await this.computeH1Dimension();
-            // logger.info('EnhancedQualiaSheaf._updateDerivedMetrics(): computeH1Dimension() completed. Calling computeGluingInconsistency().'); // Removed verbose log
             await this.computeGluingInconsistency();
-            // logger.info('EnhancedQualiaSheaf._updateDerivedMetrics(): computeGluingInconsistency() completed. Calling computeGestaltUnity().'); // Removed verbose log
             this.computeGestaltUnity(); // Not async
-            // logger.info('EnhancedQualiaSheaf._updateDerivedMetrics(): computeGestaltUnity() completed. Calling computeIntegratedInformation().'); // Removed verbose log
             await this.computeIntegratedInformation();
-            // logger.info('EnhancedQualiaSheaf._updateDerivedMetrics() completed.'); // Removed verbose log
         } catch (e) {
             logger.error("Error during derived metrics update:", e);
             // Fallback values in case of error
@@ -1961,8 +2064,11 @@ class EnhancedQualiaSheaf {
         }
     }
 
+    /**
+     * Computes the dimension of the first cohomology group (H1), indicating structural complexity.
+     * @returns {Promise<void>}
+     */
     async computeH1Dimension() {
-        // logger.info('EnhancedQualiaSheaf.computeH1Dimension() started.'); // Removed verbose log
         const { boundary1, boundary2 } = this.buildBoundaryMatrices();
         if (!isFiniteMatrix(boundary1) || !isFiniteMatrix(boundary2)) {
             logger.warn("Non-finite boundary matrices detected. Setting H1 to default max/min.");
@@ -1989,9 +2095,7 @@ class EnhancedQualiaSheaf {
 
         let rankB1, rankB2;
         try {
-            // logger.info('Calling worker for matrixRank (B1)...'); // Removed verbose log
             rankB1 = await runWorkerTask('matrixRank', { matrix: flatBoundary1 }, 10000); // 10s timeout
-            // logger.info('matrixRank for B1 completed.'); // Removed verbose log
         } catch (e) {
             logger.error('Error computing rankB1 in worker:', e);
             this.h1Dimension = 1;
@@ -1999,9 +2103,7 @@ class EnhancedQualiaSheaf {
             return;
         }
         try {
-            // logger.info('Calling worker for matrixRank (B2)...'); // Removed verbose log
             rankB2 = await runWorkerTask('matrixRank', { matrix: flatBoundary2 }, 10000); // 10s timeout
-            // logger.info('matrixRank for B2 completed.'); // Removed verbose log
         } catch (e) {
             logger.error('Error computing rankB2 in worker:', e);
             this.h1Dimension = 1;
@@ -2018,11 +2120,13 @@ class EnhancedQualiaSheaf {
 
         this.stability = clamp(Math.exp(-this.h1Dimension * 0.2), 0.01, 1);
         if (!Number.isFinite(this.stability)) this.stability = 0.5;
-        // logger.info('EnhancedQualiaSheaf.computeH1Dimension() completed.'); // Removed verbose log
     }
 
+    /**
+     * Computes the gluing inconsistency across the sheaf, indicating internal contradictions.
+     * @returns {Promise<void>}
+     */
     async computeGluingInconsistency() {
-        // logger.info('EnhancedQualiaSheaf.computeGluingInconsistency() started.'); // Removed verbose log
         let sum = 0;
         for (const [u, v] of this.graph.edges) {
             const stalk_u = this.stalks.get(u);
@@ -2048,11 +2152,12 @@ class EnhancedQualiaSheaf {
         }
         this.inconsistency = this.graph.edges.length > 0 ? clamp(sum / this.graph.edges.length, 0, 1) : 0;
         if (!Number.isFinite(this.inconsistency)) this.inconsistency = 1.0;
-        // logger.info('EnhancedQualiaSheaf.computeGluingInconsistency() completed.'); // Removed verbose log
     }
 
+    /**
+     * Computes the Gestalt Unity, which quantifies holistic coherence in the sheaf.
+     */
     computeGestaltUnity() {
-        // logger.info('EnhancedQualiaSheaf.computeGestaltUnity() started.'); // Removed verbose log
         let sum = 0;
         this.graph.edges.forEach(([u, v]) => {
             const stalk_u = this.stalks.get(u);
@@ -2066,11 +2171,13 @@ class EnhancedQualiaSheaf {
         });
         this.gestaltUnity = this.graph.edges.length > 0 ? clamp(sum / this.graph.edges.length, 0.05, 0.99) : 0.05;
         if (!Number.isFinite(this.gestaltUnity)) this.gestaltUnity = 0.05;
-        // logger.info('EnhancedQualiaSheaf.computeGestaltUnity() completed.'); // Removed verbose log
     }
 
+    /**
+     * Computes Integrated Information (Phi), a measure of consciousness.
+     * @returns {Promise<void>}
+     */
     async computeIntegratedInformation() {
-        // logger.info('EnhancedQualiaSheaf.computeIntegratedInformation() started.'); // Removed verbose log
         const validStates = this.windowedStates.filter(isFiniteVector);
         if (validStates.length < Math.max(4, this.stateDim + this.qDim)) { // Need enough samples for meaningful covariance
             logger.warn('Not enough valid states for meaningful covariance calculation. Using base Phi.');
@@ -2079,9 +2186,7 @@ class EnhancedQualiaSheaf {
         }
         let cov;
         try {
-            // logger.info('Calling worker for covarianceMatrix...'); // Removed verbose log
             cov = await runWorkerTask('covarianceMatrix', { states: validStates, eps: this.eps }, 10000); // 10s timeout
-            // logger.info('covarianceMatrix completed.'); // Removed verbose log
         } catch (e) {
             logger.error('Error computing covarianceMatrix in worker:', e);
             this.phi = clamp(0.5 + (this.gestaltUnity || 0.1) * (this.stability || 0.1), 0.01, 5);
@@ -2103,9 +2208,11 @@ class EnhancedQualiaSheaf {
 
         this.phi = clamp(Math.log(1 + MI) * safeStability * safeGestaltUnity * Math.exp(-safeInconsistency), 0.01, 5);
         if (!Number.isFinite(this.phi)) this.phi = 0.01;
-        // logger.info('EnhancedQualiaSheaf.computeIntegratedInformation() completed.'); // Removed verbose log
     }
 
+    /**
+     * Updates the visual activity of the sheaf graph vertices based on stalk norms.
+     */
     visualizeActivity() {
         this.graph.vertices.forEach((vertexName, idx) => {
             const el = document.getElementById(`vertex-${idx}`);
@@ -2128,28 +2235,48 @@ class EnhancedQualiaSheaf {
         });
     }
 
+    /**
+     * Adaptively tunes the sheaf's internal parameters (alpha, beta, gamma)
+     * based on current system stability, inconsistency, Gestalt unity, and H1 dimension.
+     */
     tuneParameters() {
         const currentStability = Number.isFinite(this.stability) ? this.stability : 0.5;
         const currentInconsistency = Number.isFinite(this.inconsistency) ? this.inconsistency : 0.5;
         const currentGestaltUnity = Number.isFinite(this.gestaltUnity) ? this.gestaltUnity : 0.5;
         const currentH1Dimension = Number.isFinite(this.h1Dimension) ? this.h1Dimension : 1;
 
-        // Tune alpha: More responsive if unstable or inconsistent
-        this.alpha = clamp(this.alpha * (1 + 0.02 * (1 - currentStability)) * (1 + 0.01 * currentInconsistency), 0.01, 1);
-        // Tune beta: Increase unity with higher unity, decrease if H1 is high (too complex)
-        this.beta = clamp(this.beta * (1 + 0.02 * currentGestaltUnity) * (1 - 0.01 * currentH1Dimension), 0.01, 1);
-        // Tune gamma: Lower if H1 is high (stability), lower if inconsistent
-        this.gamma = clamp(this.gamma * (1 - 0.05 * currentH1Dimension) * (1 - 0.02 * currentInconsistency), 0.01, 0.5);
+        // Tune alpha: Increase responsiveness (alpha) if consistency is low or H1 is high (needs more input to stabilize)
+        // Decrease if stability is high and inconsistency is low (system is balanced, avoid over-reactivity)
+        this.alpha = clamp(this.alpha * (1 + 0.02 * (1 - currentStability)) * (1 + 0.01 * currentInconsistency) * (1 + 0.005 * currentH1Dimension), 0.01, 1);
+
+        // Tune beta: Increase diffusion strength (beta) to enhance unity, especially if Gestalt unity is low,
+        // but slightly reduce if H1 is very high to prevent over-complexity.
+        this.beta = clamp(this.beta * (1 + 0.02 * (1 - currentGestaltUnity)) * (1 - 0.01 * currentH1Dimension), 0.01, 1);
+        
+        // Tune gamma: Adjust learning rate (gamma). Lower it if inconsistency or H1 is high (system is chaotic, slow down changes),
+        // Increase slightly if stability is very high but learning seems slow.
+        this.gamma = clamp(this.gamma * (1 - 0.05 * currentH1Dimension) * (1 - 0.02 * currentInconsistency) * (1 + 0.01 * currentStability), 0.01, 0.5);
+        
         logger.info(`Tuned parameters: Alpha=${this.alpha.toFixed(3)}, Beta=${this.beta.toFixed(3)}, Gamma=${this.gamma.toFixed(3)}`);
     }
 }
+/**
+ * Represents an Ontological World Model (OWM) for an AI, combining a Qualia Sheaf with a Recurrent Neural Network (LSTM-like).
+ * It predicts future states and Q-values for actions.
+ */
 class OntologicalWorldModel {
+    /**
+     * @param {number} stateDim - Dimension of the input state vector.
+     * @param {number} actionDim - Dimension of the action space.
+     * @param {number} qDim - Dimension of qualia vectors.
+     * @param {number[]} hiddenSizes - Array of hidden layer sizes for the recurrent network.
+     * @param {boolean} isPlayerTwo - True if this OWM belongs to the second player (AI).
+     */
     constructor(stateDim = 10, actionDim = 3, qDim = 7, hiddenSizes = [64, 64], isPlayerTwo = false) {
-        // logger.info(`OWM Constructor (${isPlayerTwo ? 'AI' : 'Player'}) started.`); // Removed verbose log
         this.stateDim = stateDim;
         this.actionDim = actionDim;
         this.isPlayerTwo = isPlayerTwo;
-        const recurrentStateSize = hiddenSizes[hiddenSizes.length - 1]; // Size of our LSTM-like state
+        this.recurrentStateSize = hiddenSizes[hiddenSizes.length - 1]; // Size of our LSTM-like state
 
         // Graph and Sheaf setup remains the same
         const commonVertices = ['paddle_y', 'ball_x', 'ball_y', 'ball_dx', 'ball_dy', 'player_score', 'ai_score', 'paddle_speed', 'player_collision', 'ai_collision'];
@@ -2165,27 +2292,27 @@ class OntologicalWorldModel {
         // Define the total input dimension expected by the NN for current state + qualia
         this.inputDim = this.stateDim + this.expectedQualiaInputLength; // 10 state + 70 qualia = 80
 
-        this.hiddenState = vecZeros(recurrentStateSize);
-        this.cellState = vecZeros(recurrentStateSize);
+        this.hiddenState = vecZeros(this.recurrentStateSize); // Use this.recurrentStateSize
+        this.cellState = vecZeros(this.recurrentStateSize); // Use this.recurrentStateSize
 
-        const combinedInputSize = this.inputDim + recurrentStateSize;
+        const combinedInputSize = this.inputDim + this.recurrentStateSize; // Use this.recurrentStateSize
         const weightScale = Math.sqrt(2.0 / combinedInputSize); // Glorot/Xavier initialization approximation
 
-        this.Wf = randomMatrix(recurrentStateSize, combinedInputSize, weightScale); // Forget gate
-        this.Wi = randomMatrix(recurrentStateSize, combinedInputSize, weightScale); // Input gate
-        this.Wc = randomMatrix(recurrentStateSize, combinedInputSize, weightScale); // Cell state candidate
-        this.Wo = randomMatrix(recurrentStateSize, combinedInputSize, weightScale); // Output gate
-        this.bf = vecZeros(recurrentStateSize);
-        this.bi = vecZeros(recurrentStateSize);
-        this.bc = vecZeros(recurrentStateSize);
-        this.bo = vecZeros(recurrentStateSize);
+        this.Wf = randomMatrix(this.recurrentStateSize, combinedInputSize, weightScale); // Forget gate
+        this.Wi = randomMatrix(this.recurrentStateSize, combinedInputSize, weightScale); // Input gate
+        this.Wc = randomMatrix(this.recurrentStateSize, combinedInputSize, weightScale); // Cell state candidate
+        this.Wo = randomMatrix(this.recurrentStateSize, combinedInputSize, weightScale); // Output gate
+        this.bf = vecZeros(this.recurrentStateSize);
+        this.bi = vecZeros(this.recurrentStateSize);
+        this.bc = vecZeros(this.recurrentStateSize);
+        this.bo = vecZeros(this.recurrentStateSize);
         
         // Output heads are now fed from the recurrent hidden state
-        const qValueScale = Math.sqrt(2.0 / (recurrentStateSize + this.actionDim));
-        this.qValueHead = { W: randomMatrix(this.actionDim, recurrentStateSize, qValueScale), b: vecZeros(this.actionDim) };
+        const qValueScale = Math.sqrt(2.0 / (this.recurrentStateSize + this.actionDim)); // Use this.recurrentStateSize
+        this.qValueHead = { W: randomMatrix(this.actionDim, this.recurrentStateSize, qValueScale), b: vecZeros(this.actionDim) };
         
-        const statePredScale = Math.sqrt(2.0 / (recurrentStateSize + this.stateDim));
-        this.statePredHead = { W: randomMatrix(this.stateDim, recurrentStateSize, statePredScale), b: vecZeros(this.stateDim) };
+        const statePredScale = Math.sqrt(2.0 / (this.recurrentStateSize + this.stateDim)); // Use this.recurrentStateSize
+        this.statePredHead = { W: randomMatrix(this.stateDim, this.recurrentStateSize, statePredScale), b: vecZeros(this.stateDim) };
 
         this.attentionWeights = randomMatrix(this.qDim, this.inputDim, 0.1); // Attention weights dim: qDim x inputDim
         this.lastSoftmaxScores = vecZeros(this.qDim); // Size qDim
@@ -2198,10 +2325,13 @@ class OntologicalWorldModel {
         logger.info(`OWM constructed (${isPlayerTwo ? 'AI' : 'Player'}): inputDim=${this.inputDim}, qualiaSheaf.qDim=${this.qualiaSheaf.qDim}, expectedQualiaInputLength=${this.expectedQualiaInputLength}`);
     }
 
+    /**
+     * Initializes the OWM and its underlying Qualia Sheaf.
+     * @returns {Promise<void>}
+     */
     async initialize() {
         logger.info(`OWM.initialize() (${this.isPlayerTwo ? 'AI' : 'Player'}) called.`);
         try {
-            // logger.info(`OWM.initialize() (${this.isPlayerTwo ? 'AI' : 'Player'}): Calling qualiaSheaf.initialize().`); // Removed verbose log
             await this.qualiaSheaf.initialize();
             this.ready = true;
             logger.info(`Recurrent OWM for ${this.isPlayerTwo ? 'AI' : 'Player'} ready.`);
@@ -2212,9 +2342,16 @@ class OntologicalWorldModel {
         }
     }
 
+    /**
+     * Performs a forward pass through the recurrent neural network.
+     * @param {Float32Array} input - The concatenated state and qualia input.
+     * @returns {Promise<{qValues: Float32Array, nextState: Float32Array, activations: Float32Array[]}>}
+     *          Predicted Q-values, next state, and intermediate activations.
+     */
     async forward(input) {
         if (!isFiniteVector(input) || input.length !== this.inputDim) {
             logger.error('OWM.forward: Invalid input. Returning zeros.', {expected: this.inputDim, got: input.length});
+            this.resetRecurrentState(); // Attempt to recover from bad input
             return { qValues: vecZeros(this.actionDim), nextState: vecZeros(this.stateDim), activations: [] };
         }
         
@@ -2279,6 +2416,11 @@ class OntologicalWorldModel {
         return { qValues, nextState, activations };
     }
 
+    /**
+     * Applies an attention mechanism to the input, weighting different parts based on their relevance to qualia.
+     * @param {Float32Array} input - The combined state and qualia input.
+     * @returns {Float32Array} The attended input vector.
+     */
     applyAttention(input) {
         if (!isFiniteVector(input) || input.length !== this.inputDim) {
             logger.error('OWM.applyAttention: Invalid input. Returning original input.', {expected: this.inputDim, got: input.length});
@@ -2317,6 +2459,13 @@ class OntologicalWorldModel {
         return isFiniteVector(weightedAttended) ? weightedAttended : input; // Fallback to original if non-finite
     }
 
+    /**
+     * Predicts Q-values and next state based on the current state.
+     * Involves qualia diffusion, attention, and the recurrent neural network forward pass.
+     * @param {Float32Array} state - The current state vector.
+     * @returns {Promise<{qValues: Float32Array, activations: Float32Array[], corrupted: boolean}>}
+     *          Predicted Q-values, intermediate activations, and a flag indicating if corruption occurred.
+     */
     async predict(state) {
         if (!this.ready) {
             logger.warn('OWM not ready for prediction.');
@@ -2402,6 +2551,17 @@ class OntologicalWorldModel {
         return { qValues, activations, corrupted: corruptedFlag };
     }
 
+    /**
+     * Performs a learning step using Q-learning.
+     * @param {Float32Array} state - The current state.
+     * @param {number} actionIndex - The index of the action taken.
+     * @param {number} reward - The reward received.
+     * @param {Float32Array} nextState - The state after taking the action.
+     * @param {boolean} isDone - True if the episode is finished.
+     * @param {number} learningRate - The learning rate for weight updates.
+     * @param {number} gamma - The discount factor for future rewards.
+     * @returns {Promise<void>}
+     */
     async learn(state, actionIndex, reward, nextState, isDone, learningRate = 0.01, gamma = 0.99) {
         if (!isFiniteVector(state) || !isFiniteVector(nextState) || !Number.isFinite(reward) || !Number.isFinite(actionIndex)) {
             logger.warn('OWM.learn: Invalid input (state, nextState, reward, or actionIndex). Skipping learning step.');
@@ -2444,13 +2604,20 @@ class OntologicalWorldModel {
         }
     }
 
+    /**
+     * Resets the internal recurrent state (hidden and cell states) of the OWM.
+     */
     resetRecurrentState() {
         this.hiddenState.fill(0);
         this.cellState.fill(0);
         logger.info(`OWM recurrent state for ${this.isPlayerTwo ? 'AI' : 'Player'} has been reset.`);
     }
 }
-        class LearningAI {
+/**
+ * Implements a Reinforcement Learning agent using an Ontological World Model.
+ * Manages exploration-exploitation balance (epsilon-greedy) and state representation.
+ */
+class LearningAI {
     // Constants for normalization and game physics
     static BALL_DX_NORMALIZATION = 10;
     static BALL_DY_NORMALIZATION = 12;
@@ -2459,6 +2626,12 @@ class OntologicalWorldModel {
     static PADDLE_WIDTH_BASE = 15;
     static PADDLE_OFFSET_X = 10; // Player paddle X, AI paddle X offset from width
 
+    /**
+     * @param {OntologicalWorldModel} worldModel - The OWM this AI will use.
+     * @param {Object} gameBounds - Object containing game width, height.
+     * @param {boolean} isPlayerTwo - True if this AI controls the right paddle.
+     * @param {number} aiResponseTime - Number of frames between AI decisions.
+     */
     constructor(worldModel, gameBounds, isPlayerTwo = false, aiResponseTime = 3) {
         this.worldModel = worldModel;
         this.gameWidth = gameBounds.width;
@@ -2479,6 +2652,11 @@ class OntologicalWorldModel {
         this.avgQValue = 0; // For tracking/visualization
     }
 
+    /**
+     * Creates a normalized state vector from the current game state.
+     * @param {Object} gameState - The raw game state object.
+     * @returns {Float32Array} The normalized state vector.
+     */
     createStateVector(gameState) {
         const paddle = this.isPlayerTwo ? gameState.ai : gameState.player;
         const opponentPaddle = this.isPlayerTwo ? gameState.player : gameState.ai;
@@ -2508,6 +2686,13 @@ class OntologicalWorldModel {
         }
         return clampedStateVec;
     }
+
+    /**
+     * Makes a decision for the AI action (UP, DOWN, IDLE) based on epsilon-greedy policy.
+     * @param {Object} gameState - The current game state.
+     * @returns {Promise<{action: number[], activations: Float32Array[], corrupted: boolean, chosenActionIndex: number}>}
+     *          The chosen action vector, neural network activations, corruption flag, and chosen action index.
+     */
     async makeDecision(gameState) {
         if (this.actionQueue.length >= this.aiResponseTime) {
             return this.actionQueue.shift();
@@ -2525,7 +2710,7 @@ class OntologicalWorldModel {
         if (corrupted) {
             logger.warn(`LearningAI (${this.isPlayerTwo ? 'AI' : 'Player'}): World model predicted a corrupted state. Defaulting to IDLE and signaling corruption.`);
             this.lastActionIndex = 2; // IDLE
-            const decision = { action: actions[2].vec, activations: this.lastActivations, corrupted: true };
+            const decision = { action: actions[2].vec, activations: this.lastActivations, corrupted: true, chosenActionIndex: 2 };
             this.actionQueue.push(decision);
             return this.actionQueue.shift() || decision;
         }
@@ -2544,12 +2729,19 @@ class OntologicalWorldModel {
         }
         
         this.lastActionIndex = actionIndex;
-        const decision = { action: actions[actionIndex].vec, activations: this.lastActivations, corrupted: false };
+        const decision = { action: actions[actionIndex].vec, activations: this.lastActivations, corrupted: false, chosenActionIndex: actionIndex };
         this.actionQueue.push(decision);
 
         return this.actionQueue.shift() || decision;
     }
 
+    /**
+     * Performs a Q-learning update step.
+     * @param {number} reward - The reward received from the environment.
+     * @param {Object} newGameState - The new state of the game.
+     * @param {boolean} isDone - True if the episode is finished.
+     * @returns {Promise<void>}
+     */
     async learn(reward, newGameState, isDone) {
         const nextStateVec = this.createStateVector(newGameState);
         await this.worldModel.learn(this.lastStateVec, this.lastActionIndex, reward, nextStateVec, isDone, this.learningRate);
@@ -2558,20 +2750,33 @@ class OntologicalWorldModel {
             this.epsilon *= this.epsilonDecay;
         }
 
-        const uncertaintyFactor = 1 + clamp(this.worldModel.predictionError, 0, 5); // Incorporate prediction error
+        // Incorporate prediction error to modulate epsilon
+        const uncertaintyFactor = 1 + clamp(this.worldModel.predictionError, 0, 5) * 0.05; // Small modulation
         this.epsilon = clamp(this.epsilon * uncertaintyFactor, this.epsilonMin, 1.0);
+        this.epsilon = Number.isFinite(this.epsilon) ? this.epsilon : this.epsilonMin; // Ensure epsilon remains finite
     }
 
+    /**
+     * Resets the AI's internal state and learning parameters.
+     */
     reset() {
         this.worldModel.resetRecurrentState();
         this.epsilon = 1.0;
         this.avgQValue = 0;
         this.actionQueue = []; // Clear any pending actions
+        this.learningRate = 0.01; // Reset learning rate
         logger.info(`LearningAI for ${this.isPlayerTwo ? 'AI' : 'Player'} has been reset.`);
     }
 }
 // NEW: StrategicAI for Meta-Learning
+/**
+ * Monitors a LearningAI's performance and internal metrics to adapt its learning rate and exploration.
+ * This acts as a meta-learning agent.
+ */
 class StrategicAI {
+    /**
+     * @param {LearningAI} learningAI - The learning AI to manage.
+     */
     constructor(learningAI) {
         this.learningAI = learningAI;
         this.rewardHistory = [];
@@ -2580,6 +2785,10 @@ class StrategicAI {
         this.learningRateModulationRate = 0.005; // Rate for learning rate adjustment
     }
 
+    /**
+     * Observes the reward received by the learning AI.
+     * @param {number} reward - The reward received.
+     */
     observe(reward) {
         if (Number.isFinite(reward)) {
             this.rewardHistory.push(reward);
@@ -2589,6 +2798,10 @@ class StrategicAI {
         }
     }
 
+    /**
+     * Modulates the `epsilon` and `learningRate` of the associated `LearningAI`
+     * based on performance and internal consciousness metrics.
+     */
     modulateParameters() {
         if (this.rewardHistory.length < this.HISTORY_SIZE) return;
 
@@ -2612,10 +2825,17 @@ class StrategicAI {
         const explorationModifier = (1 - gestaltUnity) + (h1Dimension * 0.1); // Simple heuristic
         this.learningAI.epsilon = clamp(this.learningAI.epsilon * (1 + (explorationModifier - 0.5) * 0.01), this.learningAI.epsilonMin, 1.0);
 
+        // Ensure learningRate and epsilon are finite after modulation
+        this.learningAI.learningRate = Number.isFinite(this.learningAI.learningRate) ? this.learningAI.learningRate : 0.01;
+        this.learningAI.epsilon = Number.isFinite(this.learningAI.epsilon) ? this.learningAI.epsilon : this.learningAI.epsilonMin;
+
 
         logger.info(`StrategicAI modulated LearningAI. Epsilon: ${this.learningAI.epsilon.toFixed(3)}, LR: ${this.learningAI.learningRate.toFixed(4)}`);
     }
 }
+        /**
+         * Represents the Pong game environment, handling physics, scoring, and rendering.
+         */
         class PongGame {
             // Game constants for clarity and easy tuning
             static PADDLE_HEIGHT_BASE = 80;
@@ -2624,13 +2844,20 @@ class StrategicAI {
             static INITIAL_BALL_SPEED_X = 4;
             static INITIAL_BALL_SPEED_Y_MAX = 6;
             static PLAYER_PADDLE_SPEED = 7; // Fixed player speed
+            static SCORE_TO_WIN = 10;
+            static MAX_BALL_SPEED_MULTIPLIER_FACTOR = 1.25; // Max ball speed is BASE * current multiplier * this factor
 
+            /**
+             * @param {HTMLCanvasElement} canvas - The canvas element for rendering.
+             * @param {number} initialWidth - Initial width of the game area.
+             * @param {number} initialHeight - Initial height of the game area.
+             */
             constructor(canvas, initialWidth, initialHeight) {
                 this.canvas = canvas;
                 this.ctx = canvas.getContext('2d');
                 this.width = initialWidth;
                 this.height = initialHeight;
-                this.scoreToWin = 10;
+                this.scoreToWin = PongGame.SCORE_TO_WIN;
                 this.ballSpeedMultiplier = 1.0;
                 this.paddleHeightMultiplier = 1.0;
                 this.MAX_BALL_SPEED_BASE = 8;
@@ -2639,11 +2866,14 @@ class StrategicAI {
                 this.reset();
             }
 
-            // NEW: Method to explicitly resume AudioContext
+            /**
+             * Explicitly resumes the AudioContext if it's suspended, usually in response to a user gesture.
+             * @returns {Promise<void>}
+             */
             async resumeAudioContext() {
                 if (this.audioContext.state === 'suspended') {
                     return this.audioContext.resume().then(() => {
-                        logger.info("AudioContext resumed by PongGame.");
+                        // logger.info("AudioContext resumed by PongGame."); // Removed verbose log
                     }).catch(e => {
                         logger.error("Failed to resume AudioContext in PongGame:", e);
                         throw e; // Re-throw to propagate if critical
@@ -2652,7 +2882,9 @@ class StrategicAI {
                 return Promise.resolve(); // Already running or not suspended
             }
 
-
+            /**
+             * Resets the game to its initial state.
+             */
             reset() {
                 // Ensure dimensions are valid, fallback to canvas client dimensions if needed
                 this.width = this.canvas.clientWidth || this.width;
@@ -2681,6 +2913,9 @@ class StrategicAI {
                 this.winner = null;
             }
 
+            /**
+             * Resets only the ball's position and velocity.
+             */
             resetBall() {
                 this.ball.x = this.width / 2;
                 this.ball.y = this.height / 2;
@@ -2688,13 +2923,18 @@ class StrategicAI {
                 this.ball.dy = (Math.random() - 0.5) * PongGame.INITIAL_BALL_SPEED_Y_MAX * this.ballSpeedMultiplier;
             }
 
+            /**
+             * Updates the game state for a single frame.
+             * @returns {{aReward: number, pReward: number, playerCollision: boolean, aiCollision: boolean, isDone: boolean}}
+             *          Rewards for AI and Player, collision flags, and game over status.
+             */
             update() {
                 if (this.gameOver) {
                     return { aReward: 0, pReward: 0, playerCollision: false, aiCollision: false, isDone: true };
                 }
 
                 const MAX_BALL_DX = this.MAX_BALL_SPEED_BASE * this.ballSpeedMultiplier;
-                const MAX_BALL_DY = this.MAX_BALL_SPEED_BASE * 1.25 * this.ballSpeedMultiplier;
+                const MAX_BALL_DY = this.MAX_BALL_SPEED_BASE * PongGame.MAX_BALL_SPEED_MULTIPLIER_FACTOR * this.ballSpeedMultiplier;
 
                 this.ball.x += this.ball.dx;
                 this.ball.y += this.ball.dy;
@@ -2776,6 +3016,10 @@ class StrategicAI {
                 return { aReward, pReward, playerCollision: this.playerCollision, aiCollision: this.aiCollision, isDone };
             }
 
+            /**
+             * Sets the action for the AI paddle.
+             * @param {number[]} action - An array representing the action (e.g., [1,0,0] for UP).
+             */
             setAIAction(action) {
                 const speed = this.MAX_PADDLE_SPEED_BASE * this.ballSpeedMultiplier;
                 if (action[0] === 1) this.ai.dy = -speed;
@@ -2783,6 +3027,10 @@ class StrategicAI {
                 else this.ai.dy = 0;
             }
 
+            /**
+             * Sets the action for the player paddle.
+             * @param {number[]} action - An array representing the action (e.g., [1,0,0] for UP).
+             */
             setPlayerAction(action) {
                 const speed = PongGame.PLAYER_PADDLE_SPEED;
                 if (action[0] === 1) this.player.dy = -speed;
@@ -2790,6 +3038,10 @@ class StrategicAI {
                 else this.player.dy = 0;
             }
 
+            /**
+             * Gets the current state of the game.
+             * @returns {Object} The current game state.
+             */
             getState() {
                 // Return a comprehensive state vector for AI learning
                 return {
@@ -2802,6 +3054,10 @@ class StrategicAI {
                 };
             }
 
+            /**
+             * Renders the current game state on the canvas.
+             * @param {CanvasRenderingContext2D} ctx - The rendering context.
+             */
             render(ctx) {
                 if (!ctx) return;
 
@@ -2835,19 +3091,32 @@ class StrategicAI {
                 }
             }
 
-            // Moved playSound and _playActualSound methods here
+            /**
+             * Plays a sound effect for game events.
+             * @param {'collision'|'win'} type - The type of sound to play.
+             */
             playSound(type = 'collision') {
                 try {
-                    if (this.audioContext.state !== 'running') {
-                        logger.warn('AudioContext is not running. Sound will not play until resumed by user interaction.');
-                        return;
+                    // Check if AudioContext is ready or can be resumed
+                    if (this.audioContext.state === 'suspended') {
+                         this.audioContext.resume().then(() => {
+                             this._playActualSound(type);
+                         }).catch(e => logger.warn('Failed to resume AudioContext for sound:', e));
+                    } else if (this.audioContext.state === 'running') {
+                        this._playActualSound(type);
+                    } else {
+                        logger.warn('AudioContext state is not "running" or "suspended". Cannot play sound.', this.audioContext.state);
                     }
-                    this._playActualSound(type);
                 } catch (e) {
                     logger.warn('Audio playback failed or context error', e.message);
                 }
             }
 
+            /**
+             * Internal method to create and play the actual sound.
+             * @param {'collision'|'win'} type - The type of sound to play.
+             * @private
+             */
             _playActualSound(type) {
                 if (this.audioContext.state !== 'running') return;
 
@@ -2875,7 +3144,15 @@ class StrategicAI {
             }
         }
 
+        /**
+         * Visualizes the neural network structure and activity.
+         */
         class NeuralNetworkVisualizer {
+            /**
+             * @param {string} containerId - The ID of the HTML container for the visualizer.
+             * @param {OntologicalWorldModel} worldModel - The OWM whose NN to visualize.
+             * @param {'main'|'opponent'} theme - The visual theme ('main' for blue, 'opponent' for orange).
+             */
             constructor(containerId, worldModel, theme = 'main') {
                 this.container = document.getElementById(containerId);
                 this.worldModel = worldModel;
@@ -2889,20 +3166,32 @@ class StrategicAI {
                 this.neuronElements = [];
                 this.visualLayers = [];
                 this.MAX_NEURONS_TO_DISPLAY = 12; // Reduced for clarity in smaller panels
+                this.lastChosenActionIndex = -1; // New property to track the chosen action
 
                 this._setupVisualLayers();
                 this._setupDOM();
             }
 
+            /**
+             * Defines the layers to visualize from the world model.
+             * @private
+             */
             _setupVisualLayers() {
                 const model = this.worldModel;
+                // Layer 0: Input (State + Qualia)
                 this.visualLayers.push({ name: 'input', actualCount: model.inputDim });
-                // NEW: The hidden layers are now the recurrent cell states
+                // Layer 1: Cell State (LSTM's internal memory)
                 this.visualLayers.push({ name: 'cellState', actualCount: model.cellState.length });
+                // Layer 2: Hidden State (LSTM's output state)
                 this.visualLayers.push({ name: 'hiddenState', actualCount: model.hiddenState.length });
-                this.visualLayers.push({ name: 'qValues', actualCount: model.actionDim }); // Output is now Q-values
+                // Layer 3: Q-Values (final output for action selection)
+                this.visualLayers.push({ name: 'qValues', actualCount: model.actionDim }); 
             }
 
+            /**
+             * Sets up the DOM elements (neurons and canvas) for the visualizer.
+             * @private
+             */
             _setupDOM() {
                 this.container.innerHTML = '';
 
@@ -2931,14 +3220,22 @@ class StrategicAI {
                     this.canvas.width = this.container.clientWidth * dpr;
                     this.canvas.height = this.container.clientHeight * dpr;
                     this.ctx.scale(dpr, dpr);
-                    // Connections are too complex to meaningfully draw for LSTM, so we skip it.
+                    this._drawConnections(); // Redraw connections on resize
                 });
                 ro.observe(this.container);
             }
             
+            /**
+             * Gets the absolute position of a neuron element within its container.
+             * @param {number} lIndex - Layer index.
+             * @param {number} nIndex - Neuron index within the layer.
+             * @returns {{x: number, y: number}} The x and y coordinates.
+             * @private
+             */
             _getNeuronPosition(lIndex, nIndex) {
                 const el = this.neuronElements[lIndex]?.[nIndex];
                 if (!el) {
+                    // Fallback if element not found, should not happen if _setupDOM is correct
                     const layerDiv = this.container.children[lIndex + 1]; // +1 because canvas is first child
                     if (!layerDiv) return { x: 0, y: 0 };
                     const layerRect = layerDiv.getBoundingClientRect();
@@ -2958,14 +3255,109 @@ class StrategicAI {
                 };
             }
 
+            /**
+             * Draws connections between neurons, with opacity and color based on weight strength and sign.
+             * @private
+             */
             _drawConnections() {
-                // Connections are too complex to visualize for a recurrent net, so we disable this.
-                if (!this.ctx) return;
+                if (!this.ctx || !this.worldModel || this.neuronElements.length < 4) return;
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                const model = this.worldModel;
+                
+                // --- Connection Type 1: Hidden State (Layer 2) to Q-Values (Layer 3) ---
+                const hiddenStateNeurons = this.neuronElements[2];
+                const qValuesNeurons = this.neuronElements[3];
+
+                if (hiddenStateNeurons && qValuesNeurons && model.qValueHead && model.qValueHead.W) {
+                    const weights_h_to_q = model.qValueHead.W;
+                    const maxWeightAbs_h_to_q = 1.0; // Max expected weight magnitude for scaling
+
+                    for (let i = 0; i < hiddenStateNeurons.length; i++) {
+                        const fromPos = this._getNeuronPosition(2, i);
+                        // Map visual neuron index to actual data index
+                        const hiddenStateDataIndex = Math.floor(i * (model.hiddenState.length / hiddenStateNeurons.length));
+
+                        for (let j = 0; j < qValuesNeurons.length; j++) {
+                            const toPos = this._getNeuronPosition(3, j);
+                            // Map visual neuron index to actual data index
+                            const qValueDataIndex = Math.floor(j * (model.actionDim / qValuesNeurons.length));
+
+                            const weight = weights_h_to_q[qValueDataIndex]?.[hiddenStateDataIndex] || 0;
+                            const absWeight = Math.abs(weight);
+                            const strength = clamp(absWeight / maxWeightAbs_h_to_q, 0, 1);
+
+                            this.ctx.beginPath();
+                            this.ctx.strokeStyle = weight > 0 
+                                ? `var(--connection-positive, rgba(0, 255, 153, ${0.1 + strength * 0.9}))`
+                                : `var(--connection-negative, rgba(255, 100, 100, ${0.1 + strength * 0.9}))`;
+                            
+                            if (absWeight < 0.05) { // Dim connections for very small weights
+                                this.ctx.strokeStyle = `var(--connection-neutral, rgba(100, 100, 100, 0.1))`;
+                            }
+
+                            this.ctx.lineWidth = 0.5 + strength * 2.5;
+                            this.ctx.moveTo(fromPos.x, fromPos.y);
+                            this.ctx.lineTo(toPos.x, toPos.y);
+                            this.ctx.stroke();
+                        }
+                    }
+                }
+
+                // --- Connection Type 2: Input (Layer 0) to Cell State (Layer 1 - conceptual influence via Wc) ---
+                const inputNeurons = this.neuronElements[0];
+                const cellStateNeurons = this.neuronElements[1];
+
+                if (inputNeurons && cellStateNeurons && model.Wc) {
+                    const weights_input_to_c_tilde_candidate = model.Wc; // Wc transforms combinedInput
+                    const maxWeightAbs_input_to_c = 0.5; // Max expected weight magnitude for scaling
+
+                    // The combinedInput has structure [input_features..., prev_hidden_state...]
+                    // We are interested in the influence of 'input_features' on the 'c_tilde' candidate
+                    const inputFeatureCount = model.inputDim; // Length of the direct input part
+
+                    for (let i = 0; i < inputNeurons.length; i++) {
+                        const fromPos = this._getNeuronPosition(0, i); // Input neuron position
+                        const inputDataIndex = Math.floor(i * (inputFeatureCount / inputNeurons.length));
+
+                        for (let j = 0; j < cellStateNeurons.length; j++) {
+                            const toPos = this._getNeuronPosition(1, j); // Cell State neuron position (representing a c_tilde component)
+                            const cellStateDataIndex = Math.floor(j * (model.recurrentStateSize / cellStateNeurons.length));
+
+                            // Weight from an input feature to a cell state candidate component
+                            // Wc[row_for_c_tilde_component][column_for_input_feature]
+                            const weight = weights_input_to_c_tilde_candidate[cellStateDataIndex]?.[inputDataIndex] || 0;
+                            const absWeight = Math.abs(weight);
+                            const strength = clamp(absWeight / maxWeightAbs_input_to_c, 0, 1);
+
+                            this.ctx.beginPath();
+                            // Use a slightly different color scheme for this type of connection
+                            this.ctx.strokeStyle = weight > 0 
+                                ? `rgba(100, 200, 255, ${0.1 + strength * 0.7})` // Light blue for positive input flow
+                                : `rgba(255, 150, 100, ${0.1 + strength * 0.7})`; // Light orange for negative input flow
+
+                            if (absWeight < 0.05) {
+                                this.ctx.strokeStyle = `rgba(100, 100, 100, 0.05)`;
+                            }
+
+                            this.ctx.lineWidth = 0.3 + strength * 1.5; // Thinner lines for this conceptual influence
+                            this.ctx.moveTo(fromPos.x, fromPos.y);
+                            this.ctx.lineTo(toPos.x, toPos.y);
+                            this.ctx.stroke();
+                        }
+                    }
+                }
             }
 
 
-            update(activations) {
+            /**
+             * Updates the visual activity of the neurons based on activations.
+             * @param {Float32Array[]} activations - An array of activation vectors for each layer.
+             * @param {number} [chosenActionIndex=-1] - The index of the action chosen by the AI, for highlighting.
+             */
+            update(activations, chosenActionIndex = -1) {
+                this.lastChosenActionIndex = chosenActionIndex; // Store for potential redraws/consistency
+
                 // If activations are not provided or invalid, visualize a neutral state
                 if (!activations || activations.length === 0 || !activations.every(isFiniteVector)) {
                     this.visualLayers.forEach((layerViz, l_idx) => {
@@ -2974,6 +3366,7 @@ class StrategicAI {
                                 el.style.backgroundColor = '#333';
                                 el.style.borderColor = '#888';
                                 el.style.boxShadow = 'none';
+                                el.classList.remove('active-action');
                             }
                         });
                     });
@@ -3008,13 +3401,23 @@ class StrategicAI {
                             el.style.backgroundColor = `hsl(${hue},100%,${lightness}%)`;
                             el.style.borderColor = `hsl(${hue},100%,${lightness * 1.2}%)`;
                             el.style.boxShadow = `0 0 ${clamp(intensity * 8, 0, 8)}px hsl(${hue},100%,${lightness}%)`;
+                            
+                            // Highlight the neuron corresponding to the chosen action in the Q-value layer
+                            if (l_idx === this.visualLayers.length - 1 && n_idx === chosenActionIndex && chosenActionIndex !== -1) {
+                                el.classList.add('active-action');
+                            } else {
+                                el.classList.remove('active-action');
+                            }
                         }
                     }
                 });
-                this._drawConnections();
+                this._drawConnections(); // Call connections drawing after neuron updates
             }
         }
 
+        /**
+         * The main application class, orchestrating the game, AI, and UI updates.
+         */
         class MainApp {
     constructor() {
         logger.info('MainApp Constructor started.');
@@ -3074,9 +3477,15 @@ class StrategicAI {
         document.getElementById('status').textContent = 'Ready';
 
         this.setupGameAndAIs(); // Call asynchronously below
-        // logger.info('MainApp Constructor completed. Calling setupGameAndAIs.'); // Removed verbose log
     }
 
+    /**
+     * Applies Device Pixel Ratio (DPR) scaling to a canvas.
+     * @param {HTMLCanvasElement} canvas - The canvas element.
+     * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
+     * @param {number} [baseWidth=canvas.clientWidth] - The base logical width.
+     * @param {number} [baseHeight=canvas.clientHeight] - The base logical height.
+     */
     applyCanvasDPR(canvas, ctx, baseWidth = canvas.clientWidth, baseHeight = canvas.clientHeight) {
         const dpr = window.devicePixelRatio || 1;
         canvas.width = baseWidth * dpr;
@@ -3086,6 +3495,11 @@ class StrategicAI {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // Apply DPR scaling to context
     }
 
+    /**
+     * Sets up the Pong game and both AI agents.
+     * Handles asynchronous initialization and loading states.
+     * @returns {Promise<void>}
+     */
     async setupGameAndAIs() {
         logger.info('setupGameAndAIs() started.');
         showLoading('game', 'Initializing Pong Environment...');
@@ -3098,11 +3512,10 @@ class StrategicAI {
             this.pongGame = new PongGame(this.gameCanvas, w, h);
             logger.info('PongGame initialized.');
             
-            const gameBounds = { width: w, height: h, scoreToWin: 10 };
+            const gameBounds = { width: w, height: h, scoreToWin: PongGame.SCORE_TO_WIN };
 
             this.mainAI_worldModel = new OntologicalWorldModel(10, 3, 7, [64, 64], true);
             this.opponent_worldModel = new OntologicalWorldModel(10, 3, 7, [64, 64], false);
-            // logger.info('OntologicalWorldModels instantiated.'); // Removed verbose log
 
             logger.info('Calling Promise.all for OWM initialization...');
             await Promise.all([
@@ -3113,15 +3526,12 @@ class StrategicAI {
 
             this.mainAI = new LearningAI(this.mainAI_worldModel, gameBounds, true);
             this.opponentAI = new LearningAI(this.opponent_worldModel, gameBounds, false);
-            // logger.info('LearningAIs instantiated.'); // Removed verbose log
             
             this.mainStrategicAI = new StrategicAI(this.mainAI);
             this.opponentStrategicAI = new StrategicAI(this.opponentAI);
-            // logger.info('StrategicAIs instantiated.'); // Removed verbose log
 
             this.mainViz = new NeuralNetworkVisualizer('nn-visualization-container', this.mainAI_worldModel, 'main');
             this.opponentViz = new NeuralNetworkVisualizer('nn-visualization-container-opponent', this.opponent_worldModel, 'opponent');
-            // logger.info('NeuralNetworkVisualizers instantiated.'); // Removed verbose log
 
             this.pongGame.render(this.ctx); 
             this.updateVisualization();
@@ -3136,10 +3546,12 @@ class StrategicAI {
             hideLoading('mainBrain');
             hideLoading('opponentBrain');
             hideLoading('metrics');
-            // logger.info('setupGameAndAIs() completed.'); // Removed verbose log
         }
     }
 
+    /**
+     * Binds UI events to their respective handlers.
+     */
     bindEvents() {
         document.getElementById('toggleSimButton').onclick = () => this.toggleGame();
         document.getElementById('resetSimButton').onclick = () => this.resetAI();
@@ -3184,6 +3596,9 @@ class StrategicAI {
         });
     }
 
+    /**
+     * Sets up Tippy.js tooltips for various UI elements.
+     */
     setupTooltips() {
         tippy('#phi-display', { content: 'Φ (Phi) measures integrated information, indicating the system\'s level of consciousness or experience.' });
         tippy('#free-energy', { content: 'Free Energy (F) quantifies the system’s predictive divergence from its world model; the AI strives to minimize this.' });
@@ -3191,6 +3606,8 @@ class StrategicAI {
         tippy('#gestalt-unity', { content: 'Gestalt Unity quantifies the holistic coherence and interconnectedness across the sheaf structure, indicating how well its internal model is integrated.' });
         tippy('#h1-dimension', { content: 'dim H¹ represents the first cohomology dimension, indicating structural complexity and the presence of "holes" or non-trivial loops in the information flow within the sheaf.' });
         tippy('#inconsistency', { content: 'Gluing Inconsistency measures the misalignment in qualia projections between connected vertices (concepts) in the sheaf, indicating internal contradictions.' });
+        tippy('#learning-rate', { content: 'The current learning rate (alpha) of the main AI\'s reinforcement learning algorithm.' });
+        tippy('#epsilon-value', { content: 'The current exploration rate (epsilon) of the main AI\'s reinforcement learning algorithm. Higher values mean more random actions.' });
         tippy('#qualia-being-fill', { content: 'Being: Reflects the system’s fundamental existence and persistent state, representing its self-awareness.' });
         tippy('#qualia-intent-fill', { content: 'Intent: Captures directed action potential and goal-oriented focus, signifying its purpose and goals.' });
         tippy('#qualia-existence-fill', { content: 'Existence: Models state persistence and resilience to change, representing its current state and environmental robustness.' });
@@ -3218,6 +3635,9 @@ class StrategicAI {
         tippy('#vertex-9', 'AI-Col: AI (Right) collision state. Indicates if the ball has just collided with the main AI\'s paddle.');
     }
     
+    /**
+     * Initializes the Qualia Attention display panel.
+     */
     setupQualiaAttentionPanel() {
         const panel = document.getElementById('qualiaAttentionPanel');
         if (!panel) return;
@@ -3237,6 +3657,9 @@ class StrategicAI {
         panel.innerHTML = html;
     }
 
+    /**
+     * Updates the visual representation of Qualia Attention bars.
+     */
     updateQualiaAttentionVisuals() {
         const softmaxScores = this.mainAI_worldModel?.lastSoftmaxScores;
         if (!softmaxScores || !isFiniteVector(softmaxScores)) return; // Ensure scores are valid
@@ -3250,6 +3673,9 @@ class StrategicAI {
         }
     }
 
+    /**
+     * Draws the Sheaf graph connections on its canvas.
+     */
     drawSheafGraph() {
         if (!this.sheafGraphCtx) return;
         const dpr = window.devicePixelRatio || 1;
@@ -3275,7 +3701,7 @@ class StrategicAI {
             
             const p1 = sheafVertexPositions[uIdx], p2 = sheafVertexPositions[vIdx];
             this.sheafGraphCtx.beginPath();
-            // Scale positions, accounting for vertex size to keep lines centered on vertices
+            // Scale positions, accounting for vertex size (36px) to keep lines centered on vertices
             const scaledX1 = p1.x * (w / dpr - 36) + 18;
             const scaledY1 = p1.y * (h / dpr - 36) + 18;
             const scaledX2 = p2.x * (w / dpr - 36) + 18;
@@ -3287,6 +3713,14 @@ class StrategicAI {
         });
     }
 
+    /**
+     * Draws a line chart on an SVG element.
+     * @param {string} svgId - The ID of the SVG element.
+     * @param {number[]} data - The data points for the chart.
+     * @param {string} color - The stroke color for the line.
+     * @param {number} yMin - The minimum Y-axis value for scaling.
+     * @param {number} yMax - The maximum Y-axis value for scaling.
+     */
     drawChart(svgId, data, color, yMin, yMax) {
         const svg = document.getElementById(svgId);
         if (!svg) return;
@@ -3317,6 +3751,9 @@ class StrategicAI {
         svg.appendChild(path);
     }
 
+    /**
+     * Updates all performance charts with new data.
+     */
     updatePerformanceCharts() {
         if(this.mainAI && this.pongGame) {
             this.chartData.qValue.push(this.mainAI.avgQValue);
@@ -3338,11 +3775,15 @@ class StrategicAI {
     }
 
 
+    /**
+     * Updates all UI elements related to the AI's internal state and consciousness metrics.
+     */
     updateVisualization() {
         const qualia = this.mainAI_worldModel?.qualiaSheaf;
         const model = this.mainAI_worldModel;
+        const mainAI = this.mainAI;
 
-        if (!qualia || !model) {
+        if (!qualia || !model || !mainAI) {
             logger.warn('Main AI World Model or Qualia Sheaf not initialized for visualization.');
             return;
         }
@@ -3385,6 +3826,11 @@ class StrategicAI {
             document.getElementById('gestalt-unity').textContent = clamp(qualia.gestaltUnity, 0, 1).toFixed(5);
             document.getElementById('inconsistency').textContent = (qualia.inconsistency || 0).toFixed(5);
 
+            // New: Display Learning Rate and Epsilon
+            document.getElementById('learning-rate').textContent = (mainAI.learningRate || 0).toFixed(4);
+            document.getElementById('epsilon-value').textContent = (mainAI.epsilon || 0).toFixed(3);
+
+
             document.getElementById('stability-fill').style.width = `${clamp(qualia.stability, 0, 1) * 100}%`;
 
             document.getElementById('alpha-param').textContent = qualia.alpha.toFixed(3);
@@ -3405,6 +3851,12 @@ class StrategicAI {
         });
     }
 
+    /**
+     * The main game loop, responsible for AI decisions, game updates, and learning.
+     * @param {DOMHighResTimeStamp} timestamp - The current time (provided by requestAnimationFrame).
+     * @param {boolean} [isManualStep=false] - True if this is a single step initiated by user.
+     * @returns {Promise<void>}
+     */
     async gameLoop(timestamp, isManualStep = false) {
         if (!this.isRunning && !isManualStep) {
             return;
@@ -3421,39 +3873,31 @@ class StrategicAI {
 
             const preGameState = this.pongGame.getState();
             
-            // logger.info('gameLoop: Making AI decisions...'); // Removed verbose log
             const [mainDecision, opponentDecision] = await Promise.all([
                 this.mainAI.makeDecision(preGameState),
                 this.opponentAI.makeDecision(preGameState)
             ]);
-            // logger.info('gameLoop: AI decisions made.'); // Removed verbose log
 
             // FIX: Check for corruption and reset AI if needed
             if (mainDecision.corrupted) {
                 logger.warn('Main AI state corrupted. Resetting its recurrent state and learning parameters.');
-                this.mainAI.worldModel.resetRecurrentState();
-                this.mainAI.epsilon = 1.0; // Reset epsilon to encourage re-exploration
+                this.mainAI.reset(); // Use the reset method for a full reset
             }
             if (opponentDecision.corrupted) {
                 logger.warn('Opponent AI state corrupted. Resetting its recurrent state and learning parameters.');
-                this.opponentAI.worldModel.resetRecurrentState();
-                this.opponentAI.epsilon = 1.0;
+                this.opponentAI.reset(); // Use the reset method for a full reset
             }
 
             this.pongGame.setAIAction(mainDecision.action);
             this.pongGame.setPlayerAction(opponentDecision.action);
             
-            // logger.info('gameLoop: Updating game state...'); // Removed verbose log
             const gameUpdateResult = this.pongGame.update();
             const postGameState = this.pongGame.getState();
-            // logger.info('gameLoop: Game state updated.'); // Removed verbose log
 
-            // logger.info('gameLoop: AIs learning...'); // Removed verbose log
             await Promise.all([
                 this.mainAI.learn(gameUpdateResult.aReward, postGameState, gameUpdateResult.isDone),
                 this.opponentAI.learn(gameUpdateResult.pReward, postGameState, gameUpdateResult.isDone)
             ]);
-            // logger.info('gameLoop: AIs learning completed.'); // Removed verbose log
             
             this.mainStrategicAI.observe(gameUpdateResult.aReward);
             this.opponentStrategicAI.observe(gameUpdateResult.pReward);
@@ -3466,8 +3910,9 @@ class StrategicAI {
             document.getElementById('ai-score').textContent = this.pongGame.score.ai;
 
             if (this.frameCount % 5 === 0 || isManualStep) { // Update visualizers every 5 frames
-                this.mainViz.update(mainDecision.activations);
-                this.opponentViz.update(opponentDecision.activations);
+                // Pass the chosen action index to highlight the correct Q-value neuron
+                this.mainViz.update(mainDecision.activations, mainDecision.chosenActionIndex);
+                this.opponentViz.update(opponentDecision.activations, opponentDecision.chosenActionIndex);
                 this.updateVisualization();
             }
             if (this.frameCount % 20 === 0 || isManualStep) { // Update charts every 20 frames
@@ -3492,6 +3937,10 @@ class StrategicAI {
             }
         }
     }
+
+    /**
+     * Toggles the simulation between running and paused states.
+     */
     toggleGame() {
         if (!this.mainAI_worldModel?.ready || !this.opponent_worldModel?.ready) {
             logger.warn('AIs are not fully initialized yet. Please wait.');
@@ -3506,7 +3955,6 @@ class StrategicAI {
             // Attempt to resume AudioContext on user interaction
             if (this.pongGame && this.pongGame.audioContext.state === 'suspended') { // Check pongGame and its audioContext
                 this.pongGame.resumeAudioContext().then(() => {
-                    // logger.info("AudioContext resumed on user interaction."); // Removed verbose log
                     this.gameLoop(null, false);
                 }).catch(e => logger.error("Failed to resume AudioContext on toggle:", e));
             } else {
@@ -3518,6 +3966,9 @@ class StrategicAI {
         }
     }
 
+    /**
+     * Stops the simulation.
+     */
     stop() {
         this.isRunning = false;
         document.getElementById('toggleSimButton').textContent = '🚀 Toggle Simulation';
@@ -3525,6 +3976,9 @@ class StrategicAI {
         logger.info('Simulation stopped.');
     }
 
+    /**
+     * Starts the simulation. If the game is over, it resets first.
+     */
     start() {
         if (!this.ctx) {
             document.getElementById('status').textContent = 'Error: Canvas context missing. Cannot start game.';
@@ -3539,6 +3993,10 @@ class StrategicAI {
         }
     }
 
+    /**
+     * Resets the entire simulation: game state, AI models, and UI.
+     * @returns {Promise<void>}
+     */
     async resetAI() {
         this.stop();
         logger.info('Resetting all game and AI states...');
@@ -3562,12 +4020,12 @@ class StrategicAI {
             // Recreate OWMs and LearningAIs to ensure a clean state
             this.mainAI_worldModel = new OntologicalWorldModel(10, 3, 7, [64, 64], true);
             await this.mainAI_worldModel.initialize();
-            this.mainAI = new LearningAI(this.mainAI_worldModel, { width: w, height: h, scoreToWin: 10 }, true);
+            this.mainAI = new LearningAI(this.mainAI_worldModel, { width: w, height: h, scoreToWin: PongGame.SCORE_TO_WIN }, true);
             this.mainStrategicAI = new StrategicAI(this.mainAI);
             
             this.opponent_worldModel = new OntologicalWorldModel(10, 3, 7, [64, 64], false);
             await this.opponent_worldModel.initialize();
-            this.opponentAI = new LearningAI(this.opponent_worldModel, { width: w, height: h, scoreToWin: 10 }, false);
+            this.opponentAI = new LearningAI(this.opponent_worldModel, { width: w, height: h, scoreToWin: PongGame.SCORE_TO_WIN }, false);
             this.opponentStrategicAI = new StrategicAI(this.opponentAI);
             
             // Reinitialize visualizers with new world models
@@ -3592,6 +4050,9 @@ class StrategicAI {
         }
     }
 
+    /**
+     * Triggers the adaptive parameter tuning for both AI's Qualia Sheafs.
+     */
     tuneParameters() {
         if (!this.mainAI_worldModel?.ready || !this.opponent_worldModel?.ready) {
             logger.warn('AIs are not fully initialized yet. Cannot tune parameters.');
@@ -3614,6 +4075,10 @@ class StrategicAI {
         this.updateVisualization();
     }
 
+    /**
+     * Handles keyboard keydown events for game controls and simulation management.
+     * @param {KeyboardEvent} e - The keyboard event.
+     */
     handleKeyDown(e) {
         switch (e.key) {
             case ' ': e.preventDefault(); this.toggleGame(); break;
@@ -3626,6 +4091,10 @@ class StrategicAI {
         }
     }
 
+    /**
+     * Handles keyboard keyup events for game controls.
+     * @param {KeyboardEvent} e - The keyboard event.
+     */
     handleKeyUp(e) {
         switch (e.key) {
             case 'ArrowUp':
@@ -3635,6 +4104,9 @@ class StrategicAI {
 }
 // --- App Initialization ---
         window.onload = async () => {
+            /**
+             * Positions the Sheaf graph vertices dynamically within their container.
+             */
             function positionVertices() {
                 const graph = document.getElementById('sheafGraph');
                 if (!graph) return;
